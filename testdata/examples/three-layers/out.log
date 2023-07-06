@@ -1,0 +1,21 @@
+ok
+
+runner:
+  done
+
+test:
+  starting
+  1
+  exit ok
+
+two/test:
+  starting
+  2
+  exit ok
+  invalidating {test}
+
+two/three/test:
+  starting
+  3
+  exit ok
+  invalidating {two/test}

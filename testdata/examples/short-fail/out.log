@@ -1,0 +1,8 @@
+exit 1
+
+runner:
+  failed
+
+test:
+  starting
+  exit: exit 1

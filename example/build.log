@@ -1,0 +1,19 @@
+     runner  watching src.css
+             watching src.js
+
+   js/build  starting
+
+  css/build  starting
+             Building CSS
+
+   js/build  Building JS
+
+  css/build  done
+             exit ok
+             invalidating {build}
+
+   js/build  done
+             exit ok
+             invalidating {build}
+
+      build  starting

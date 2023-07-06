@@ -1,0 +1,28 @@
+[[task]]
+  id = "dev"
+  type = "long"
+  dependencies = ["simulate-coding"]
+  triggers = ["css/build", "js/build"]
+  watch = ["server-config.json"]
+  cmd = """
+    echo "dev-server running at http://localhost:3000"
+    while true; do sleep 1; done
+  """
+
+[[task]]
+  id = "build"
+  type = "short"
+  dependencies = ["css/build", "js/build"]
+
+[[task]]
+  id = "simulate-coding"
+  type = "long"
+  cmd = """
+    while true; do
+      sleep 5
+      echo "touching js file" && date > src.js
+      sleep 5
+      echo "touching css file" && date > src.css
+    done
+  """
+

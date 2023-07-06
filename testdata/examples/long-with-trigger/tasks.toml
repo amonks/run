@@ -1,0 +1,11 @@
+[[task]]
+  id = "test"
+  type = "long"
+  triggers = ["trigger"]
+
+[[task]]
+  id = "trigger"
+  type = "short"
+  cmd = "echo trigger"
+  watch = ["changed-file"]
+

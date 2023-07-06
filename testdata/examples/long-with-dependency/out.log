@@ -1,0 +1,10 @@
+long
+
+prereq:
+  starting
+  prereq
+  exit ok
+  invalidating {test}
+
+test:
+  starting

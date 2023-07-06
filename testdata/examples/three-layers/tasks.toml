@@ -1,0 +1,6 @@
+[[task]]
+  id = "test"
+  type = "short"
+  cmd = "echo 1"
+  dependencies = ["two/test"]
+

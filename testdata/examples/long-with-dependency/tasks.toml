@@ -1,0 +1,10 @@
+[[task]]
+  id = "test"
+  type = "long"
+  dependencies = ["prereq"]
+
+[[task]]
+  id = "prereq"
+  type = "short"
+  cmd = "echo prereq"
+

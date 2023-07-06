@@ -1,0 +1,12 @@
+[[task]]
+  id = "build"
+  type = "short"
+  watch = ["src.js"]
+  cmd = """
+    echo "Building JS"
+    sleep 0.5
+    date > dist.js
+    echo "done"
+  """
+
+

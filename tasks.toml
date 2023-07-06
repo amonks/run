@@ -1,0 +1,69 @@
+[[task]]
+  id = "install"
+  type = "short"
+  dependencies = ["generate"]
+  cmd = "go install ./cmd/runner"
+
+[[task]]
+  id = "generate"
+  type = "short"
+  cmd = "go generate ./..."
+
+[[task]]
+  id = "screenshots"
+  type = "short"
+  dependencies = [
+    "screenshot-tui",
+    "screenshot-printer",
+    "screenshot-nontty",
+  ]
+  cmd = """
+    echo cleaning up
+    echo "" > example/src.js
+    echo "" > example/src.css
+    echo "" > example/dist.js
+    echo "" > example/dist.css
+  """
+
+[[task]]
+  id = "screenshot-tui"
+  type = "short"
+  dependencies = ["install"]
+  cmd = """
+    cd example
+    vhs ../screenshots/tui.tape
+    mv tui.gif ../screenshots/
+  """
+
+[[task]]
+  id = "screenshot-printer"
+  type = "short"
+  dependencies = ["install"]
+  cmd = """
+    cd example
+    vhs ../screenshots/printer.tape
+    mv printer.gif ../screenshots/
+  """
+
+[[task]]
+  id = "screenshot-nontty"
+  type = "short"
+  dependencies = ["install"]
+  cmd = """
+    cd example
+    vhs ../screenshots/nontty.tape
+    mv nontty.gif ../screenshots/
+  """
+
+[[task]]
+  id = "overwrite-snapshots"
+  type = "short"
+  cmd = """
+    cd testdata/examples
+    for d in * ; do
+      if test -f $d/fail.log ; then
+        echo overwriting $d
+        mv $d/fail.log $d/out.log
+      fi
+    done
+  """

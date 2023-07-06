@@ -1,0 +1,15 @@
+ok
+
+prereq:
+  starting
+  prereq ok
+  exit ok
+  invalidating {test}
+
+runner:
+  done
+
+test:
+  starting
+  test ok
+  exit ok

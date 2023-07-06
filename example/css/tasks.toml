@@ -1,0 +1,11 @@
+[[task]]
+  id = "build"
+  type = "short"
+  watch = ["src.css"]
+  cmd = """
+    echo "Building CSS"
+    sleep 0.1
+    date > dist.css
+    echo "done"
+  """
+

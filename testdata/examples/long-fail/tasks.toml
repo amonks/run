@@ -1,0 +1,5 @@
+[[task]]
+  id = "test"
+  type = "long"
+  cmd = "echo running...; sleep 1; echo fail; exit 1"
+

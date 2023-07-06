@@ -1,0 +1,21 @@
+long
+
+runner:
+  watching testdata/examples/long-with-trigger/changed-file
+  watched file change: {notify.Remove:/Users/ajm/runner/testdata/examples/long-with-trigger/changed-file}
+  invalidating {trigger}
+
+test:
+  starting
+  starting
+  starting
+
+trigger:
+  starting
+  trigger
+  exit ok
+  invalidating {test}
+  starting
+  trigger
+  exit ok
+  invalidating {test}
