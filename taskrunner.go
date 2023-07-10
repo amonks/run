@@ -88,8 +88,8 @@ func RunTask(dir string, allTasks map[string]Task, taskID string) (*Run, error) 
 }
 
 // A Run represents an execution of a task, including,
-// - execution of other tasks that it depends on
-// - configuration of file-watches for retriggering tasks.
+//   - execution of other tasks that it depends on
+//   - configuration of file-watches for retriggering tasks.
 //
 // A Run is safe to access concurrently from multiple goroutines.
 type Run struct {
@@ -117,9 +117,10 @@ type Run struct {
 }
 
 // MultiWriter is the interface Runs use to display UI. To start a Run, you
-// must pass in a MultiWriter.
+// must pass a MultiWriter into [Run.Start].
 //
-// Runner UIs implement MultiWriter.
+// MultiWriter is a subset of [UI], so the UIs produced by [NewTUI] and
+// [NewPrinter] implement MultiWriter.
 type MultiWriter interface {
 	Writer(id string) io.Writer
 }
@@ -162,6 +163,9 @@ func (r *Run) printf(id string, style lipgloss.Style, f string, args ...interfac
 	r.out.Writer(id).Write([]byte(style.Render(fmt.Sprintf(f, args...)) + "\n"))
 }
 
+// Start starts the Run. If it returns nil, the Run is started successfully.
+// After starting the run, you can wait for it to end with [Run.Wait], or stop
+// it immediately with [Run.Stop].
 func (r *Run) Start(out MultiWriter) error {
 	defer r.mu.Lock("Start").Unlock()
 
@@ -216,7 +220,7 @@ func (r *Run) Start(out MultiWriter) error {
 }
 
 // Wait returns a channel that will emit one error when the Run exits, then
-// close. It is ok to call Wait before the run is Started. If Wait is called
+// close. It is ok to call Wait before calling [Run.Start]. If Wait is called
 // after a Run exits, it will return a closed channel. If Wait is called more
 // than once, it will return different channels, and all of the channels will
 // emit when the Run exits.
@@ -235,7 +239,11 @@ func (r *Run) Wait() <-chan error {
 }
 
 // Stop stops a Run, including all of its tasks and watches, and returns when
-// the Run has stopped.
+// the Run has stopped. If any waiting channels were created with [Run.Wait],
+// they will emit before Stop returns.
+//
+// It is safe (but useless) to call Stop without previously calling
+// [Run.Start].
 func (r *Run) Stop() {
 	r.stop(nil)
 }

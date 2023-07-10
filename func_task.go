@@ -7,10 +7,8 @@ import (
 	"os/exec"
 )
 
-type Func func(ctx context.Context, w io.Writer) error
-
 // FuncTask produces a runnable Task from a go function. metadata.Dir is ignored.
-func FuncTask(fn Func, metadata TaskMetadata) Task {
+func FuncTask(fn func(ctx context.Context, w io.Writer) error, metadata TaskMetadata) Task {
 	return &funcTask{
 		mu:       newMutex(fmt.Sprintf("script")),
 		fn:       fn,
@@ -21,7 +19,7 @@ func FuncTask(fn Func, metadata TaskMetadata) Task {
 type funcTask struct {
 	mu *mutex
 
-	fn       Func
+	fn       func(ctx context.Context, w io.Writer) error
 	cancel   func()
 	metadata TaskMetadata
 
