@@ -1,8 +1,6 @@
 package runner
 
 import (
-	"errors"
-	"fmt"
 	"os"
 	"path"
 	"strings"
