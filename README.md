@@ -32,7 +32,7 @@ func main() {
 Runner can be used and extended programatically through its Go API. See [the
 godoc][1]
 
-[1]: https://pkg.go.dev/github.com/amonks/runner
+[1]: https://amonks.github.io/runner
 
 ## CLI Usage
 
@@ -167,4 +167,4 @@ Runner can be used and extended programatically through its Go API. For more
 information, including a conceptual overview of the architecture, example code,
 and reference documentation, see [the godoc][1].
 
-[1]: https://pkg.go.dev/github.com/amonks/runner
+[1]: https://amonks.github.io/runner

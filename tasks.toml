@@ -67,3 +67,34 @@
       fi
     done
   """
+
+[[task]]
+  id = "generate-docs"
+  type = "short"
+  cmd = """
+    godoc -http=0.0.0.0:3335 &
+
+    sha=$(git rev-parse --short HEAD)
+
+    for (( ; ; )); do
+      sleep 0.5
+      if [[ $(curl -so /dev/null -w '%{http_code}' "http://localhost:3335/pkg/github.com/amonks/runner/") -eq 200 ]]; then
+        break
+      fi
+    done
+
+    wget --quiet --mirror --page-requisites --no-parent http://localhost:3335/pkg/github.com/amonks/runner
+
+    cd localhost:3335
+    mv pkg/github.com/amonks/runner index.html
+    rm -r pkg
+    sed -i -e 's%"/pkg%"https://pkg.go.dev/pkg%g' index.html
+    sed -i -e 's%"/lib%"/runner/lib%g' index.html
+    sed -i -e '/topbar/,+11d' index.html
+    sed -i -e '/footer/,+8d' index.html
+    rm index.html-e
+    cd ..
+
+    rm -r docs
+    mv localhost:3335 docs
+  """
