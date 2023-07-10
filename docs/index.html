@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#375EAB">
+
+  <title>runner - Go Documentation Server</title>
+
+<link type="text/css" rel="stylesheet" href="/lib/godoc/style.css">
+
+<script>window.initFuncs = [];</script>
+<script src="/lib/godoc/jquery.js" defer></script>
+
+
+
+<script>var goVersion = "go1.20.3";</script>
+<script src="/lib/godoc/godocs.js" defer></script>
+</head>
+<body>
+
+<div id='lowframe' style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+
+
+
+<div id="page" class="wide">
+<div class="container">
+
+
+  <h1>
+    Package runner
+    <span class="text-muted"></span>
+  </h1>
+
+
+
+
+
+
+
+<div id="nav"></div>
+
+
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<!--
+	Note: Static (i.e., not template-generated) href and id
+	attributes start with "pkg-" to make it impossible for
+	them to conflict with generated attributes (some of which
+	correspond to Go identifiers).
+-->
+
+	<script>
+	document.ANALYSIS_DATA = null;
+	document.CALLGRAPH = null;
+	</script>
+
+	
+		
+		<div id="short-nav">
+			<dl>
+			<dd><code>import "github.com/amonks/runner"</code></dd>
+			</dl>
+			<dl>
+			<dd><a href="#pkg-overview" class="overviewLink">Overview</a></dd>
+			<dd><a href="#pkg-index" class="indexLink">Index</a></dd>
+			
+				<dd><a href="#pkg-examples" class="examplesLink">Examples</a></dd>
+			
+			
+				<dd><a href="#pkg-subdirectories">Subdirectories</a></dd>
+			
+			</dl>
+		</div>
+		<!-- The package's Name is printed as title by the top-level template -->
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ▹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ▾</h2>
+				<p>Runner runs a collection of programs specified in tasks.toml files, and
+provides a UI for inspecting their execution. Runner displays long-lived
+processes in an interactive TUI. Runner also works well for short-lived
+processes, and its interleaved output can be sent to a file.
+<p>Runner can be used and extended programatically through its Go API, which is
+documented here. Runner&apos;s primary documentation is on <a href="https://github.com/amonks/runner">Github</a>.
+<h3 id="hdr-Conceptual_Overview">Conceptual Overview</h3>
+<p>1. You call Load to parse task files and get a Task set.
+<ul>
+<li>You can also generate your own task set, or append your own tasks onto it.
+<li>Tasks just implement an interface.
+</ul>
+<p>2. You combine a task list with an ID to get a Run.
+<ul>
+<li>You can also generate your own Run.
+<li>Runs just implement an interface.
+</ul>
+<p>3. You pass a UI into a Run and Start it.
+<ul>
+<li>You can also make your own UI.
+<li>You can also use a Runner UI with any other collection of processes
+that expect io.Writers.
+</ul>
+
+				<div id="example_" class="toggle">
+	<div class="collapsed">
+		<p class="exampleHeading toggleButton">▹ <span class="text">Example</span></p>
+	</div>
+	<div class="expanded">
+		<p class="exampleHeading toggleButton">▾ <span class="text">Example</span></p>
+		<p>In this example, we use components from Runner to build our own version of
+the runner CLI tool. See cmd/runner for the source of the -real- runner CLI,
+which isn&#39;t too much more complex.
+</p>
+		
+		
+			<p>Code:</p>
+			<pre class="code">
+tasks, err := runner.Load(&#34;.&#34;)
+if err != nil {
+    log.Fatal(err)
+}
+
+run, err := runner.RunTask(&#34;.&#34;, tasks, &#34;dev&#34;)
+if err != nil {
+    log.Fatal(err)
+}
+
+ui := runner.NewTUI()
+ui.Start(os.Stdin, os.Stdout, run.IDs())
+run.Start(ui)
+
+var wg sync.WaitGroup
+
+wg.Add(1)
+go func() {
+    defer wg.Done()
+    if err := &lt;-ui.Wait(); err != nil {
+        log.Fatal(err)
+    }
+    run.Stop()
+}()
+
+wg.Add(1)
+go func() {
+    defer wg.Done()
+    if err := &lt;-run.Wait(); err != nil {
+        log.Fatal(err)
+    }
+    ui.Stop()
+}()
+
+wg.Wait()
+</pre>
+			
+		
+	</div>
+</div>
+<div id="example__bringYourOwnTasks" class="toggle">
+	<div class="collapsed">
+		<p class="exampleHeading toggleButton">▹ <span class="text">Example (BringYourOwnTasks)</span></p>
+	</div>
+	<div class="expanded">
+		<p class="exampleHeading toggleButton">▾ <span class="text">Example (BringYourOwnTasks)</span></p>
+		<p>In this example, we generate our own Task and run it.
+</p>
+		
+		
+			<p>Code:</p>
+			<pre class="code">tasks := runner.Tasks{
+    &#34;custom&#34;: runner.FuncTask(func(ctx context.Context, w io.Writer) error {
+        w.Write([]byte(&#34;sleep&#34;))
+        time.Sleep(1 * time.Second)
+        w.Write([]byte(&#34;done&#34;))
+        return nil
+    }, runner.TaskMetadata{}),
+}
+
+run, err := runner.RunTask(&#34;.&#34;, tasks, &#34;custom&#34;)
+if err != nil {
+    log.Fatal(err)
+}
+
+fmt.Println(strings.Join(run.IDs(), &#34;, &#34;))
+<span class="comment"></pre>
+			
+			<p>Output:</p>
+			<pre class="output">runner, custom
+</pre>
+			
+		
+	</div>
+</div>
+<div id="example__bringYourOwnUI" class="toggle">
+	<div class="collapsed">
+		<p class="exampleHeading toggleButton">▹ <span class="text">Example (BringYourOwnUI)</span></p>
+	</div>
+	<div class="expanded">
+		<p class="exampleHeading toggleButton">▾ <span class="text">Example (BringYourOwnUI)</span></p>
+		<p>In this example, we build a version of the runner CLI tool that uses a UI we
+provide ourselves.
+</p>
+		
+		
+			<p>Code:</p>
+			<pre class="code">package runner_test
+
+import (
+    &#34;io&#34;
+    &#34;log&#34;
+    &#34;os&#34;
+
+    &#34;github.com/amonks/runner&#34;
+)
+
+<span class="comment">// ui implements MultiWriter</span>
+var _ runner.MultiWriter = ui{}
+
+type ui struct{}
+
+func (w ui) Writer(string) io.Writer {
+    return os.Stdout
+}
+
+<span class="comment">// In this example, we build a version of the runner CLI tool that uses a UI we</span>
+<span class="comment">// provide ourselves.</span>
+func Example_bringYourOwnUI() {
+    tasks, err := runner.Load(&#34;.&#34;)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    run, err := runner.RunTask(&#34;.&#34;, tasks, &#34;dev&#34;)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    ui := ui{}
+
+    run.Start(ui)
+
+    if err := &lt;-run.Wait(); err != nil {
+        log.Fatal(err)
+    }
+}
+</pre>
+			
+		
+	</div>
+</div>
+
+			</div>
+		</div>
+
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ▹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ▾</h2>
+
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+			<div id="manual-nav">
+			<dl>
+			
+			
+			
+			
+				
+				<dd><a href="#Func">type Func</a></dd>
+				
+				
+			
+				
+				<dd><a href="#MultiWriter">type MultiWriter</a></dd>
+				
+				
+			
+				
+				<dd><a href="#Run">type Run</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#RunTask">func RunTask(dir string, allTasks map[string]Task, taskID string) (*Run, error)</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Run.IDs">func (r *Run) IDs() []string</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Run.Start">func (r *Run) Start(out MultiWriter) error</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Run.Stop">func (r *Run) Stop()</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Run.Tasks">func (r *Run) Tasks() Tasks</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Run.Type">func (r *Run) Type() RunType</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Run.Wait">func (r *Run) Wait() &lt;-chan error</a></dd>
+				
+			
+				
+				<dd><a href="#RunType">type RunType</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#RunType.String">func (i RunType) String() string</a></dd>
+				
+			
+				
+				<dd><a href="#Task">type Task</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#FuncTask">func FuncTask(fn Func, metadata TaskMetadata) Task</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#ScriptTask">func ScriptTask(script string, metadata TaskMetadata) Task</a></dd>
+				
+				
+			
+				
+				<dd><a href="#TaskMetadata">type TaskMetadata</a></dd>
+				
+				
+			
+				
+				<dd><a href="#Taskfile">type Taskfile</a></dd>
+				
+				
+			
+				
+				<dd><a href="#TaskfileTask">type TaskfileTask</a></dd>
+				
+				
+			
+				
+				<dd><a href="#Tasks">type Tasks</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Load">func Load(root string) (Tasks, error)</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Tasks.Validate">func (tf Tasks) Validate() error</a></dd>
+				
+			
+				
+				<dd><a href="#UI">type UI</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#NewPrinter">func NewPrinter() UI</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#NewTUI">func NewTUI() UI</a></dd>
+				
+				
+			
+			
+			</dl>
+			</div><!-- #manual-nav -->
+
+		
+		<div id="pkg-examples">
+			<h3>Examples</h3>
+			<div class="js-expandAll expandAll collapsed">(Expand All)</div>
+			<dl>
+			
+			<dd><a class="exampleLink" href="#example_">Package</a></dd>
+			
+			<dd><a class="exampleLink" href="#example__bringYourOwnTasks">Package (BringYourOwnTasks)</a></dd>
+			
+			<dd><a class="exampleLink" href="#example__bringYourOwnUI">Package (BringYourOwnUI)</a></dd>
+			
+			</dl>
+		</div>
+		
+
+		
+			<h3>Package files</h3>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="/src/github.com/amonks/runner/color.go">color.go</a>
+			
+				<a href="/src/github.com/amonks/runner/func_task.go">func_task.go</a>
+			
+				<a href="/src/github.com/amonks/runner/mutex.go">mutex.go</a>
+			
+				<a href="/src/github.com/amonks/runner/printer.go">printer.go</a>
+			
+				<a href="/src/github.com/amonks/runner/runner.go">runner.go</a>
+			
+				<a href="/src/github.com/amonks/runner/runtype_string.go">runtype_string.go</a>
+			
+				<a href="/src/github.com/amonks/runner/script_task.go">script_task.go</a>
+			
+				<a href="/src/github.com/amonks/runner/task.go">task.go</a>
+			
+				<a href="/src/github.com/amonks/runner/taskfile.go">taskfile.go</a>
+			
+				<a href="/src/github.com/amonks/runner/taskrunner.go">taskrunner.go</a>
+			
+				<a href="/src/github.com/amonks/runner/taskstate_string.go">taskstate_string.go</a>
+			
+				<a href="/src/github.com/amonks/runner/tui.go">tui.go</a>
+			
+				<a href="/src/github.com/amonks/runner/ui.go">ui.go</a>
+			
+				<a href="/src/github.com/amonks/runner/watch.go">watch.go</a>
+			
+			</span>
+			</p>
+		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
+
+		
+
+		
+		
+		
+		
+			
+			
+			<h2 id="Func">type <a href="/src/github.com/amonks/runner/func_task.go?s=63:117#L1">Func</a>
+				<a class="permalink" href="#Func">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type Func func(ctx <a href="https://pkg.go.dev/pkg/context/">context</a>.<a href="https://pkg.go.dev/pkg/context/#Context">Context</a>, w <a href="https://pkg.go.dev/pkg/io/">io</a>.<a href="https://pkg.go.dev/pkg/io/#Writer">Writer</a>) <a href="https://pkg.go.dev/pkg/builtin/#error">error</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="MultiWriter">type <a href="/src/github.com/amonks/runner/taskrunner.go?s=2582:2641#L113">MultiWriter</a>
+				<a class="permalink" href="#MultiWriter">&#xb6;</a>
+				
+				
+			</h2>
+			<p>MultiWriter is the interface Runs use to display UI. To start a Run, you
+must pass in a MultiWriter.
+<p>Runner UIs implement MultiWriter.
+
+			<pre>type MultiWriter interface {
+    Writer(id <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>) <a href="https://pkg.go.dev/pkg/io/">io</a>.<a href="https://pkg.go.dev/pkg/io/#Writer">Writer</a>
+}</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="Run">type <a href="/src/github.com/amonks/runner/taskrunner.go?s=2053:2433#L85">Run</a>
+				<a class="permalink" href="#Run">&#xb6;</a>
+				
+				
+			</h2>
+			<p>A Run represents an execution of a task, including,
+- execution of other tasks that it depends on
+- configuration of file-watches for retriggering tasks.
+<p>A Run is safe to access concurrently from multiple goroutines.
+
+			<pre>type Run struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="RunTask">func <a href="/src/github.com/amonks/runner/taskrunner.go?s=321:400#L10">RunTask</a>
+					<a class="permalink" href="#RunTask">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func RunTask(dir <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>, allTasks map[<a href="https://pkg.go.dev/pkg/builtin/#string">string</a>]<a href="#Task">Task</a>, taskID <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>) (*<a href="#Run">Run</a>, <a href="https://pkg.go.dev/pkg/builtin/#error">error</a>)</pre>
+				<p>RunTask creates an executable Run from a taskList and a taskID.
+<p>The run will handle task dependencies, watches, and triggers as documented
+in the README.
+
+				
+				
+			
+
+			
+				
+				<h3 id="Run.IDs">func (*Run) <a href="/src/github.com/amonks/runner/taskrunner.go?s=2865:2893#L120">IDs</a>
+					<a class="permalink" href="#Run.IDs">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (r *<a href="#Run">Run</a>) IDs() []<a href="https://pkg.go.dev/pkg/builtin/#string">string</a></pre>
+				<p>IDs returns the list of output stream names that a Run would write to. This
+includes the IDs of each Task that will be used in the run, plus the id
+&quot;runner&quot;, which the Run uses for messaging about the run itself.
+
+				
+				
+				
+			
+				
+				<h3 id="Run.Start">func (*Run) <a href="/src/github.com/amonks/runner/taskrunner.go?s=3799:3841#L155">Start</a>
+					<a class="permalink" href="#Run.Start">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (r *<a href="#Run">Run</a>) Start(out <a href="#MultiWriter">MultiWriter</a>) <a href="https://pkg.go.dev/pkg/builtin/#error">error</a></pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="Run.Stop">func (*Run) <a href="/src/github.com/amonks/runner/taskrunner.go?s=5436:5456#L229">Stop</a>
+					<a class="permalink" href="#Run.Stop">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (r *<a href="#Run">Run</a>) Stop()</pre>
+				<p>Stop stops a Run, including all of its tasks and watches, and returns when
+the Run has stopped.
+
+				
+				
+				
+			
+				
+				<h3 id="Run.Tasks">func (*Run) <a href="/src/github.com/amonks/runner/taskrunner.go?s=3131:3158#L133">Tasks</a>
+					<a class="permalink" href="#Run.Tasks">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (r *<a href="#Run">Run</a>) Tasks() <a href="#Tasks">Tasks</a></pre>
+				<p>Tasks returns the Tasks that a Run would execute.
+
+				
+				
+				
+			
+				
+				<h3 id="Run.Type">func (*Run) <a href="/src/github.com/amonks/runner/taskrunner.go?s=3544:3572#L145">Type</a>
+					<a class="permalink" href="#Run.Type">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (r *<a href="#Run">Run</a>) Type() <a href="#RunType">RunType</a></pre>
+				<p>Type returns the RunType of a run. It is RunTypeLong if any task is &quot;long&quot;,
+otherwise it is RunTypeShort.
+<p>If a run is RunTypeShort, it will exit once all of its tasks have succeeded.
+If a run is RunTypeLong, it will continue running until it is interrupted.
+File watches are only used if a run is RunTypeLong.
+
+				
+				
+				
+			
+				
+				<h3 id="Run.Wait">func (*Run) <a href="/src/github.com/amonks/runner/taskrunner.go?s=5127:5160#L213">Wait</a>
+					<a class="permalink" href="#Run.Wait">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (r *<a href="#Run">Run</a>) Wait() &lt;-chan <a href="https://pkg.go.dev/pkg/builtin/#error">error</a></pre>
+				<p>Wait returns a channel that will emit one error when the Run exits, then
+close. It is ok to call Wait before the run is Started. If Wait is called
+after a Run exits, it will return a closed channel. If Wait is called more
+than once, it will return different channels, and all of the channels will
+emit when the Run exits.
+
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="RunType">type <a href="/src/github.com/amonks/runner/taskrunner.go?s=6554:6570#L282">RunType</a>
+				<a class="permalink" href="#RunType">&#xb6;</a>
+				
+				
+			</h2>
+			<p>A Run&apos;s RunType is RunTypeLong if any task is &quot;long&quot;, otherwise it is
+RunTypeShort.
+<p>If a run is RunTypeShort, it will exit once all of its tasks have succeeded.
+If a run is RunTypeLong, it will continue running until it is interrupted.
+File watches are only used if a run is RunTypeLong.
+
+			<pre>type RunType <a href="https://pkg.go.dev/pkg/builtin/#int">int</a></pre>
+
+			
+				
+				<pre>const (
+    <span id="RunTypeShort">RunTypeShort</span> <a href="#RunType">RunType</a>
+    <span id="RunTypeLong">RunTypeLong</span>
+)</pre>
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+				
+				<h3 id="RunType.String">func (RunType) <a href="/src/github.com/amonks/runner/runtype_string.go?s=458:490#L10">String</a>
+					<a class="permalink" href="#RunType.String">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (i <a href="#RunType">RunType</a>) String() <a href="https://pkg.go.dev/pkg/builtin/#string">string</a></pre>
+				
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="Task">type <a href="/src/github.com/amonks/runner/task.go?s=29:143#L1">Task</a>
+				<a class="permalink" href="#Task">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type Task interface {
+    Start(stdout <a href="https://pkg.go.dev/pkg/io/">io</a>.<a href="https://pkg.go.dev/pkg/io/#Writer">Writer</a>) <a href="https://pkg.go.dev/pkg/builtin/#error">error</a>
+    Wait() &lt;-chan <a href="https://pkg.go.dev/pkg/builtin/#error">error</a>
+    Stop() <a href="https://pkg.go.dev/pkg/builtin/#error">error</a>
+    Metadata() <a href="#TaskMetadata">TaskMetadata</a>
+}</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="FuncTask">func <a href="/src/github.com/amonks/runner/func_task.go?s=201:251#L3">FuncTask</a>
+					<a class="permalink" href="#FuncTask">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func FuncTask(fn <a href="#Func">Func</a>, metadata <a href="#TaskMetadata">TaskMetadata</a>) <a href="#Task">Task</a></pre>
+				<p>FuncTask produces a runnable Task from a go function. metadata.Dir is ignored.
+
+				
+				
+			
+				
+				<h3 id="ScriptTask">func <a href="/src/github.com/amonks/runner/script_task.go?s=351:409#L6">ScriptTask</a>
+					<a class="permalink" href="#ScriptTask">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func ScriptTask(script <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>, metadata <a href="#TaskMetadata">TaskMetadata</a>) <a href="#Task">Task</a></pre>
+				<p>ScriptTask produces a runnable Task from a bash script. The script can be
+multiple lines. The script will execute in metadata.Dir. The script&apos;s Stdout
+and Stderr will be provided by the Run, and will be forwarded to the UI. The
+script will not get a Stdin.
+
+				
+				
+			
+
+			
+		
+			
+			
+			<h2 id="TaskMetadata">type <a href="/src/github.com/amonks/runner/task.go?s=145:305#L2">TaskMetadata</a>
+				<a class="permalink" href="#TaskMetadata">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type TaskMetadata struct {
+<span id="TaskMetadata.ID"></span>    ID           <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>
+<span id="TaskMetadata.Type"></span>    Type         <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>
+<span id="TaskMetadata.Dependencies"></span>    Dependencies []<a href="https://pkg.go.dev/pkg/builtin/#string">string</a>
+<span id="TaskMetadata.Triggers"></span>    Triggers     []<a href="https://pkg.go.dev/pkg/builtin/#string">string</a>
+<span id="TaskMetadata.Watch"></span>    Watch        []<a href="https://pkg.go.dev/pkg/builtin/#string">string</a>
+<span id="TaskMetadata.CWD"></span>    CWD          <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="Taskfile">type <a href="/src/github.com/amonks/runner/taskfile.go?s=3002:3062#L125">Taskfile</a>
+				<a class="permalink" href="#Taskfile">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type Taskfile struct {
+<span id="Taskfile.Tasks"></span>    Tasks []<a href="#TaskfileTask">TaskfileTask</a> `toml:&#34;task&#34;`
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="TaskfileTask">type <a href="/src/github.com/amonks/runner/taskfile.go?s=3064:5780#L129">TaskfileTask</a>
+				<a class="permalink" href="#TaskfileTask">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type TaskfileTask struct {
+<span id="TaskfileTask.ID"></span>    <span class="comment">// ID identifies a task, for example,</span>
+    <span class="comment">// - for command line invocation, as in `$ runner &lt;id&gt;`</span>
+    <span class="comment">// - in the TUI&#39;s task list.</span>
+    ID <a href="https://pkg.go.dev/pkg/builtin/#string">string</a> `toml:&#34;id&#34;`
+
+<span id="TaskfileTask.Type"></span>    <span class="comment">// Type specifies how we manage a task.</span>
+    <span class="comment">//</span>
+    <span class="comment">// If the Type is &#34;long&#34;,</span>
+    <span class="comment">// - We will restart the task if it exits.</span>
+    <span class="comment">// - If the long task A is a dependency or trigger of</span>
+    <span class="comment">//   task B, we will begin B as soon as A starts.</span>
+    <span class="comment">//</span>
+    <span class="comment">// If the Type is &#34;short&#34;,</span>
+    <span class="comment">// - If the task exits 0, we will consider it done.</span>
+    <span class="comment">// - If the task exits !0, we will wait 1 second and rerun it.</span>
+    <span class="comment">// - If the short task A is a dependency or trigger of task B, we will</span>
+    <span class="comment">//   wait for A to complete before starting B.</span>
+    <span class="comment">//</span>
+    <span class="comment">// Any Type besides &#34;long&#34; or &#34;short&#34; is invalid. There is no default</span>
+    <span class="comment">// type: every task must specify its type.</span>
+    Type <a href="https://pkg.go.dev/pkg/builtin/#string">string</a> `toml:&#34;type&#34;`
+
+<span id="TaskfileTask.Dependencies"></span>    <span class="comment">// Dependencies are other tasks IDs which should always run alongside</span>
+    <span class="comment">// this task. If a task A lists B as a dependency, running A will first</span>
+    <span class="comment">// run B.</span>
+    <span class="comment">//</span>
+    <span class="comment">// Dependencies do not set up an invalidation relationship: if long</span>
+    <span class="comment">// task A lists short task B as a dependency, and B reruns because a</span>
+    <span class="comment">// watched file is changed, we will not restart A, assuming that A has</span>
+    <span class="comment">// its own mechanism for detecting file changes. If A does not have</span>
+    <span class="comment">// such a mechanhism, use a trigger rather than a dependency.</span>
+    <span class="comment">//</span>
+    <span class="comment">// Dependencies can be task IDs from child directories. For example,</span>
+    <span class="comment">// the dependency &#34;css/build&#34; specifies the task with ID &#34;build&#34; in the</span>
+    <span class="comment">// tasks file &#34;./css/tasks.toml&#34;.</span>
+    Dependencies []<a href="https://pkg.go.dev/pkg/builtin/#string">string</a> `toml:&#34;dependencies&#34;`
+
+<span id="TaskfileTask.Triggers"></span>    <span class="comment">// Triggers are other task IDs which should always be run alongside</span>
+    <span class="comment">// this task, and whose success should cause this task to re-execute.</span>
+    <span class="comment">// If a task A lists B as a dependency, and both A and B are running,</span>
+    <span class="comment">// successful execution of B will always trigger an execution of A.</span>
+    <span class="comment">//</span>
+    <span class="comment">// Triggers can be task IDs from child directories. For example, the</span>
+    <span class="comment">// trigger &#34;css/build&#34; specifies the task with ID &#34;build&#34; in the tasks</span>
+    <span class="comment">// file &#34;./css/tasks.toml&#34;.</span>
+    Triggers []<a href="https://pkg.go.dev/pkg/builtin/#string">string</a> `toml:&#34;triggers&#34;`
+
+<span id="TaskfileTask.Watch"></span>    <span class="comment">// Watch specifies file paths where, if a change to the file path is</span>
+    <span class="comment">// detected, we should restart the task. Recursive paths are specified</span>
+    <span class="comment">// with the suffix &#34;/...&#34;.</span>
+    <span class="comment">//</span>
+    <span class="comment">// For example,</span>
+    <span class="comment">// - &#34;.&#34; watches for changes to the working directory only, but not</span>
+    <span class="comment">//   changes within subdirectories.</span>
+    <span class="comment">// - &#34;./...&#34; watches for changes at any level within the working</span>
+    <span class="comment">//   directory.</span>
+    <span class="comment">// - &#34;./some/path/file.txt&#34; watches for changes to the file, which may</span>
+    <span class="comment">//   or may not already exist.</span>
+    Watch []<a href="https://pkg.go.dev/pkg/builtin/#string">string</a> `toml:&#34;watch&#34;`
+
+<span id="TaskfileTask.CMD"></span>    <span class="comment">// CMD is the command to run. It runs in a new bash process, as in,</span>
+    <span class="comment">//     $ bash -c &#34;$CMD&#34;</span>
+    <span class="comment">// CMD can have many lines.</span>
+    CMD <a href="https://pkg.go.dev/pkg/builtin/#string">string</a> `toml:&#34;cmd&#34;`
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="Tasks">type <a href="/src/github.com/amonks/runner/taskfile.go?s=1777:1803#L79">Tasks</a>
+				<a class="permalink" href="#Tasks">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type Tasks map[<a href="https://pkg.go.dev/pkg/builtin/#string">string</a>]<a href="#Task">Task</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="Load">func <a href="/src/github.com/amonks/runner/taskfile.go?s=186:223#L5">Load</a>
+					<a class="permalink" href="#Load">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func Load(root <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>) (<a href="#Tasks">Tasks</a>, <a href="https://pkg.go.dev/pkg/builtin/#error">error</a>)</pre>
+				<p>Load loads a task file from the specified directory, producing a set of
+Tasks.
+
+				
+				
+			
+
+			
+				
+				<h3 id="Tasks.Validate">func (Tasks) <a href="/src/github.com/amonks/runner/taskfile.go?s=1805:1837#L81">Validate</a>
+					<a class="permalink" href="#Tasks.Validate">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (tf <a href="#Tasks">Tasks</a>) Validate() <a href="https://pkg.go.dev/pkg/builtin/#error">error</a></pre>
+				
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="UI">type <a href="/src/github.com/amonks/runner/ui.go?s=116:263#L1">UI</a>
+				<a class="permalink" href="#UI">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type UI interface {
+    Start(stdin <a href="https://pkg.go.dev/pkg/io/">io</a>.<a href="https://pkg.go.dev/pkg/io/#Reader">Reader</a>, stdout <a href="https://pkg.go.dev/pkg/io/">io</a>.<a href="https://pkg.go.dev/pkg/io/#Writer">Writer</a>, ids []<a href="https://pkg.go.dev/pkg/builtin/#string">string</a>) <a href="https://pkg.go.dev/pkg/builtin/#error">error</a>
+    Wait() &lt;-chan <a href="https://pkg.go.dev/pkg/builtin/#error">error</a>
+    Stop() <a href="https://pkg.go.dev/pkg/builtin/#error">error</a>
+    Writer(id <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>) <a href="https://pkg.go.dev/pkg/io/">io</a>.<a href="https://pkg.go.dev/pkg/io/#Writer">Writer</a>
+}</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="NewPrinter">func <a href="/src/github.com/amonks/runner/ui.go?s=70:90#L1">NewPrinter</a>
+					<a class="permalink" href="#NewPrinter">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func NewPrinter() <a href="#UI">UI</a></pre>
+				
+				
+				
+			
+				
+				<h3 id="NewTUI">func <a href="/src/github.com/amonks/runner/ui.go?s=29:45#L1">NewTUI</a>
+					<a class="permalink" href="#NewTUI">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func NewTUI() <a href="#UI">UI</a></pre>
+				
+				
+				
+			
+
+			
+		
+	
+
+	
+
+
+
+
+
+	
+	
+		<h2 id="pkg-subdirectories">Subdirectories</h2>
+	
+	<div class="pkg-dir">
+		<table>
+			<tr>
+				<th class="pkg-name">Name</th>
+				<th class="pkg-synopsis">Synopsis</th>
+			</tr>
+
+			
+			<tr>
+				<td colspan="2"><a href="..">..</a></td>
+			</tr>
+			
+
+			
+				<tr>
+				
+					<td class="pkg-name" style="padding-left: 0px;">
+						<a href="cmd/">cmd</a>
+					</td>
+				
+					<td class="pkg-synopsis">
+						
+					</td>
+				</tr>
+			
+				<tr>
+				
+					<td class="pkg-name" style="padding-left: 20px;">
+						<a href="cmd/runner/">runner</a>
+					</td>
+				
+					<td class="pkg-synopsis">
+						
+					</td>
+				</tr>
+			
+		</table>
+	</div>
+
+
+
+
+</div><!-- .container -->
+</div><!-- #page -->
+</body>
+</html>
