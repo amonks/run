@@ -9,13 +9,19 @@ import (
 	"time"
 )
 
-// ScriptTask produces a runnable Task from a bash script. The script can be
+// ScriptTask produces a runnable Task from a bash script and working directory.
 // multiple lines. The script will execute in metadata.Dir. The script's Stdout
 // and Stderr will be provided by the Run, and will be forwarded to the UI. The
 // script will not get a Stdin.
-func ScriptTask(script string, metadata TaskMetadata) Task {
+//
+// Script runs in a new bash process, and can have multiple lines. It is run
+// basically like this:
+//     $ cd dir
+//     $ bash -c "$CMD" 2&>1 /some/ui
+func ScriptTask(script string, dir string, metadata TaskMetadata) Task {
 	return &scriptTask{
 		mu:       newMutex(fmt.Sprintf("script")),
+		dir:      dir,
 		script:   script,
 		metadata: metadata,
 	}
@@ -24,6 +30,7 @@ func ScriptTask(script string, metadata TaskMetadata) Task {
 type scriptTask struct {
 	mu *mutex
 
+	dir      string
 	script   string
 	metadata TaskMetadata
 
@@ -43,8 +50,6 @@ func (t *scriptTask) Metadata() TaskMetadata {
 }
 
 func (t *scriptTask) Start(stdout io.Writer) error {
-	dir := t.Metadata().CWD
-
 	_ = t.Stop()
 	defer t.mu.Lock("Start").Unlock()
 
@@ -57,7 +62,7 @@ func (t *scriptTask) Start(stdout io.Writer) error {
 
 	t.cmd = exec.Command("/bin/bash", "-c", t.script)
 	t.cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	t.cmd.Dir = dir
+	t.cmd.Dir = t.dir
 	t.cmd.Stdout = stdout
 	t.cmd.Stderr = stdout
 
