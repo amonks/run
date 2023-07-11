@@ -19,7 +19,7 @@ func Example_bringYourOwnTasks() {
 			time.Sleep(1 * time.Second)
 			w.Write([]byte("done"))
 			return nil
-		}, run.TaskMetadata{}),
+		}, run.TaskMetadata{ID: "custom", Type: "short"}),
 	}
 
 	run, err := run.RunTask(".", tasks, "custom")
