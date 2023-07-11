@@ -17,13 +17,14 @@ import (
 )
 
 var (
-	fChosenUI  = flag.String("ui", "", "Force a particular ui. Legal values are 'tui' and 'printer'.")
-	fChosenDir = flag.String("dir", ".", "Look for a root taskfile in the given directory.")
-	fList      = flag.Bool("list", false, "Display the task list and exit. If run is invoked with both -list and a task ID, that task's dependencies are displayed.")
-	fVersion   = flag.Bool("version", false, "Display the version and exit.")
-	fHelp      = flag.Bool("help", false, "Display the help text and exit.")
-	fCredits   = flag.Bool("credits", false, "Display the open source credits and exit.")
-	fLicense   = flag.Bool("license", false, "Display the license info and exit.")
+	fUI   = flag.String("ui", "", "Force a particular ui. Legal values are 'tui' and 'printer'.")
+	fDir  = flag.String("dir", ".", "Look for a root taskfile in the given directory.")
+	fList = flag.Bool("list", false, "Display the task list and exit. If run is invoked with both -list and a task ID, that task's dependencies are displayed.")
+
+	fVersion = flag.Bool("version", false, "Display the version and exit.")
+	fHelp    = flag.Bool("help", false, "Display the help text and exit.")
+	fCredits = flag.Bool("credits", false, "Display the open source credits and exit.")
+	fLicense = flag.Bool("license", false, "Display the license info and exit.")
 )
 
 func main() {
@@ -43,7 +44,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	allTasks, err := run.Load(*fChosenDir)
+	allTasks, err := run.Load(*fDir)
 	if err != nil {
 		fmt.Println("Error loading tasks:")
 		fmt.Println(err)
@@ -60,7 +61,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	r, err := run.RunTask(*fChosenDir, allTasks, taskID)
+	r, err := run.RunTask(*fDir, allTasks, taskID)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -73,7 +74,7 @@ func main() {
 	}
 
 	var ui run.UI
-	switch *fChosenUI {
+	switch *fUI {
 	case "tui":
 		ui = run.NewTUI()
 	case "printer":
