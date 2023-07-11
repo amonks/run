@@ -17,9 +17,6 @@ cli:
 	- flag to print task list
 	- flag to output parsed task set as json or something?
 
-task:
-	- Validate task set before running
-
 doc:
 	- add cli flag reference to readme
 
