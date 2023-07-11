@@ -1,4 +1,4 @@
-# 🏃🏽‍♀️🏃🏾‍♂️🏃🏻‍♀️💨 _RUN_
+# 🏃🏽‍♀️🏃🏾‍♂️🏃🏻‍♀️💨 _⸻RUN_
 
 <img alt="interactive TUI" src="https://github.com/amonks/run/blob/main/screenshots/tui.gif?raw=true" />
 
