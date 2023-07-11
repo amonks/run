@@ -5,5 +5,5 @@ prereq:
   prereq fail
   exit: exit 1
 
-runner:
+run:
   failed

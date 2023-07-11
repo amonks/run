@@ -1,15 +1,15 @@
-package runner_test
+package run_test
 
 import (
 	"io"
 	"log"
 	"os"
 
-	"github.com/amonks/runner"
+	"github.com/amonks/run"
 )
 
 // ui implements MultiWriter
-var _ runner.MultiWriter = ui{}
+var _ run.MultiWriter = ui{}
 
 type ui struct{}
 
@@ -17,15 +17,15 @@ func (w ui) Writer(string) io.Writer {
 	return os.Stdout
 }
 
-// In this example, we build a version of the runner CLI tool that uses a UI we
+// In this example, we build a version of the run CLI tool that uses a UI we
 // provide ourselves.
 func Example_bringYourOwnUI() {
-	tasks, err := runner.Load(".")
+	tasks, err := run.Load(".")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	run, err := runner.RunTask(".", tasks, "dev")
+	run, err := run.RunTask(".", tasks, "dev")
 	if err != nil {
 		log.Fatal(err)
 	}

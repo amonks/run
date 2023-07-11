@@ -4,7 +4,7 @@ Set Width 800
 Set Height 600
 Set Shell fish
 
-Type "runner build | tee build.log"
+Type "run build | tee build.log"
 Sleep 1s
 Enter
 Sleep 4s

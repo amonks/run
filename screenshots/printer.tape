@@ -4,7 +4,7 @@ Set Width 800
 Set Height 600
 Set Shell fish
 
-Type "runner build"
+Type "run build"
 Sleep 1s
 Enter
 Sleep 3s

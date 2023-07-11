@@ -1,8 +1,8 @@
-# Runner
+# 🏃🏽‍♀️ Run
 
-<img alt="interactive TUI" src="https://github.com/amonks/runner/blob/main/screenshots/tui.gif?raw=true" />
+<img alt="interactive TUI" src="https://github.com/amonks/run/blob/main/screenshots/tui.gif?raw=true" />
 
-<img alt="noninteractive printed output" src="https://github.com/amonks/runner/blob/main/screenshots/printer.gif?raw=true" />
+<img alt="noninteractive printed output" src="https://github.com/amonks/run/blob/main/screenshots/printer.gif?raw=true" />
 
 ```toml
 # ./tasks.toml
@@ -27,50 +27,50 @@
   """
 ```
 
-_Find a full example configuration in the [example folder](https://github.com/amonks/runner/tree/amonks/table/example)._
+_Find a full example configuration in the [example folder](https://github.com/amonks/run/tree/amonks/table/example)._
 
-Runner runs a collection of programs specified in tasks.toml files, and
-provides a UI for inspecting their execution. Runner's interactive UI for
+Run runs a collection of programs specified in tasks.toml files, and
+provides a UI for inspecting their execution. Run's interactive UI for
 long-lived programs has full mouse support.
 
-Runner also works well for short-lived processes, and its interleaved output
+Run also works well for short-lived processes, and its interleaved output
 can be sent to a file.
 
 ```go
 package main
 
-import "github.com/amonks/runner"
+import "github.com/amonks/run"
 
 func main() {
-	tasks, err := runner.Load(".")
+	tasks, err := run.Load(".")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	run := runner.RunTask(tasks, "dev")
+	r := run.RunTask(tasks, "dev")
 
-	ui := runner.NewTUI()
-	ui.Start(os.Stdin, os.Stdout, run.IDs())
+	ui := run.NewTUI()
+	ui.Start(os.Stdin, os.Stdout, r.IDs())
 	run.Start(ui)
 }
 ```
 
-Runner can be used and extended programatically through its Go API. See [the
+Run can be used and extended programatically through its Go API. See [the
 godoc][godoc]
 
-[godoc]: https://amonks.github.io/runner
+[godoc]: https://amonks.github.io/run
 
 ## Installation
 
-Runner is a single binary, which you can download from from the [releases
+Run is a single binary, which you can download from from the [releases
 page][releases].
 
-Alternately, if you already use go, you can install Runner with the go command
+Alternately, if you already use go, you can install Run with the go command
 line tool:
 
-    $ go install github.com/amonks/runner@latest
+    $ go install github.com/amonks/run@latest
 
-[releases]: https://github.com/amonks/runner/releases
+[releases]: https://github.com/amonks/run/releases
 
 ## Task Files
 
@@ -92,7 +92,7 @@ Task files are called "tasks.toml". They specify one or more tasks.
 There's an example project in the [example folder][example], where you can see
 a realistic configuration.
 
-[example]: https://github.com/amonks/runner/tree/amonks/table/example
+[example]: https://github.com/amonks/run/tree/amonks/table/example
 
 Let's go through the fields that can be specified on tasks.
 
@@ -100,7 +100,7 @@ Let's go through the fields that can be specified on tasks.
 
 ID identifies a task, for example,
 
-- for command line invocation, as in `$ runner <id>`
+- for command line invocation, as in `$ run <id>`
 - in the TUI's task list.
 
 ### Type
@@ -172,28 +172,26 @@ CMD can have many lines.
 
 ## CLI Usage
 
-```
-$ runner dev
-```
+    $ run dev
 
-Runner takes one argument: the task ID to run. Runner looks for a task file in
+Run takes one argument: the task ID to run. Run looks for a task file in
 the current directory.
 
 ### User Interfaces
 
-Runner has two UIs that it deploys in different circumstances, a TUI and a
-Printer. You can force Runner to use a particular UI by passing the 'ui' flag,
+Run has two UIs that it deploys in different circumstances, a TUI and a
+Printer. You can force Run to use a particular UI by passing the 'ui' flag,
 as in,
 
-    $ runner -ui=printer dev
+    $ run -ui=printer dev
 
 #### Interactive TUI
 
-<img alt="interactive TUI" src="https://github.com/amonks/runner/blob/main/screenshots/tui.gif?raw=true" />
+<img alt="interactive TUI" src="https://github.com/amonks/run/blob/main/screenshots/tui.gif?raw=true" />
 
 The Interactive TUI is used whenever both,
 
-1. stdout is a tty (eg Runner is _not_ being piped to a file), and,
+1. stdout is a tty (eg Run is _not_ being piped to a file), and,
 2. any running task is "long" (eg an ongoing "dev server" process rather than a
    one-shot "build" procedure).
 
@@ -202,20 +200,20 @@ while you make changes.
 
 #### Non-Interactive Printer UI
 
-| in your terminal...                                                                                                    | or as part of a pipeline...                                                                                      |
-| ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| <img alt="non-interactive output" src="https://github.com/amonks/runner/blob/main/screenshots/printer.gif?raw=true" /> | <img alt="redirected output" src="https://github.com/amonks/runner/blob/main/screenshots/nontty.gif?raw=true" /> |
+| in your terminal...                                                                                                 | or as part of a pipeline...                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| <img alt="non-interactive output" src="https://github.com/amonks/run/blob/main/screenshots/printer.gif?raw=true" /> | <img alt="redirected output" src="https://github.com/amonks/run/blob/main/screenshots/nontty.gif?raw=true" /> |
 
-Runner prints its output if either,
+Run prints its output if either,
 
-1. runner is not a tty (eg Runner is being piped to a file), or,
+1. run is not a tty (eg Run is being piped to a file), or,
 2. no tasks are "long" (eg a one-shot "build" procedure, rather than an ongoing
    "dev server").
 
 ## Programmatic Use
 
-Runner can be used and extended programatically through its Go API. For more
+Run can be used and extended programatically through its Go API. For more
 information, including a conceptual overview of the architecture, example code,
 and reference documentation, see [the godoc][godoc].
 
-[godoc]: https://amonks.github.io/runner
+[godoc]: https://amonks.github.io/run

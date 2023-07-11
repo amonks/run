@@ -6,7 +6,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/amonks/runner"
+	"github.com/amonks/run"
 	"github.com/carlmjohnson/versioninfo"
 	"golang.org/x/term"
 )
@@ -20,7 +20,7 @@ func main() {
 	versioninfo.AddFlag(nil)
 	flag.Parse()
 
-	allTasks, err := runner.Load(*chosenDir)
+	allTasks, err := run.Load(*chosenDir)
 	if err != nil {
 		fmt.Println("Error loading tasks:")
 		fmt.Println(err)
@@ -28,36 +28,36 @@ func main() {
 	}
 
 	taskID := os.Args[len(os.Args)-1]
-	run, err := runner.RunTask(*chosenDir, allTasks, taskID)
+	r, err := run.RunTask(*chosenDir, allTasks, taskID)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 		return
 	}
 
-	var ui runner.UI
+	var ui run.UI
 	switch *chosenUI {
 	case "tui":
-		ui = runner.NewTUI()
+		ui = run.NewTUI()
 	case "printer":
-		ui = runner.NewPrinter()
+		ui = run.NewPrinter()
 	case "":
 		if !term.IsTerminal(int(os.Stdout.Fd())) {
-			ui = runner.NewPrinter()
-		} else if run.Type() == runner.RunTypeShort {
-			ui = runner.NewPrinter()
+			ui = run.NewPrinter()
+		} else if r.Type() == run.RunTypeShort {
+			ui = run.NewPrinter()
 		} else {
-			ui = runner.NewTUI()
+			ui = run.NewTUI()
 		}
 	}
 
-	if err := ui.Start(os.Stdin, os.Stdout, run.IDs()); err != nil {
+	if err := ui.Start(os.Stdin, os.Stdout, r.IDs()); err != nil {
 		fmt.Println("Error starting run:")
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	if err := run.Start(ui); err != nil {
+	if err := r.Start(ui); err != nil {
 		ui.Stop()
 		fmt.Println("Error starting UI:")
 		fmt.Println(err)
@@ -73,13 +73,13 @@ func main() {
 			fmt.Println("UI failed:")
 			fmt.Println(err)
 		}
-		run.Stop()
+		r.Stop()
 	}()
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := <-run.Wait(); err != nil {
+		if err := <-r.Wait(); err != nil {
 			fmt.Println("Run failed:")
 			fmt.Println(err)
 		}

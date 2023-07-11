@@ -1,4 +1,4 @@
-package runner
+package run
 
 import (
 	"errors"
@@ -29,7 +29,7 @@ type Task interface {
 // [Run] uses for task execution.
 type TaskMetadata struct {
 	// ID identifies a task, for example,
-	//   - for command line invocation, as in `$ runner <id>`
+	//   - for command line invocation, as in `$ run <id>`
 	//   - in the TUI's task list.
 	ID string
 

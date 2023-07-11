@@ -1,4 +1,4 @@
-package runner
+package run
 
 import (
 	"errors"
@@ -65,7 +65,7 @@ func RunTask(dir string, allTasks map[string]Task, taskID string) (*Run, error) 
 	}
 
 	run := Run{
-		mu: newMutex("runner"),
+		mu: newMutex("run"),
 
 		dir:      dir,
 		runType:  runType,
@@ -126,7 +126,7 @@ type MultiWriter interface {
 
 // IDs returns the list of output stream names that a Run would write to. This
 // includes the IDs of each Task that will be used in the run, plus the id
-// "runner", which the Run uses for messaging about the run itself.
+// "run", which the Run uses for messaging about the run itself.
 func (r *Run) IDs() []string {
 	defer r.mu.Lock("IDs").Unlock()
 
@@ -135,7 +135,7 @@ func (r *Run) IDs() []string {
 		ids = append(ids, id)
 	}
 	sort.Strings(ids)
-	ids = append([]string{"runner"}, ids...)
+	ids = append([]string{"run"}, ids...)
 	return ids
 }
 
@@ -187,7 +187,7 @@ func (r *Run) Start(out MultiWriter) error {
 	// tasks can trigger file watcher events.
 	for p := range r.byWatch {
 		watchP := path.Join(r.dir, p)
-		r.printf("runner", logStyle, "watching %s", watchP)
+		r.printf("run", logStyle, "watching %s", watchP)
 		p := p
 		c, stop, err := watch(watchP)
 		if err != nil {
@@ -254,22 +254,22 @@ func (r *Run) stop(err error) {
 	defer r.mu.Lock("stop").Unlock()
 
 	if r.stopped {
-		r.mu.printf("[runner] already stopped\n")
+		r.mu.printf("[run] already stopped\n")
 		return
 	}
 	r.stopped = true
-	r.mu.printf("[runner] stop watches\n")
+	r.mu.printf("[run] stop watches\n")
 	for _, stop := range r.watches {
 		stop()
 	}
-	r.mu.printf("[runner] stopped watches\n")
+	r.mu.printf("[run] stopped watches\n")
 
-	r.mu.printf("[runner] stopping tasks\n")
+	r.mu.printf("[run] stopping tasks\n")
 	for id, t := range r.tasks {
 		r.states[id] = taskStateStopping
 		t.Stop()
 	}
-	r.mu.printf("[runner] stopped tasks\n")
+	r.mu.printf("[run] stopped tasks\n")
 
 	close(r.events)
 
@@ -314,7 +314,7 @@ func (r *Run) handleEvent(ev event) {
 
 	switch ev := ev.(type) {
 	case evFatal:
-		r.printf("runner", logStyle, "fatal")
+		r.printf("run", logStyle, "fatal")
 		r.stop(ev.err)
 		return
 
@@ -365,7 +365,7 @@ func (r *Run) handleEvent(ev event) {
 
 		// If exit was unexpected and this was a short run, we're done now.
 		if r.runType == RunTypeShort && ev.err != nil {
-			r.printf("runner", logStyle, "failed")
+			r.printf("run", logStyle, "failed")
 			go r.stop(ev.err)
 			return
 		}
@@ -408,7 +408,7 @@ func (r *Run) handleEvent(ev event) {
 				}
 			}
 			if allStopped {
-				r.printf("runner", logStyle, "done")
+				r.printf("run", logStyle, "done")
 				go r.stop(ev.err)
 				return
 			}
@@ -419,10 +419,10 @@ func (r *Run) handleEvent(ev event) {
 		for _, ev := range ev.evs {
 			evs = append(evs, ev.event+":"+ev.path)
 		}
-		r.printf("runner", logStyle, "watched file change: {%s}", strings.Join(evs, ", "))
+		r.printf("run", logStyle, "watched file change: {%s}", strings.Join(evs, ", "))
 		taskIDs := r.byWatch[ev.path]
 		if len(taskIDs) > 0 {
-			r.printf("runner", logStyle, "invalidating {%s}", strings.Join(taskIDs, ", "))
+			r.printf("run", logStyle, "invalidating {%s}", strings.Join(taskIDs, ", "))
 			for _, id := range taskIDs {
 				id := id
 				go r.send(evInvalidateTask{id})
