@@ -1,26 +1,48 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/amonks/run"
 	"github.com/carlmjohnson/versioninfo"
+	"github.com/muesli/reflow/indent"
+	"github.com/muesli/reflow/wordwrap"
 	"golang.org/x/term"
 )
 
 var (
-	chosenUI  = flag.String("ui", "", "Force a particular ui. Legal values are 'tui' and 'printer'.")
-	chosenDir = flag.String("dir", ".", "Look for a root taskfile in the given directory.")
+	fChosenUI  = flag.String("ui", "", "Force a particular ui. Legal values are 'tui' and 'printer'.")
+	fChosenDir = flag.String("dir", ".", "Look for a root taskfile in the given directory.")
+	fVersion   = flag.Bool("version", false, "Display the version and exit.")
+	fHelp      = flag.Bool("help", false, "Display the help text and exit.")
+	fCredits   = flag.Bool("credits", false, "Display the open source credits and exit.")
+	fLicense   = flag.Bool("license", false, "Display the license info and exit.")
 )
 
 func main() {
-	versioninfo.AddFlag(nil)
 	flag.Parse()
 
-	allTasks, err := run.Load(*chosenDir)
+	if *fVersion {
+		fmt.Println("\n" + versionText())
+		os.Exit(0)
+	} else if *fHelp {
+		fmt.Println("\n" + helpText())
+		os.Exit(0)
+	} else if *fCredits {
+		fmt.Println("\n" + creditsText())
+		os.Exit(0)
+	} else if *fLicense {
+		fmt.Println("\n" + licenseText())
+		os.Exit(0)
+	}
+
+	allTasks, err := run.Load(*fChosenDir)
 	if err != nil {
 		fmt.Println("Error loading tasks:")
 		fmt.Println(err)
@@ -28,7 +50,12 @@ func main() {
 	}
 
 	taskID := flag.Arg(0)
-	r, err := run.RunTask(*chosenDir, allTasks, taskID)
+	if taskID == "" {
+		fmt.Println(helpText())
+		os.Exit(0)
+	}
+
+	r, err := run.RunTask(*fChosenDir, allTasks, taskID)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -36,7 +63,7 @@ func main() {
 	}
 
 	var ui run.UI
-	switch *chosenUI {
+	switch *fChosenUI {
 	case "tui":
 		ui = run.NewTUI()
 	case "printer":
@@ -90,4 +117,77 @@ func main() {
 	}()
 
 	wg.Wait()
+}
+
+func helpText() string {
+	b := &strings.Builder{}
+	b.WriteString("USAGE\n")
+	b.WriteString("  run [flags] <task>\n")
+	b.WriteString("\n")
+	b.WriteString("Run executes collections of tasks defined in tasks.toml files.\n")
+	b.WriteString("For documentation and the latest version, please visit GitHub:\n")
+	b.WriteString("\n")
+	b.WriteString("  https://github.com/amonks/run\n")
+	b.WriteString("\n")
+	b.WriteString(flagText())
+	b.WriteString("\n")
+	b.WriteString(versionText())
+	b.WriteString("\n")
+	b.WriteString(shortLicenseText())
+	b.WriteString("\n")
+	b.WriteString("  run with -license for more info\n")
+	b.WriteString("\n")
+
+	return b.String()
+}
+
+func flagText() string {
+	b := &strings.Builder{}
+	fmt.Fprintln(b, "FLAGS")
+	flag.CommandLine.SetOutput(b)
+	flag.PrintDefaults()
+	flag.CommandLine.SetOutput(os.Stdout)
+	return b.String()
+}
+
+func versionText() string {
+	b := &strings.Builder{}
+	fmt.Fprintln(b, "VERSION")
+	fmt.Fprintln(b, "  Version:", versioninfo.Version)
+	fmt.Fprintln(b, "  Revision:", versioninfo.Revision)
+	if versioninfo.Revision != "unknown" {
+		fmt.Fprintln(b, "  Committed:", versioninfo.LastCommit.Format(time.RFC1123))
+		if versioninfo.DirtyBuild {
+			fmt.Fprintln(b, "  Dirty Build")
+		}
+	}
+	return b.String()
+}
+
+//go:generate go run github.com/amonks/run/cmd/licenses credits.txt
+//go:embed credits.txt
+var credits string
+
+func creditsText() string {
+	return "CREDITS\n\n" + indent.String(wordwrap.String(credits, 78), 2)
+}
+
+//go:generate cp ../../LICENSE.md ./LICENSE.md
+//go:embed LICENSE.md
+var license string
+var statement = "Run is free for noncommercial and small-business use, with a guarantee that fair, reasonable, and nondiscriminatory paid-license terms will be available for everyone else."
+
+func licenseText() string {
+	return shortLicenseText() + "\n\n\n" +
+		indent.String(wordwrap.String(license, 60), 2) + "\n"
+}
+
+func shortLicenseText() string {
+	b := &strings.Builder{}
+	b.WriteString("LICENSE\n")
+	b.WriteString("\n")
+	b.WriteString("  © Andrew Monks <a@monks.co>\n")
+	b.WriteString("\n")
+	b.WriteString(indent.String(wordwrap.String(statement, 60), 2))
+	return b.String() + "\n"
 }
