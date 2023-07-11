@@ -13,6 +13,7 @@ require (
 	github.com/muesli/reflow v0.3.0
 	github.com/rjeczalik/notify v0.9.3
 	github.com/sergi/go-diff v1.2.0
+	golang.org/x/mod v0.11.0
 	golang.org/x/term v0.9.0
 	golang.org/x/tools v0.10.0
 )
@@ -223,7 +224,6 @@ require (
 	gocloud.dev v0.30.0 // indirect
 	golang.org/x/crypto v0.10.0 // indirect
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // indirect
-	golang.org/x/mod v0.11.0 // indirect
 	golang.org/x/net v0.11.0 // indirect
 	golang.org/x/oauth2 v0.9.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
