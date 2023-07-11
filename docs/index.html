@@ -280,7 +280,7 @@ func Example_bringYourOwnUI() {
 				<dd><a href="#Run">type Run</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#RunTask">func RunTask(dir string, allTasks map[string]Task, taskID string) (*Run, error)</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#RunTask">func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error)</a></dd>
 				
 				
 					
@@ -332,6 +332,9 @@ func Example_bringYourOwnUI() {
 					
 					<dd>&nbsp; &nbsp; <a href="#Load">func Load(root string) (Tasks, error)</a></dd>
 				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Tasks.IDs">func (ts Tasks) IDs() []string</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#Tasks.Validate">func (tf Tasks) Validate() error</a></dd>
@@ -415,7 +418,7 @@ func Example_bringYourOwnUI() {
 		
 			
 			
-			<h2 id="MultiWriter">type <a href="/src/github.com/amonks/run/run_task.go?s=2637:2696#L113">MultiWriter</a>
+			<h2 id="MultiWriter">type <a href="/src/github.com/amonks/run/run_task.go?s=2694:2753#L117">MultiWriter</a>
 				<a class="permalink" href="#MultiWriter">&#xb6;</a>
 				
 				
@@ -443,7 +446,7 @@ must pass a MultiWriter into <a href="#Run.Start">Run.Start</a>.
 		
 			
 			
-			<h2 id="Run">type <a href="/src/github.com/amonks/run/run_task.go?s=2020:2400#L84">Run</a>
+			<h2 id="Run">type <a href="/src/github.com/amonks/run/run_task.go?s=2077:2457#L88">Run</a>
 				<a class="permalink" href="#Run">&#xb6;</a>
 				
 				
@@ -470,12 +473,12 @@ must pass a MultiWriter into <a href="#Run.Start">Run.Start</a>.
 
 			
 				
-				<h3 id="RunTask">func <a href="/src/github.com/amonks/run/run_task.go?s=287:366#L9">RunTask</a>
+				<h3 id="RunTask">func <a href="/src/github.com/amonks/run/run_task.go?s=287:356#L9">RunTask</a>
 					<a class="permalink" href="#RunTask">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func RunTask(dir <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>, allTasks map[<a href="https://pkg.go.dev/pkg/builtin/#string">string</a>]<a href="#Task">Task</a>, taskID <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>) (*<a href="#Run">Run</a>, <a href="https://pkg.go.dev/pkg/builtin/#error">error</a>)</pre>
+				<pre>func RunTask(dir <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>, allTasks <a href="#Tasks">Tasks</a>, taskID <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>) (*<a href="#Run">Run</a>, <a href="https://pkg.go.dev/pkg/builtin/#error">error</a>)</pre>
 				<p>RunTask creates an executable Run from a taskList and a taskID.
 <p>The run will handle task dependencies, watches, and triggers as documented
 in the README.
@@ -486,7 +489,7 @@ in the README.
 
 			
 				
-				<h3 id="Run.IDs">func (*Run) <a href="/src/github.com/amonks/run/run_task.go?s=2917:2945#L120">IDs</a>
+				<h3 id="Run.IDs">func (*Run) <a href="/src/github.com/amonks/run/run_task.go?s=2974:3002#L124">IDs</a>
 					<a class="permalink" href="#Run.IDs">&#xb6;</a>
 					
 					
@@ -501,7 +504,7 @@ includes the IDs of each Task that will be used in the run, plus the id
 				
 			
 				
-				<h3 id="Run.Start">func (*Run) <a href="/src/github.com/amonks/run/run_task.go?s=4039:4081#L158">Start</a>
+				<h3 id="Run.Start">func (*Run) <a href="/src/github.com/amonks/run/run_task.go?s=4096:4138#L162">Start</a>
 					<a class="permalink" href="#Run.Start">&#xb6;</a>
 					
 					
@@ -516,7 +519,7 @@ it immediately with <a href="#Run.Stop">Run.Stop</a>.
 				
 			
 				
-				<h3 id="Run.Stop">func (*Run) <a href="/src/github.com/amonks/run/run_task.go?s=5886:5906#L239">Stop</a>
+				<h3 id="Run.Stop">func (*Run) <a href="/src/github.com/amonks/run/run_task.go?s=5943:5963#L243">Stop</a>
 					<a class="permalink" href="#Run.Stop">&#xb6;</a>
 					
 					
@@ -533,7 +536,7 @@ they will emit before Stop returns.
 				
 			
 				
-				<h3 id="Run.Tasks">func (*Run) <a href="/src/github.com/amonks/run/run_task.go?s=3180:3207#L133">Tasks</a>
+				<h3 id="Run.Tasks">func (*Run) <a href="/src/github.com/amonks/run/run_task.go?s=3237:3264#L137">Tasks</a>
 					<a class="permalink" href="#Run.Tasks">&#xb6;</a>
 					
 					
@@ -546,7 +549,7 @@ they will emit before Stop returns.
 				
 			
 				
-				<h3 id="Run.Type">func (*Run) <a href="/src/github.com/amonks/run/run_task.go?s=3593:3621#L145">Type</a>
+				<h3 id="Run.Type">func (*Run) <a href="/src/github.com/amonks/run/run_task.go?s=3650:3678#L149">Type</a>
 					<a class="permalink" href="#Run.Type">&#xb6;</a>
 					
 					
@@ -563,7 +566,7 @@ File watches are only used if a run is RunTypeLong.
 				
 			
 				
-				<h3 id="Run.Wait">func (*Run) <a href="/src/github.com/amonks/run/run_task.go?s=5397:5430#L219">Wait</a>
+				<h3 id="Run.Wait">func (*Run) <a href="/src/github.com/amonks/run/run_task.go?s=5454:5487#L223">Wait</a>
 					<a class="permalink" href="#Run.Wait">&#xb6;</a>
 					
 					
@@ -582,7 +585,7 @@ emit when the Run exits.
 		
 			
 			
-			<h2 id="RunType">type <a href="/src/github.com/amonks/run/run_task.go?s=6989:7005#L292">RunType</a>
+			<h2 id="RunType">type <a href="/src/github.com/amonks/run/run_task.go?s=7046:7062#L296">RunType</a>
 				<a class="permalink" href="#RunType">&#xb6;</a>
 				
 				
@@ -627,7 +630,7 @@ File watches are only used if a run is RunTypeLong.
 		
 			
 			
-			<h2 id="Task">type <a href="/src/github.com/amonks/run/task.go?s=517:631#L11">Task</a>
+			<h2 id="Task">type <a href="/src/github.com/amonks/run/task.go?s=536:650#L13">Task</a>
 				<a class="permalink" href="#Task">&#xb6;</a>
 				
 				
@@ -690,7 +693,7 @@ $ bash -c &quot;$CMD&quot; 2&amp;&gt;1 /some/ui
 		
 			
 			
-			<h2 id="TaskMetadata">type <a href="/src/github.com/amonks/run/task.go?s=742:3230#L20">TaskMetadata</a>
+			<h2 id="TaskMetadata">type <a href="/src/github.com/amonks/run/task.go?s=761:3249#L22">TaskMetadata</a>
 				<a class="permalink" href="#TaskMetadata">&#xb6;</a>
 				
 				
@@ -775,7 +778,7 @@ $ bash -c &quot;$CMD&quot; 2&amp;&gt;1 /some/ui
 		
 			
 			
-			<h2 id="Tasks">type <a href="/src/github.com/amonks/run/task.go?s=241:267#L3">Tasks</a>
+			<h2 id="Tasks">type <a href="/src/github.com/amonks/run/task.go?s=260:286#L5">Tasks</a>
 				<a class="permalink" href="#Tasks">&#xb6;</a>
 				
 				
@@ -811,7 +814,19 @@ Tasks.
 
 			
 				
-				<h3 id="Tasks.Validate">func (Tasks) <a href="/src/github.com/amonks/run/task.go?s=3449:3481#L86">Validate</a>
+				<h3 id="Tasks.IDs">func (Tasks) <a href="/src/github.com/amonks/run/task.go?s=3251:3281#L84">IDs</a>
+					<a class="permalink" href="#Tasks.IDs">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (ts <a href="#Tasks">Tasks</a>) IDs() []<a href="https://pkg.go.dev/pkg/builtin/#string">string</a></pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="Tasks.Validate">func (Tasks) <a href="/src/github.com/amonks/run/task.go?s=3602:3634#L97">Validate</a>
 					<a class="permalink" href="#Tasks.Validate">&#xb6;</a>
 					
 					
