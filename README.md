@@ -2,15 +2,36 @@
 
 <img alt="interactive TUI" src="https://github.com/amonks/runner/blob/main/screenshots/tui.gif?raw=true" />
 
-```toml
+<img alt="noninteractive printed output" src="https://github.com/amonks/runner/blob/main/screenshots/printer.gif?raw=true" />
 
+```toml
+# ./tasks.toml
+
+[[task]]
+  id = "build"
+  type = "short"
+  dependencies = ["css/build", "js/build"]
 ```
+
+```toml
+# ./css/tasks.toml
+
+[[task]]
+  id = "build"
+  type = "short"
+  watch = ["src.css"]
+  cmd = """
+    echo "Building CSS"
+    build-css src.css > dist.css
+    echo "done"
+  """
+```
+
+_find a full example configuration in the [example folder](https://github.com/amonks/runner/tree/amonks/table/example)_
 
 Runner runs a collection of programs specified in tasks.toml files, and
 provides a UI for inspecting their execution. Runner's interactive UI for
 long-lived programs has full mouse support.
-
-<img alt="noninteractive printed output" src="https://github.com/amonks/runner/blob/main/screenshots/printer.gif?raw=true" />
 
 Runner also works well for short-lived processes, and its interleaved output
 can be sent to a file.
@@ -67,6 +88,11 @@ Task files are called "tasks.toml". They specify one or more tasks.
     while true; do sleep 1; done
   """
 ```
+
+There's an example project in the [example folder][example], where you can see
+a realistic configuration.
+
+[example]: https://github.com/amonks/runner/tree/amonks/table/example
 
 Let's go through the fields that can be specified on tasks.
 
@@ -180,7 +206,7 @@ while you make changes.
 | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | <img alt="non-interactive output" src="https://github.com/amonks/runner/blob/main/screenshots/printer.gif?raw=true" /> | <img alt="redirected output" src="https://github.com/amonks/runner/blob/main/screenshots/nontty.gif?raw=true" /> |
 
-Runner simply prints its output if either,
+Runner prints its output if either,
 
 1. runner is not a tty (eg Runner is being piped to a file), or,
 2. no tasks are "long" (eg a one-shot "build" procedure, rather than an ongoing
