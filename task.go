@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 	"unicode"
 )
@@ -88,6 +89,15 @@ type TaskMetadata struct {
 	// - "./some/path/file.txt" watches for changes to the file, which may
 	//   or may not already exist.
 	Watch []string
+}
+
+func (ts Tasks) IDs() []string {
+	var ids []string
+	for id := range ts {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	return ids
 }
 
 // Validate inspects a set of Tasks and returns an error if
