@@ -3,13 +3,11 @@ long
 test:
   starting
   running...
-  fail
   exit: exit 1
   retrying in 1 second
   retrying
   starting
   running...
-  fail
   exit: exit 1
   retrying in 1 second
   retrying
