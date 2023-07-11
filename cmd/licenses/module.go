@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package module defines the module.Version type
-// along with support code.
 package main
 
 // IMPORTANT NOTE
