@@ -19,7 +19,6 @@ cli:
 
 task:
 	- Validate task set before running
-	- Validate should check for reserved task names (currently: "interleaved", "runner")
 
 doc:
 	- add cli flag reference to readme
