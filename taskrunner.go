@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/rjeczalik/notify"
 )
 
 // RunTask creates an executable Run from a taskList and a taskID.
@@ -187,10 +186,13 @@ func (r *Run) Start(out MultiWriter) error {
 	// Start all the file watchers. Do this before starting tasks so that
 	// tasks can trigger file watcher events.
 	for p := range r.byWatch {
-		watchPath := path.Join(r.dir, p)
-		r.printf("runner", logStyle, "watching %s", watchPath)
+		watchP := path.Join(r.dir, p)
+		r.printf("runner", logStyle, "watching %s", watchP)
 		p := p
-		c, stop := watch(watchPath)
+		c, stop, err := watch(watchP)
+		if err != nil {
+			return err
+		}
 		r.watches[p] = stop
 		go func() {
 			for {
@@ -415,7 +417,7 @@ func (r *Run) handleEvent(ev event) {
 	case evFSEvent:
 		var evs []string
 		for _, ev := range ev.evs {
-			evs = append(evs, ev.Event().String()+":"+ev.Path())
+			evs = append(evs, ev.event+":"+ev.path)
 		}
 		r.printf("runner", logStyle, "watched file change: {%s}", strings.Join(evs, ", "))
 		taskIDs := r.byWatch[ev.path]
@@ -511,7 +513,7 @@ func (e evFatal) eventType() string { return "evFatal" }
 
 type evFSEvent struct {
 	path string
-	evs  []notify.EventInfo
+	evs  []eventInfo
 }
 
 func (e evFSEvent) eventType() string { return "evFSEvent" }
