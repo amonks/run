@@ -139,25 +139,38 @@ func tasklistText(ids []string) string {
 	return b.String()
 }
 
+func init() {
+	flag.Usage = func() {
+		w := flag.CommandLine.Output()
+		fmt.Fprintln(w, "")
+		fmt.Fprintln(w, usageText())
+		fmt.Fprintln(w, flagText())
+		os.Exit(0)
+	}
+}
+
 func helpText() string {
 	b := &strings.Builder{}
-	b.WriteString("USAGE\n")
-	b.WriteString("  run [flags] <task>\n")
-	b.WriteString("\n")
 	b.WriteString("Run executes collections of tasks defined in tasks.toml files.\n")
 	b.WriteString("For documentation and the latest version, please visit GitHub:\n")
 	b.WriteString("\n")
 	b.WriteString("  https://github.com/amonks/run\n")
+	b.WriteString("\n")
+	b.WriteString(usageText())
 	b.WriteString("\n")
 	b.WriteString(flagText())
 	b.WriteString("\n")
 	b.WriteString(versionText())
 	b.WriteString("\n")
 	b.WriteString(shortLicenseText())
-	b.WriteString("\n")
-	b.WriteString("  run with -license for more info\n")
-	b.WriteString("\n")
 
+	return b.String()
+}
+
+func usageText() string {
+	b := &strings.Builder{}
+	b.WriteString("USAGE\n")
+	b.WriteString("  run [flags] <task>\n")
 	return b.String()
 }
 
@@ -198,16 +211,25 @@ var license string
 var statement = "Run is free for noncommercial and small-business use, with a guarantee that fair, reasonable, and nondiscriminatory paid-license terms will be available for everyone else."
 
 func licenseText() string {
-	return shortLicenseText() + "\n\n\n" +
-		indent.String(wordwrap.String(license, 60), 2) + "\n"
-}
-
-func shortLicenseText() string {
 	b := &strings.Builder{}
 	b.WriteString("LICENSE\n")
 	b.WriteString("\n")
 	b.WriteString("  © Andrew Monks <a@monks.co>\n")
 	b.WriteString("\n")
-	b.WriteString(indent.String(wordwrap.String(statement, 60), 2))
-	return b.String() + "\n"
+	b.WriteString(indent.String(wordwrap.String(statement, 70), 2) + "\n")
+	b.WriteString("\n")
+	b.WriteString("\n")
+	b.WriteString(indent.String(wordwrap.String(license, 70), 2))
+	return b.String()
+}
+
+func shortLicenseText() string {
+	b := &strings.Builder{}
+	b.WriteString("LICENSE\n")
+	b.WriteString(indent.String(wordwrap.String(statement, 60), 2) + "\n")
+	b.WriteString("\n")
+	b.WriteString("  Run `run -license` for more info.\n")
+	b.WriteString("\n")
+	b.WriteString("  © Andrew Monks <a@monks.co>\n")
+	return b.String()
 }
