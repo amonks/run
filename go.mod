@@ -12,6 +12,7 @@ require (
 	github.com/lrstanley/bubblezone v0.0.0-20230706131039-3438d6c6754e
 	github.com/muesli/reflow v0.3.0
 	github.com/rjeczalik/notify v0.9.3
+	github.com/sergi/go-diff v1.2.0
 	golang.org/x/term v0.9.0
 	golang.org/x/tools v0.10.0
 )
@@ -192,7 +193,6 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sahilm/fuzzy v0.1.0 // indirect
 	github.com/sasha-s/go-csync v0.0.0-20210812194225-61421b77c44b // indirect
-	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/sigstore/cosign/v2 v2.0.3-0.20230523133326-0544abd8fc8a // indirect
 	github.com/sigstore/rekor v1.2.0 // indirect
