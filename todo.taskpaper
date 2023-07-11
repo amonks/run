@@ -20,11 +20,6 @@ doc:
 	- add cli flag reference to readme? or... add the entire -help output
 	  to the README? or... just replace the readme with -help output?
 
-no-cmd?:
-	see 2a24f9e9313798966cf1ba81d5d435cd461f45fb
-	the ./cmd/run subpackage makes go:embed annoying. do we need it?
-	if we make runner a main package, can you still use it as a library the same?
-
 concurrency model:
 	- all these mutexes sure are gross; can we do more message passing instead?
 

@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	bs, err := os.ReadFile("../../go.mod")
+	bs, err := os.ReadFile("go.mod")
 	if err != nil {
 		panic(err)
 	}
