@@ -13,7 +13,7 @@
     echo "    git commit"
     echo "    set version v0.0.0-beta.0"
     echo "    git tag -a $version -m $version"
-    echo "    git push $version"
+    echo "    git push origin $version"
   """
 
 [[task]]
