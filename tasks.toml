@@ -138,9 +138,9 @@
     sed -i -e '/#pkg-subdirectories/,+1d' index.html
 
     # Remove the subdirectories section. This is insanely brittle. The
-    # subdirectories section is only 40 lines because we have exactly three
+    # subdirectories section is only 51 lines because we have exactly three
     # subdirectories.
-    sed -i -e '/"pkg-subdirectories/,+40d' index.html
+    sed -i -e '/"pkg-subdirectories/,+51d' index.html
 
     rm index.html-e
     cd ..
