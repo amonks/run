@@ -19,6 +19,7 @@ import (
 var (
 	fChosenUI  = flag.String("ui", "", "Force a particular ui. Legal values are 'tui' and 'printer'.")
 	fChosenDir = flag.String("dir", ".", "Look for a root taskfile in the given directory.")
+	fList      = flag.Bool("list", false, "Display the task list and exit. If run is invoked with both -list and a task ID, that task's dependencies are displayed.")
 	fVersion   = flag.Bool("version", false, "Display the version and exit.")
 	fHelp      = flag.Bool("help", false, "Display the help text and exit.")
 	fCredits   = flag.Bool("credits", false, "Display the open source credits and exit.")
@@ -51,6 +52,10 @@ func main() {
 
 	taskID := flag.Arg(0)
 	if taskID == "" {
+		if *fList {
+			fmt.Println(tasklistText(allTasks.IDs()))
+			os.Exit(0)
+		}
 		fmt.Println(helpText())
 		os.Exit(0)
 	}
@@ -60,6 +65,11 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 		return
+	}
+
+	if *fList {
+		fmt.Println(tasklistText(r.IDs()[1:]))
+		os.Exit(0)
 	}
 
 	var ui run.UI
@@ -117,6 +127,16 @@ func main() {
 	}()
 
 	wg.Wait()
+}
+
+func tasklistText(ids []string) string {
+	b := &strings.Builder{}
+	fmt.Fprintln(b, "")
+	fmt.Fprintln(b, "TASKS")
+	for _, id := range ids {
+		b.WriteString("  - " + id + "\n")
+	}
+	return b.String()
 }
 
 func helpText() string {
