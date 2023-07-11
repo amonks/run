@@ -111,15 +111,42 @@
     cd localhost:3335
     mv pkg/github.com/amonks/run index.html
     rm -r pkg
-    sed -i -e 's%"/pkg%"https://pkg.go.dev/pkg%g' index.html
-    sed -i -e 's%"/lib%"/run/lib%g' index.html
+
+    # Make links outside the module use pkg.go.dev.
+    sd '"/pkg' '"https://pkg.go.dev/pkg' index.html
+
+    # Correct for putting run at the server root.
+    sd '"/lib' '"/run/lib' index.html
+
+    # Make source code links point to github.
+    sd '"/src/github.com/amonks/run/' '"https://github.com/amonks/run/blob/main/' index.html
+
+    # Try to convert the selection anchors on github links. Puzzlingly, godoc's
+    # line anchors are 10 less than you'd expect: eg #L100 highlights line 110.
+    grep '?s=\\d\\+:\\d\\+#L' index.html | while read -r old_line ; do
+      old_lineno="$(echo $old_line | sd '^.*\\?s=\\d+:\\d+#L(\\d+).*$' '$1')"
+      new_lineno="$(($old_lineno + 10))"
+      new_line="$(echo $old_line | sd '\\?s=\\d+:\\d+#L'$old_lineno '#L'$new_lineno)"
+      sd -s "$old_line" "$new_line" index.html
+    done
+
+    # Remove the topbar and footer entirely.
     sed -i -e '/topbar/,+11d' index.html
     sed -i -e '/footer/,+8d' index.html
+
+    # Remove the link to the subdirectories section.
     sed -i -e '/#pkg-subdirectories/,+1d' index.html
-    sed -i -e '/"pkg-subdirectories/,+40d' index.html   # INSANELY BRITTLE; FIX THIS
+
+    # Remove the subdirectories section. This is insanely brittle. The
+    # subdirectories section is only 40 lines because we have exactly three
+    # subdirectories.
+    sed -i -e '/"pkg-subdirectories/,+40d' index.html
+
     rm index.html-e
     cd ..
 
-    rm -r docs
+    if test -d docs ; then
+      rm -r docs
+    fi
     mv localhost:3335 docs
   """
