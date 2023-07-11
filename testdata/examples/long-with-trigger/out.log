@@ -12,10 +12,8 @@ test:
 
 trigger:
   starting
-  trigger
   exit ok
   invalidating {test}
   starting
-  trigger
   exit ok
   invalidating {test}
