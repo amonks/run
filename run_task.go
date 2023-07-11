@@ -16,7 +16,11 @@ import (
 //
 // The run will handle task dependencies, watches, and triggers as documented
 // in the README.
-func RunTask(dir string, allTasks map[string]Task, taskID string) (*Run, error) {
+func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
+	if err := allTasks.Validate(); err != nil {
+		return nil, err
+	}
+
 	runType := RunTypeShort
 	tasks := map[string]Task{}
 	states := map[string]taskState{}
