@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	chosenUI  = flag.String("ui", "", "Force a particular ui. Legal values are 'tui', 'colorful-printer', 'colorless-printer'")
-	chosenDir = flag.String("dir", ".", "Look for a root taskfile in the given directory")
+	chosenUI  = flag.String("ui", "", "Force a particular ui. Legal values are 'tui' and 'printer'.")
+	chosenDir = flag.String("dir", ".", "Look for a root taskfile in the given directory.")
 )
 
 func main() {
@@ -49,6 +49,9 @@ func main() {
 		} else {
 			ui = run.NewTUI()
 		}
+	default:
+		fmt.Println("Invalid value for flag -ui. Legal values are 'tui' and 'printer'.")
+		os.Exit(1)
 	}
 
 	if err := ui.Start(os.Stdin, os.Stdout, r.IDs()); err != nil {
