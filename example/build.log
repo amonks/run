@@ -1,10 +1,11 @@
-     runner  watching src.css
+        run  watching src.css
              watching src.js
+
+  css/build  starting
 
    js/build  starting
 
-  css/build  starting
-             Building CSS
+  css/build  Building CSS
 
    js/build  Building JS
 

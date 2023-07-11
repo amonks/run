@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#375EAB">
 
-  <title>runner - Go Documentation Server</title>
+  <title>run - Go Documentation Server</title>
 
-<link type="text/css" rel="stylesheet" href="/runner/lib/godoc/style.css">
+<link type="text/css" rel="stylesheet" href="/run/lib/godoc/style.css">
 
 <script>window.initFuncs = [];</script>
-<script src="/runner/lib/godoc/jquery.js" defer></script>
+<script src="/run/lib/godoc/jquery.js" defer></script>
 
 
 
 <script>var goVersion = "go1.20.3";</script>
-<script src="/runner/lib/godoc/godocs.js" defer></script>
+<script src="/run/lib/godoc/godocs.js" defer></script>
 </head>
 <body>
 
@@ -31,7 +31,7 @@
 
 
   <h1>
-    Package runner
+    Package run
     <span class="text-muted"></span>
   </h1>
 
@@ -65,7 +65,7 @@
 		
 		<div id="short-nav">
 			<dl>
-			<dd><code>import "github.com/amonks/runner"</code></dd>
+			<dd><code>import "github.com/amonks/run"</code></dd>
 			</dl>
 			<dl>
 			<dd><a href="#pkg-overview" class="overviewLink">Overview</a></dd>
@@ -85,12 +85,12 @@
 			</div>
 			<div class="expanded">
 				<h2 class="toggleButton" title="Click to hide Overview section">Overview ▾</h2>
-				<p>Runner runs a collection of programs specified in tasks.toml files, and
-provides a UI for inspecting their execution. Runner displays long-lived
-processes in an interactive TUI. Runner also works well for short-lived
+				<p>Run runs a collection of programs specified in tasks.toml files, and
+provides a UI for inspecting their execution. Run displays long-lived
+processes in an interactive TUI. Run also works well for short-lived
 processes, and its interleaved output can be sent to a file.
-<p>Runner can be used and extended programatically through its Go API, which is
-documented here. Runner&apos;s primary documentation is on <a href="https://github.com/amonks/runner">Github</a>.
+<p>Run can be used and extended programatically through its Go API, which is
+documented here. Run&apos;s primary documentation is on <a href="https://github.com/amonks/run">Github</a>.
 <h3 id="hdr-Conceptual_Overview">Conceptual Overview</h3>
 <p>1. You call Load to parse task files and get a Task set.
 <ul>
@@ -105,7 +105,7 @@ documented here. Runner&apos;s primary documentation is on <a href="https://gith
 <p>3. You pass a UI into a Run and Start it.
 <ul>
 <li>You can also make your own UI.
-<li>You can also use a Runner UI with any other collection of processes
+<li>You can also use a Run UI with any other collection of processes
 that expect io.Writers.
 </ul>
 
@@ -115,27 +115,27 @@ that expect io.Writers.
 	</div>
 	<div class="expanded">
 		<p class="exampleHeading toggleButton">▾ <span class="text">Example</span></p>
-		<p>In this example, we use components from Runner to build our own version of
-the runner CLI tool. See cmd/runner for the source of the -real- runner CLI,
+		<p>In this example, we use components from Run to build our own version of
+the run CLI tool. See cmd/run for the source of the -real- run CLI,
 which isn&#39;t too much more complex.
 </p>
 		
 		
 			<p>Code:</p>
 			<pre class="code">
-tasks, err := runner.Load(&#34;.&#34;)
+tasks, err := run.Load(&#34;.&#34;)
 if err != nil {
     log.Fatal(err)
 }
 
-run, err := runner.RunTask(&#34;.&#34;, tasks, &#34;dev&#34;)
+r, err := run.RunTask(&#34;.&#34;, tasks, &#34;dev&#34;)
 if err != nil {
     log.Fatal(err)
 }
 
-ui := runner.NewTUI()
-ui.Start(os.Stdin, os.Stdout, run.IDs())
-run.Start(ui)
+ui := run.NewTUI()
+ui.Start(os.Stdin, os.Stdout, r.IDs())
+r.Start(ui)
 
 var wg sync.WaitGroup
 
@@ -145,13 +145,13 @@ go func() {
     if err := &lt;-ui.Wait(); err != nil {
         log.Fatal(err)
     }
-    run.Stop()
+    r.Stop()
 }()
 
 wg.Add(1)
 go func() {
     defer wg.Done()
-    if err := &lt;-run.Wait(); err != nil {
+    if err := &lt;-r.Wait(); err != nil {
         log.Fatal(err)
     }
     ui.Stop()
@@ -174,16 +174,16 @@ wg.Wait()
 		
 		
 			<p>Code:</p>
-			<pre class="code">tasks := runner.Tasks{
-    &#34;custom&#34;: runner.FuncTask(func(ctx context.Context, w io.Writer) error {
+			<pre class="code">tasks := run.Tasks{
+    &#34;custom&#34;: run.FuncTask(func(ctx context.Context, w io.Writer) error {
         w.Write([]byte(&#34;sleep&#34;))
         time.Sleep(1 * time.Second)
         w.Write([]byte(&#34;done&#34;))
         return nil
-    }, runner.TaskMetadata{}),
+    }, run.TaskMetadata{}),
 }
 
-run, err := runner.RunTask(&#34;.&#34;, tasks, &#34;custom&#34;)
+run, err := run.RunTask(&#34;.&#34;, tasks, &#34;custom&#34;)
 if err != nil {
     log.Fatal(err)
 }
@@ -192,7 +192,7 @@ fmt.Println(strings.Join(run.IDs(), &#34;, &#34;))
 <span class="comment"></pre>
 			
 			<p>Output:</p>
-			<pre class="output">runner, custom
+			<pre class="output">run, custom
 </pre>
 			
 		
@@ -204,24 +204,24 @@ fmt.Println(strings.Join(run.IDs(), &#34;, &#34;))
 	</div>
 	<div class="expanded">
 		<p class="exampleHeading toggleButton">▾ <span class="text">Example (BringYourOwnUI)</span></p>
-		<p>In this example, we build a version of the runner CLI tool that uses a UI we
+		<p>In this example, we build a version of the run CLI tool that uses a UI we
 provide ourselves.
 </p>
 		
 		
 			<p>Code:</p>
-			<pre class="code">package runner_test
+			<pre class="code">package run_test
 
 import (
     &#34;io&#34;
     &#34;log&#34;
     &#34;os&#34;
 
-    &#34;github.com/amonks/runner&#34;
+    &#34;github.com/amonks/run&#34;
 )
 
 <span class="comment">// ui implements MultiWriter</span>
-var _ runner.MultiWriter = ui{}
+var _ run.MultiWriter = ui{}
 
 type ui struct{}
 
@@ -229,15 +229,15 @@ func (w ui) Writer(string) io.Writer {
     return os.Stdout
 }
 
-<span class="comment">// In this example, we build a version of the runner CLI tool that uses a UI we</span>
+<span class="comment">// In this example, we build a version of the run CLI tool that uses a UI we</span>
 <span class="comment">// provide ourselves.</span>
 func Example_bringYourOwnUI() {
-    tasks, err := runner.Load(&#34;.&#34;)
+    tasks, err := run.Load(&#34;.&#34;)
     if err != nil {
         log.Fatal(err)
     }
 
-    run, err := runner.RunTask(&#34;.&#34;, tasks, &#34;dev&#34;)
+    run, err := run.RunTask(&#34;.&#34;, tasks, &#34;dev&#34;)
     if err != nil {
         log.Fatal(err)
     }
@@ -375,33 +375,33 @@ func Example_bringYourOwnUI() {
 			<p>
 			<span style="font-size:90%">
 			
-				<a href="/src/github.com/amonks/runner/color.go">color.go</a>
+				<a href="/src/github.com/amonks/run/color.go">color.go</a>
 			
-				<a href="/src/github.com/amonks/runner/func_task.go">func_task.go</a>
+				<a href="/src/github.com/amonks/run/func_task.go">func_task.go</a>
 			
-				<a href="/src/github.com/amonks/runner/mutex.go">mutex.go</a>
+				<a href="/src/github.com/amonks/run/mutex.go">mutex.go</a>
 			
-				<a href="/src/github.com/amonks/runner/printer.go">printer.go</a>
+				<a href="/src/github.com/amonks/run/printer.go">printer.go</a>
 			
-				<a href="/src/github.com/amonks/runner/runner.go">runner.go</a>
+				<a href="/src/github.com/amonks/run/run.go">run.go</a>
 			
-				<a href="/src/github.com/amonks/runner/runtype_string.go">runtype_string.go</a>
+				<a href="/src/github.com/amonks/run/run_task.go">run_task.go</a>
 			
-				<a href="/src/github.com/amonks/runner/script_task.go">script_task.go</a>
+				<a href="/src/github.com/amonks/run/runtype_string.go">runtype_string.go</a>
 			
-				<a href="/src/github.com/amonks/runner/task.go">task.go</a>
+				<a href="/src/github.com/amonks/run/script_task.go">script_task.go</a>
 			
-				<a href="/src/github.com/amonks/runner/taskfile.go">taskfile.go</a>
+				<a href="/src/github.com/amonks/run/task.go">task.go</a>
 			
-				<a href="/src/github.com/amonks/runner/taskrunner.go">taskrunner.go</a>
+				<a href="/src/github.com/amonks/run/taskfile.go">taskfile.go</a>
 			
-				<a href="/src/github.com/amonks/runner/taskstate_string.go">taskstate_string.go</a>
+				<a href="/src/github.com/amonks/run/taskstate_string.go">taskstate_string.go</a>
 			
-				<a href="/src/github.com/amonks/runner/tui.go">tui.go</a>
+				<a href="/src/github.com/amonks/run/tui.go">tui.go</a>
 			
-				<a href="/src/github.com/amonks/runner/ui.go">ui.go</a>
+				<a href="/src/github.com/amonks/run/ui.go">ui.go</a>
 			
-				<a href="/src/github.com/amonks/runner/watch.go">watch.go</a>
+				<a href="/src/github.com/amonks/run/watch.go">watch.go</a>
 			
 			</span>
 			</p>
@@ -417,7 +417,7 @@ func Example_bringYourOwnUI() {
 		
 			
 			
-			<h2 id="MultiWriter">type <a href="/src/github.com/amonks/runner/taskrunner.go?s=2674:2733#L114">MultiWriter</a>
+			<h2 id="MultiWriter">type <a href="/src/github.com/amonks/run/run_task.go?s=2637:2696#L113">MultiWriter</a>
 				<a class="permalink" href="#MultiWriter">&#xb6;</a>
 				
 				
@@ -445,7 +445,7 @@ must pass a MultiWriter into <a href="#Run.Start">Run.Start</a>.
 		
 			
 			
-			<h2 id="Run">type <a href="/src/github.com/amonks/runner/taskrunner.go?s=2057:2437#L85">Run</a>
+			<h2 id="Run">type <a href="/src/github.com/amonks/run/run_task.go?s=2020:2400#L84">Run</a>
 				<a class="permalink" href="#Run">&#xb6;</a>
 				
 				
@@ -472,7 +472,7 @@ must pass a MultiWriter into <a href="#Run.Start">Run.Start</a>.
 
 			
 				
-				<h3 id="RunTask">func <a href="/src/github.com/amonks/runner/taskrunner.go?s=321:400#L10">RunTask</a>
+				<h3 id="RunTask">func <a href="/src/github.com/amonks/run/run_task.go?s=287:366#L9">RunTask</a>
 					<a class="permalink" href="#RunTask">&#xb6;</a>
 					
 					
@@ -488,7 +488,7 @@ in the README.
 
 			
 				
-				<h3 id="Run.IDs">func (*Run) <a href="/src/github.com/amonks/runner/taskrunner.go?s=2957:2985#L121">IDs</a>
+				<h3 id="Run.IDs">func (*Run) <a href="/src/github.com/amonks/run/run_task.go?s=2917:2945#L120">IDs</a>
 					<a class="permalink" href="#Run.IDs">&#xb6;</a>
 					
 					
@@ -496,14 +496,14 @@ in the README.
 				<pre>func (r *<a href="#Run">Run</a>) IDs() []<a href="https://pkg.go.dev/pkg/builtin/#string">string</a></pre>
 				<p>IDs returns the list of output stream names that a Run would write to. This
 includes the IDs of each Task that will be used in the run, plus the id
-&quot;runner&quot;, which the Run uses for messaging about the run itself.
+&quot;run&quot;, which the Run uses for messaging about the run itself.
 
 				
 				
 				
 			
 				
-				<h3 id="Run.Start">func (*Run) <a href="/src/github.com/amonks/runner/taskrunner.go?s=4082:4124#L159">Start</a>
+				<h3 id="Run.Start">func (*Run) <a href="/src/github.com/amonks/run/run_task.go?s=4039:4081#L158">Start</a>
 					<a class="permalink" href="#Run.Start">&#xb6;</a>
 					
 					
@@ -518,7 +518,7 @@ it immediately with <a href="#Run.Stop">Run.Stop</a>.
 				
 			
 				
-				<h3 id="Run.Stop">func (*Run) <a href="/src/github.com/amonks/runner/taskrunner.go?s=5900:5920#L237">Stop</a>
+				<h3 id="Run.Stop">func (*Run) <a href="/src/github.com/amonks/run/run_task.go?s=5886:5906#L239">Stop</a>
 					<a class="permalink" href="#Run.Stop">&#xb6;</a>
 					
 					
@@ -535,7 +535,7 @@ they will emit before Stop returns.
 				
 			
 				
-				<h3 id="Run.Tasks">func (*Run) <a href="/src/github.com/amonks/runner/taskrunner.go?s=3223:3250#L134">Tasks</a>
+				<h3 id="Run.Tasks">func (*Run) <a href="/src/github.com/amonks/run/run_task.go?s=3180:3207#L133">Tasks</a>
 					<a class="permalink" href="#Run.Tasks">&#xb6;</a>
 					
 					
@@ -548,7 +548,7 @@ they will emit before Stop returns.
 				
 			
 				
-				<h3 id="Run.Type">func (*Run) <a href="/src/github.com/amonks/runner/taskrunner.go?s=3636:3664#L146">Type</a>
+				<h3 id="Run.Type">func (*Run) <a href="/src/github.com/amonks/run/run_task.go?s=3593:3621#L145">Type</a>
 					<a class="permalink" href="#Run.Type">&#xb6;</a>
 					
 					
@@ -565,7 +565,7 @@ File watches are only used if a run is RunTypeLong.
 				
 			
 				
-				<h3 id="Run.Wait">func (*Run) <a href="/src/github.com/amonks/runner/taskrunner.go?s=5411:5444#L217">Wait</a>
+				<h3 id="Run.Wait">func (*Run) <a href="/src/github.com/amonks/run/run_task.go?s=5397:5430#L219">Wait</a>
 					<a class="permalink" href="#Run.Wait">&#xb6;</a>
 					
 					
@@ -584,7 +584,7 @@ emit when the Run exits.
 		
 			
 			
-			<h2 id="RunType">type <a href="/src/github.com/amonks/runner/taskrunner.go?s=7018:7034#L290">RunType</a>
+			<h2 id="RunType">type <a href="/src/github.com/amonks/run/run_task.go?s=6989:7005#L292">RunType</a>
 				<a class="permalink" href="#RunType">&#xb6;</a>
 				
 				
@@ -615,7 +615,7 @@ File watches are only used if a run is RunTypeLong.
 
 			
 				
-				<h3 id="RunType.String">func (RunType) <a href="/src/github.com/amonks/runner/runtype_string.go?s=458:490#L10">String</a>
+				<h3 id="RunType.String">func (RunType) <a href="/src/github.com/amonks/run/runtype_string.go?s=455:487#L10">String</a>
 					<a class="permalink" href="#RunType.String">&#xb6;</a>
 					
 					
@@ -629,7 +629,7 @@ File watches are only used if a run is RunTypeLong.
 		
 			
 			
-			<h2 id="Task">type <a href="/src/github.com/amonks/runner/task.go?s=520:634#L11">Task</a>
+			<h2 id="Task">type <a href="/src/github.com/amonks/run/task.go?s=517:631#L11">Task</a>
 				<a class="permalink" href="#Task">&#xb6;</a>
 				
 				
@@ -656,7 +656,7 @@ passing it into <a href="#RunTask">RunTask</a>.
 
 			
 				
-				<h3 id="FuncTask">func <a href="/src/github.com/amonks/runner/func_task.go?s=145:235#L1">FuncTask</a>
+				<h3 id="FuncTask">func <a href="/src/github.com/amonks/run/func_task.go?s=142:232#L1">FuncTask</a>
 					<a class="permalink" href="#FuncTask">&#xb6;</a>
 					
 					
@@ -668,7 +668,7 @@ passing it into <a href="#RunTask">RunTask</a>.
 				
 			
 				
-				<h3 id="ScriptTask">func <a href="/src/github.com/amonks/runner/script_task.go?s=513:583#L11">ScriptTask</a>
+				<h3 id="ScriptTask">func <a href="/src/github.com/amonks/run/script_task.go?s=510:580#L11">ScriptTask</a>
 					<a class="permalink" href="#ScriptTask">&#xb6;</a>
 					
 					
@@ -692,7 +692,7 @@ $ bash -c &quot;$CMD&quot; 2&amp;&gt;1 /some/ui
 		
 			
 			
-			<h2 id="TaskMetadata">type <a href="/src/github.com/amonks/runner/task.go?s=745:3236#L20">TaskMetadata</a>
+			<h2 id="TaskMetadata">type <a href="/src/github.com/amonks/run/task.go?s=742:3230#L20">TaskMetadata</a>
 				<a class="permalink" href="#TaskMetadata">&#xb6;</a>
 				
 				
@@ -702,7 +702,7 @@ $ bash -c &quot;$CMD&quot; 2&amp;&gt;1 /some/ui
 
 			<pre>type TaskMetadata struct {
 <span id="TaskMetadata.ID"></span>    <span class="comment">// ID identifies a task, for example,</span>
-    <span class="comment">//   - for command line invocation, as in `$ runner &lt;id&gt;`</span>
+    <span class="comment">//   - for command line invocation, as in `$ run &lt;id&gt;`</span>
     <span class="comment">//   - in the TUI&#39;s task list.</span>
     ID <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>
 
@@ -777,7 +777,7 @@ $ bash -c &quot;$CMD&quot; 2&amp;&gt;1 /some/ui
 		
 			
 			
-			<h2 id="Tasks">type <a href="/src/github.com/amonks/runner/task.go?s=244:270#L3">Tasks</a>
+			<h2 id="Tasks">type <a href="/src/github.com/amonks/run/task.go?s=241:267#L3">Tasks</a>
 				<a class="permalink" href="#Tasks">&#xb6;</a>
 				
 				
@@ -798,7 +798,7 @@ Tasks into <a href="#RunTask">RunTask</a>.
 
 			
 				
-				<h3 id="Load">func <a href="/src/github.com/amonks/runner/taskfile.go?s=186:223#L5">Load</a>
+				<h3 id="Load">func <a href="/src/github.com/amonks/run/taskfile.go?s=166:203#L3">Load</a>
 					<a class="permalink" href="#Load">&#xb6;</a>
 					
 					
@@ -813,7 +813,7 @@ Tasks.
 
 			
 				
-				<h3 id="Tasks.Validate">func (Tasks) <a href="/src/github.com/amonks/runner/task.go?s=3455:3487#L86">Validate</a>
+				<h3 id="Tasks.Validate">func (Tasks) <a href="/src/github.com/amonks/run/task.go?s=3449:3481#L86">Validate</a>
 					<a class="permalink" href="#Tasks.Validate">&#xb6;</a>
 					
 					
@@ -831,7 +831,7 @@ describing the problems with the task set.
 		
 			
 			
-			<h2 id="UI">type <a href="/src/github.com/amonks/runner/ui.go?s=1090:1237#L18">UI</a>
+			<h2 id="UI">type <a href="/src/github.com/amonks/run/ui.go?s=1087:1234#L18">UI</a>
 				<a class="permalink" href="#UI">&#xb6;</a>
 				
 				
@@ -858,7 +858,7 @@ stopped. Since UIs implement <a href="#MultiWriter">MultiWriter</a>, they can be
 
 			
 				
-				<h3 id="NewPrinter">func <a href="/src/github.com/amonks/runner/ui.go?s=785:805#L11">NewPrinter</a>
+				<h3 id="NewPrinter">func <a href="/src/github.com/amonks/run/ui.go?s=782:802#L11">NewPrinter</a>
 					<a class="permalink" href="#NewPrinter">&#xb6;</a>
 					
 					
@@ -874,7 +874,7 @@ streams to its Stdout. The output is suitable for piping to a file.
 				
 			
 				
-				<h3 id="NewTUI">func <a href="/src/github.com/amonks/runner/ui.go?s=384:400#L2">NewTUI</a>
+				<h3 id="NewTUI">func <a href="/src/github.com/amonks/run/ui.go?s=381:397#L2">NewTUI</a>
 					<a class="permalink" href="#NewTUI">&#xb6;</a>
 					
 					
@@ -932,7 +932,7 @@ navigation for selecting a particular stream to inspect.
 				<tr>
 				
 					<td class="pkg-name" style="padding-left: 20px;">
-						<a href="cmd/runner/">runner</a>
+						<a href="cmd/run/">run</a>
 					</td>
 				
 					<td class="pkg-synopsis">

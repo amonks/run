@@ -1,30 +1,30 @@
-package runner_test
+package run_test
 
 import (
 	"log"
 	"os"
 	"sync"
 
-	"github.com/amonks/runner"
+	"github.com/amonks/run"
 )
 
-// In this example, we use components from Runner to build our own version of
-// the runner CLI tool. See cmd/runner for the source of the -real- runner CLI,
+// In this example, we use components from Run to build our own version of
+// the run CLI tool. See cmd/run for the source of the -real- run CLI,
 // which isn't too much more complex.
 func Example() {
-	tasks, err := runner.Load(".")
+	tasks, err := run.Load(".")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	run, err := runner.RunTask(".", tasks, "dev")
+	r, err := run.RunTask(".", tasks, "dev")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	ui := runner.NewTUI()
-	ui.Start(os.Stdin, os.Stdout, run.IDs())
-	run.Start(ui)
+	ui := run.NewTUI()
+	ui.Start(os.Stdin, os.Stdout, r.IDs())
+	r.Start(ui)
 
 	var wg sync.WaitGroup
 
@@ -34,13 +34,13 @@ func Example() {
 		if err := <-ui.Wait(); err != nil {
 			log.Fatal(err)
 		}
-		run.Stop()
+		r.Stop()
 	}()
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := <-run.Wait(); err != nil {
+		if err := <-r.Wait(); err != nil {
 			log.Fatal(err)
 		}
 		ui.Stop()

@@ -1,7 +1,7 @@
 //go:build tools
 // +build tools
 
-package runner
+package run
 
 import (
 	_ "github.com/goreleaser/goreleaser"

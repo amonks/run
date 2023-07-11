@@ -1,6 +1,6 @@
 exit 1
 
-runner:
+run:
   failed
 
 test:

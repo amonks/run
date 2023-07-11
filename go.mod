@@ -1,4 +1,4 @@
-module github.com/amonks/runner
+module github.com/amonks/run
 
 go 1.20
 

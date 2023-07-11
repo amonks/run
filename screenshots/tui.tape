@@ -4,7 +4,7 @@ Set Width 1200
 Set Height 800
 Set Shell fish
 
-Type "runner dev"
+Type "run dev"
 Sleep 1s
 Enter
 Sleep 10s

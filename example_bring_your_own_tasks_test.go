@@ -1,4 +1,4 @@
-package runner_test
+package run_test
 
 import (
 	"context"
@@ -8,25 +8,25 @@ import (
 	"strings"
 	"time"
 
-	"github.com/amonks/runner"
+	"github.com/amonks/run"
 )
 
 // In this example, we generate our own Task and run it.
 func Example_bringYourOwnTasks() {
-	tasks := runner.Tasks{
-		"custom": runner.FuncTask(func(ctx context.Context, w io.Writer) error {
+	tasks := run.Tasks{
+		"custom": run.FuncTask(func(ctx context.Context, w io.Writer) error {
 			w.Write([]byte("sleep"))
 			time.Sleep(1 * time.Second)
 			w.Write([]byte("done"))
 			return nil
-		}, runner.TaskMetadata{}),
+		}, run.TaskMetadata{}),
 	}
 
-	run, err := runner.RunTask(".", tasks, "custom")
+	run, err := run.RunTask(".", tasks, "custom")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Println(strings.Join(run.IDs(), ", "))
-	// Output: runner, custom
+	// Output: run, custom
 }

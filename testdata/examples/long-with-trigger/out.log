@@ -1,6 +1,6 @@
 long
 
-runner:
+run:
   watching testdata/examples/long-with-trigger/changed-file
   watched file change: {Remove:testdata/examples/long-with-trigger/changed-file}
   invalidating {trigger}

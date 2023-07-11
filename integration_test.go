@@ -1,4 +1,4 @@
-package runner_test
+package run_test
 
 import (
 	"errors"
@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/amonks/runner"
+	"github.com/amonks/run"
 	"github.com/muesli/reflow/indent"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
@@ -50,18 +50,18 @@ func testExample(t *testing.T, name string) error {
 		os.Remove(changedFilePath)
 	}()
 
-	tasks, err := runner.Load(path.Join("testdata/examples", name))
+	tasks, err := run.Load(path.Join("testdata/examples", name))
 	if err != nil {
 		return fmt.Errorf("Error loading tasks: %s", err)
 	}
 
-	run, err := runner.RunTask(path.Join("testdata/examples", name), tasks, "test")
+	r, err := run.RunTask(path.Join("testdata/examples", name), tasks, "test")
 	if err != nil {
 		return fmt.Errorf("Error running tasks: %s", err)
 	}
 
 	ui := newTestUI()
-	run.Start(ui)
+	r.Start(ui)
 
 	go func() {
 		time.Sleep(time.Second)
@@ -71,12 +71,12 @@ func testExample(t *testing.T, name string) error {
 	}()
 
 	var exit error
-	if run.Type() == runner.RunTypeShort {
-		exit = <-run.Wait()
+	if r.Type() == run.RunTypeShort {
+		exit = <-r.Wait()
 	} else {
 		time.Sleep(5 * time.Second)
 		exit = errors.New("long")
-		run.Stop()
+		r.Stop()
 	}
 
 	var log string
@@ -109,7 +109,7 @@ func testExample(t *testing.T, name string) error {
 		return fmt.Errorf("Unexpected output from example '%s', saved to fail.log:\n%s", name, dmp.DiffPrettyText(diff))
 	}
 
-	run.Stop()
+	r.Stop()
 
 	return nil
 }
@@ -125,8 +125,8 @@ type testUI struct {
 	mu   sync.Mutex
 }
 
-// ui implements runner.MultiWriter
-var _ runner.MultiWriter = &testUI{}
+// ui implements run.MultiWriter
+var _ run.MultiWriter = &testUI{}
 
 func (ui *testUI) Writer(id string) io.Writer {
 	ui.mu.Lock()

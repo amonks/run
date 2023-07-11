@@ -3,7 +3,7 @@ before:
     - go mod tidy
     - go generate ./...
 builds:
-  - main: ./cmd/runner
+  - main: ./cmd/run
     env:
       - CGO_ENABLED=0
     goos:

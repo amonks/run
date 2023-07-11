@@ -6,7 +6,7 @@ prereq:
   exit ok
   invalidating {test}
 
-runner:
+run:
   done
 
 test:
