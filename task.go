@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"unicode"
 )
 
 // Tasks is a map from IDs to Tasks. The string keys of the map must match the
@@ -116,6 +117,16 @@ func (tf Tasks) validateTask(ids map[string]struct{}, t Task) []error {
 	meta := t.Metadata()
 	if meta.ID == "" {
 		problems = append(problems, errors.New("task has no ID"))
+	}
+
+	if meta.ID == "interleaved" || meta.ID == "run" {
+		problems = append(problems, fmt.Errorf("'%s' is reserved and cannot be used as a task ID", meta.ID))
+	}
+
+	for _, c := range meta.ID {
+		if unicode.IsSpace(c) {
+			problems = append(problems, fmt.Errorf("task IDs cannot contain whitespace characters"))
+		}
 	}
 
 	if meta.Type != "long" && meta.Type != "short" {
