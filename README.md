@@ -176,9 +176,7 @@ while you make changes.
 
 #### Non-Interactive Printer UI
 
-|------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
 | <img alt="non-interactive output" src="https://github.com/amonks/runner/blob/main/screenshots/printer.gif?raw=true" /> | <img alt="redirected output" src="https://github.com/amonks/runner/blob/main/screenshots/nontty.gif?raw=true" /> |
-|------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
 
 Runner simply prints its output if either,
 
