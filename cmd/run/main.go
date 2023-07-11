@@ -1,7 +1,6 @@
 package main
 
 import (
-	_ "embed"
 	"flag"
 	"fmt"
 	"os"
@@ -235,17 +234,10 @@ func versionText() string {
 	return b.String()
 }
 
-//go:generate go run github.com/amonks/run/cmd/licenses credits.txt
-//go:embed credits.txt
-var credits string
-
 func creditsText() string {
-	return "CREDITS\n\n" + indent.String(wordwrap.String(credits, 78), 2)
+	return "CREDITS\n\n" + indent.String(wordwrap.String(run.Credits, 78), 2)
 }
 
-//go:generate cp ../../LICENSE.md ./LICENSE.md
-//go:embed LICENSE.md
-var license string
 var statement = "Run is free for noncommercial and small-business use, with a guarantee that fair, reasonable, and nondiscriminatory paid-license terms will be available for everyone else."
 
 func licenseText() string {
@@ -257,7 +249,7 @@ func licenseText() string {
 	b.WriteString(indent.String(wordwrap.String(statement, 70), 2) + "\n")
 	b.WriteString("\n")
 	b.WriteString("\n")
-	b.WriteString(indent.String(wordwrap.String(license, 70), 2))
+	b.WriteString(indent.String(wordwrap.String(run.License, 70), 2))
 	return b.String()
 }
 
