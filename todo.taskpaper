@@ -1,42 +1,51 @@
 TODO
-====
 
 TUI:
-  - see how things look on light backgrounds
-  - the tui spacing feels kind of weird
-  - key shortcut for force-retrigger
-  - colorhash task names in list
-  - slash-to-search in pager mode
-  - w-to-save in pager mode
+	- see how things look on light backgrounds
+	- the tui spacing feels kind of weird
+	- key shortcut for force-retrigger
+	- colorhash task names in list
+	- /-to-search in pager mode
+	- w-to-save in pager mode
 
 runner:
-  - smells like a deadlock: https://github.com/amonks/run/actions/runs/5517437587/jobs/10060053339
-  - any use-cases for periodic invalidation?
+	- smells like a deadlock: https://github.com/amonks/run/actions/runs/5517437587/jobs/10060053339
+	- any use-cases for periodic invalidation?
 
 cli:
-  - colorize help output lol why not
-  - flag to print task list
-  - flag to output parsed task set as json or something?
+	- colorize help output lol why not
+	- flag to print task list
+	- flag to output parsed task set as json or something?
 
 task:
-  - Validate task set before running
-  - Validate should check for reserved task names (currently: "interleaved", "runner")
+	- Validate task set before running
+	- Validate should check for reserved task names (currently: "interleaved", "runner")
 
-think:
-  - all these mutexes sure are gross; can we do more message passing instead?
+doc:
+	- add cli flag reference to readme
 
-maybe:
-  Auto-exit the UI when a short run ends, and then print output on-exit. Maybe
-  best of both words? (the logs don't just disappear, plus you get multiplexing
-  while the thing runs, which might help if it's long-ish). Downside is that if
-  the run is _very_ short, the flash of TUI might be jarring.
+no-cmd?:
+	see 2a24f9e9313798966cf1ba81d5d435cd461f45fb
+	the ./cmd/run subpackage makes go:embed annoying. do we need it?
+	if we make runner a main package, can you still use it as a library the same?
 
-maybe:
-  Tasks can't take any input. Not flags, not stdin, not nothin else besides.
-  One dogfoody use case for this would be a tag-and-release script for Run,
-  which would require specifying a version identifier somehow.
+concurrency model:
+	- all these mutexes sure are gross; can we do more message passing instead?
 
-  "not run's purview" is a reasonable answer.
+always-tui?:
+	Auto-exit the UI when a short run ends, and then print output on-exit. Maybe
+	best of both words? (the logs don't just disappear, plus you get multiplexing
+	while the thing runs, which might help if it's long-ish). Downside is that if
+	the run is _very_ short, the flash of TUI might be jarring.
 
-  "tasks can declare structured inputs, which the UI can handle appropriately"
-  might be fun.
+input?:
+	Tasks can't take any input. Not flags, not stdin, not nothin else besides.
+	One dogfoody use case for this would be a tag-and-release script for Run,
+	which would require specifying a version identifier somehow.
+
+	"not run's purview" is a reasonable answer.
+
+	"tasks can declare structured inputs, which the UI can handle appropriately"
+	might be fun.
+
+
