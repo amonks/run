@@ -105,11 +105,15 @@ func (ts Tasks) IDs() []string {
 // [error.Error] will return a formatted multiline string
 // describing the problems with the task set.
 func (tf Tasks) Validate() error {
+	var problems []string
+
 	ids := map[string]struct{}{}
-	for _, t := range tf {
+	for id, t := range tf {
+		if id != t.Metadata().ID {
+			problems = append(problems, fmt.Sprintf("- task '%s' has mismatched key '%s'", t.Metadata().ID, id))
+		}
 		ids[t.Metadata().ID] = struct{}{}
 	}
-	var problems []string
 	for _, t := range tf {
 		for _, err := range tf.validateTask(ids, t) {
 			problems = append(problems, "- "+err.Error())
@@ -140,18 +144,18 @@ func (tf Tasks) validateTask(ids map[string]struct{}, t Task) []error {
 	}
 
 	if meta.Type != "long" && meta.Type != "short" {
-		problems = append(problems, fmt.Errorf("task %s has invalid type '%s', must be 'long' or 'short'", meta.ID, meta.Type))
+		problems = append(problems, fmt.Errorf("task '%s' has invalid type '%s', must be 'long' or 'short'", meta.ID, meta.Type))
 	}
 
 	for _, id := range meta.Dependencies {
 		if _, ok := ids[id]; !ok {
-			problems = append(problems, fmt.Errorf("task %s lists dependency '%s', which is not the ID of a task", meta.ID, id))
+			problems = append(problems, fmt.Errorf("task '%s' lists dependency '%s', which is not the ID of a task", meta.ID, id))
 		}
 	}
 
 	for _, id := range meta.Triggers {
 		if _, ok := ids[id]; !ok {
-			problems = append(problems, fmt.Errorf("task %s lists trigger '%s', which is not the ID of a task", meta.ID, id))
+			problems = append(problems, fmt.Errorf("task '%s' lists trigger '%s', which is not the ID of a task", meta.ID, id))
 		}
 	}
 

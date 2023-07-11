@@ -178,7 +178,7 @@ wg.Wait()
         time.Sleep(1 * time.Second)
         w.Write([]byte(&#34;done&#34;))
         return nil
-    }, run.TaskMetadata{}),
+    }, run.TaskMetadata{ID: &#34;custom&#34;, Type: &#34;short&#34;}),
 }
 
 run, err := run.RunTask(&#34;.&#34;, tasks, &#34;custom&#34;)
