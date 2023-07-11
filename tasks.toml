@@ -1,4 +1,27 @@
 [[task]]
+  id = "build"
+  type = "short"
+  dependencies = ["test", "screenshots", "generate-docs"]
+  cmd = """
+    echo "Doing a test build..."
+    go run github.com/goreleaser/goreleaser release --snapshot --clean
+    echo ""
+    echo "Done. Commit the changes, if any, make a git tag, push it, and then"
+    echo "hit New Release in github."
+    echo ""
+    echo "    git add ."
+    echo "    git commit"
+    echo "    set version v0.0.0-beta.0"
+    echo "    git tag -a $version -m $version"
+    echo "    git push $version"
+  """
+
+[[task]]
+  id = "test"
+  type = "short"
+  cmd = "go test -v ."
+
+[[task]]
   id = "install"
   type = "short"
   dependencies = ["generate"]
