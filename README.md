@@ -27,7 +27,7 @@
   """
 ```
 
-_find a full example configuration in the [example folder](https://github.com/amonks/runner/tree/amonks/table/example)_
+_Find a full example configuration in the [example folder](https://github.com/amonks/runner/tree/amonks/table/example)._
 
 Runner runs a collection of programs specified in tasks.toml files, and
 provides a UI for inspecting their execution. Runner's interactive UI for
