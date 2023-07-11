@@ -115,6 +115,8 @@
     sed -i -e 's%"/lib%"/run/lib%g' index.html
     sed -i -e '/topbar/,+11d' index.html
     sed -i -e '/footer/,+8d' index.html
+    sed -i -e '/#pkg-subdirectories/,+1d' index.html
+    sed -i -e '/"pkg-subdirectories/,+40d' index.html   # INSANELY BRITTLE; FIX THIS
     rm index.html-e
     cd ..
 
