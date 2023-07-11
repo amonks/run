@@ -1,17 +1,40 @@
 package runner
 
 import (
+	"os"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/rjeczalik/notify"
 )
 
-func watch(path string) (<-chan []notify.EventInfo, func()) {
+type eventInfo struct {
+	path  string
+	event string
+}
+
+func watch(watchPath string) (<-chan []eventInfo, func(), error) {
 	var stopped bool
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, nil, err
+	}
 
 	// Start listening for events
 	c := make(chan notify.EventInfo)
+	out := make(chan eventInfo)
+
+	go func() {
+		for ev := range c {
+			out <- eventInfo{
+				path:  strings.TrimPrefix(ev.Path(), cwd+"/"),
+				event: strings.TrimPrefix(ev.Event().String(), "notify."),
+			}
+		}
+		close(out)
+	}()
 
 	stop := func() {
 		if stopped {
@@ -23,23 +46,23 @@ func watch(path string) (<-chan []notify.EventInfo, func()) {
 	}
 
 	// Start the watcher.
-	if err := notify.Watch(path, c, notify.All); err != nil {
+	if err := notify.Watch(watchPath, c, notify.All); err != nil {
 		stop()
 	}
 
-	return debounce(500*time.Millisecond, c), stop
+	return debounce(500*time.Millisecond, out), stop, nil
 }
 
-type debounced struct {
+type debounced[T any] struct {
 	mu      sync.Mutex
-	coll    []notify.EventInfo
+	coll    []T
 	waiting bool
 }
 
-func debounce(dur time.Duration, c <-chan notify.EventInfo) <-chan []notify.EventInfo {
-	debounced := &debounced{}
+func debounce[T any](dur time.Duration, c <-chan T) <-chan []T {
+	debounced := &debounced[T]{}
 
-	debouncedC := make(chan []notify.EventInfo)
+	debouncedC := make(chan []T)
 
 	go func() {
 		for ev := range c {
