@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -176,14 +177,50 @@ func usageText() string {
 }
 
 func flagText() string {
-	b := &strings.Builder{}
-	fmt.Fprintln(b, "FLAGS")
-	flag.CommandLine.SetOutput(b)
-	flag.PrintDefaults()
-	flag.CommandLine.SetOutput(os.Stdout)
+	var b strings.Builder
+	fmt.Fprintln(&b, "FLAGS")
+
+	f := flag.CommandLine
+
+	f.VisitAll(func(f *flag.Flag) {
+		fmt.Fprintf(&b, "  -%s", f.Name) // Two spaces before -; see next two comments.
+		name, usage := flag.UnquoteUsage(f)
+		if len(name) > 0 {
+			b.WriteString("=")
+			b.WriteString(name)
+		}
+		// Print the default value only if it differs to the zero value
+		// for this flag type.
+		if isZero := isZeroValue(f, f.DefValue); !isZero {
+			fmt.Fprintf(&b, " (default %q)", f.DefValue)
+		}
+		b.WriteString("\n")
+
+		usage = strings.ReplaceAll(usage, "\n", "\n    \t")
+		usage = wordwrap.String(usage, 52)
+		usage = indent.String(usage, 8)
+		b.WriteString(usage)
+
+		b.WriteString("\n")
+	})
 	return b.String()
 }
 
+// isZeroValue determines whether the string represents the zero
+// value for a flag.
+func isZeroValue(f *flag.Flag, value string) (ok bool) {
+	// Build a zero value of the flag's Value type, and see if the
+	// result of calling its String method equals the value passed in.
+	// This works unless the Value type is itself an interface type.
+	typ := reflect.TypeOf(f.Value)
+	var z reflect.Value
+	if typ.Kind() == reflect.Pointer {
+		z = reflect.New(typ.Elem())
+	} else {
+		z = reflect.Zero(typ)
+	}
+	return value == z.Interface().(flag.Value).String()
+}
 func versionText() string {
 	b := &strings.Builder{}
 	fmt.Fprintln(b, "VERSION")
