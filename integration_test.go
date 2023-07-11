@@ -15,6 +15,7 @@ import (
 
 	"github.com/amonks/runner"
 	"github.com/muesli/reflow/indent"
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 func TestIntegrationExamples(t *testing.T) {
@@ -34,6 +35,8 @@ func TestIntegrationExamples(t *testing.T) {
 }
 
 func testExample(t *testing.T, name string) error {
+	dmp := diffmatchpatch.New()
+
 	changedFilePath := path.Join("testdata/examples", name, "changed-file")
 	if f, err := os.Create(changedFilePath); err != nil {
 		return err
@@ -102,7 +105,8 @@ func testExample(t *testing.T, name string) error {
 		if err := os.WriteFile(errFilePath, []byte(log), 0644); err != nil {
 			return err
 		}
-		return fmt.Errorf("Unexpected output from example '%s', saved to fail.log", name)
+		diff := dmp.DiffMain(string(expected), log, false)
+		return fmt.Errorf("Unexpected output from example '%s', saved to fail.log:\n%s", name, dmp.DiffPrettyText(diff))
 	}
 
 	run.Stop()
