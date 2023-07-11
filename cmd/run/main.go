@@ -27,7 +27,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	taskID := os.Args[len(os.Args)-1]
+	taskID := flag.Arg(0)
 	r, err := run.RunTask(*chosenDir, allTasks, taskID)
 	if err != nil {
 		fmt.Println(err)
