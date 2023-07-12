@@ -460,13 +460,12 @@ func (r *Run) handleEvent(ev event) {
 			if t.Metadata().Type == "long" {
 				go func() {
 					time.Sleep(50 * time.Millisecond)
-					defer r.mu.Lock("ready").Unlock()
-					if r.counters[ev.task] != counter {
+					if !r.counterIs(ev.task, counter) {
 						return
 					}
-					r.ran[ev.task] = true
-					if r.states[ev.task] == taskStateRunning {
-						go r.send(evTaskReady{ev.task})
+					r.setTaskRan(ev.task)
+					if r.taskState(ev.task) == taskStateRunning {
+						r.send(evTaskReady{ev.task})
 					}
 				}()
 			}
