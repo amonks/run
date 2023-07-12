@@ -1,5 +1,5 @@
 [[task]]
   id = "test"
   type = "short"
-  cmd = "echo 3"
+  cmd = "exit 0"
 

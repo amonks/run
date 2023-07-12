@@ -13,8 +13,14 @@ import (
 func Load(root string) (Tasks, error) {
 	allTasks := map[string]taskfileTask{}
 
+	seenDirs := map[string]struct{}{}
 	var ingestTaskMap func(dir string) error
 	ingestTaskMap = func(dir string) error {
+		if _, ok := seenDirs[dir]; ok {
+			return nil
+		}
+		seenDirs[dir] = struct{}{}
+
 		relativeDir := strings.TrimPrefix(dir, root)
 		relativeDir = strings.TrimPrefix(relativeDir, "/")
 		if relativeDir == "" {
@@ -42,7 +48,11 @@ func Load(root string) (Tasks, error) {
 			}
 		}
 
+		// Reload referenced taskfiles (if there are any)
 		for id := range depSet {
+			if path.Dir(id) == relativeDir {
+				continue
+			}
 			// ignore the task ID and just load the whole
 			// referenced taskfile
 			if err := ingestTaskMap(path.Join(dir, strings.TrimPrefix(path.Dir(id), relativeDir+"/"))); err != nil {
@@ -89,11 +99,11 @@ type taskfile struct {
 }
 
 type taskfileTask struct {
-	ID string `toml:"id"`
-	Type string `toml:"type"`
+	ID           string   `toml:"id"`
+	Type         string   `toml:"type"`
 	Dependencies []string `toml:"dependencies"`
-	Triggers []string `toml:"triggers"`
-	Watch []string `toml:"watch"`
+	Triggers     []string `toml:"triggers"`
+	Watch        []string `toml:"watch"`
 	// CMD is the command to run. It runs in a new bash process, as in,
 	//     $ bash -c "$CMD"
 	// CMD can have many lines.
