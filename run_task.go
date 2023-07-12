@@ -214,8 +214,15 @@ func (r *Run) Start(out MultiWriter) error {
 	}
 
 	// Start all the zero-dep tasks. When they finish, they'll trigger
-	// their dependents.
-	for id, t := range r.tasks {
+	// their dependents. Start them in alphabetical order to avoid
+	// randomness.
+	var ids []string
+	for id := range r.tasks {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	for _, id := range ids {
+		t := r.tasks[id]
 		if len(t.Metadata().Dependencies) > 0 {
 			continue
 		}
