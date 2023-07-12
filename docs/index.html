@@ -682,15 +682,15 @@ passing it into <a href="#RunTask">RunTask</a>.
 				
 			
 				
-				<h3 id="ScriptTask">func <a href="https://github.com/amonks/run/blob/main/script_task.go#L21">ScriptTask</a>
+				<h3 id="ScriptTask">func <a href="https://github.com/amonks/run/blob/main/script_task.go#L23">ScriptTask</a>
 					<a class="permalink" href="#ScriptTask">&#xb6;</a>
 					
 					
 				</h3>
 				<pre>func ScriptTask(script <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>, dir <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>, metadata <a href="#TaskMetadata">TaskMetadata</a>) <a href="#Task">Task</a></pre>
-				<p>ScriptTask produces a runnable Task from a bash script and working directory.
-multiple lines. The script will execute in metadata.Dir. The script&apos;s Stdout
-and Stderr will be provided by the Run, and will be forwarded to the UI. The
+				<p>ScriptTask produces a runnable Task from a bash script and working
+directory. The script will execute in metadata.Dir. The script&apos;s Stdout and
+Stderr will be provided by the Run, and will be forwarded to the UI. The
 script will not get a Stdin.
 <p>Script runs in a new bash process, and can have multiple lines. It is run
 basically like this:

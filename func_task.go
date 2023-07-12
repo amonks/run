@@ -10,7 +10,7 @@ import (
 // FuncTask produces a runnable Task from a go function. metadata.Dir is ignored.
 func FuncTask(fn func(ctx context.Context, w io.Writer) error, metadata TaskMetadata) Task {
 	return &funcTask{
-		mu:       newMutex(fmt.Sprintf("script")),
+		mu:       newMutex(fmt.Sprintf("funcTask")),
 		fn:       fn,
 		metadata: metadata,
 	}
@@ -39,7 +39,10 @@ func (t *funcTask) Metadata() TaskMetadata {
 }
 
 func (t *funcTask) Start(stdout io.Writer) error {
-	_ = t.Stop()
+	if err := t.Stop(); err != nil {
+		return err
+	}
+
 	defer t.mu.Lock("Start").Unlock()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -59,6 +62,10 @@ func (t *funcTask) Wait() <-chan error {
 	defer t.mu.Lock("Wait").Unlock()
 
 	c := make(chan error)
+	if t.cancel == nil {
+		close(c)
+		return c
+	}
 	t.waiters = append(t.waiters, c)
 	return c
 }
@@ -73,14 +80,24 @@ func (t *funcTask) notify(err error) {
 		}
 		close(w)
 	}
+
+	t.cancel = nil
+	t.waiters = nil
 }
 
 func (t *funcTask) Stop() error {
-	waitC := t.Wait()
-	defer t.mu.Lock("Stop").Unlock()
-
+	if !t.isRunning() {
+		return nil
+	}
 	t.cancel()
-	err := <-waitC
+	w := t.Wait()
 
-	return err
+	<-w
+
+	return nil
+}
+
+func (t *funcTask) isRunning() bool {
+	defer t.mu.Lock("hasStarted").Unlock()
+	return t.cancel != nil
 }

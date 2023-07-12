@@ -1,17 +1,19 @@
 package run
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"strings"
 	"syscall"
 	"time"
 )
 
-// ScriptTask produces a runnable Task from a bash script and working directory.
-// multiple lines. The script will execute in metadata.Dir. The script's Stdout
-// and Stderr will be provided by the Run, and will be forwarded to the UI. The
+// ScriptTask produces a runnable Task from a bash script and working
+// directory. The script will execute in metadata.Dir. The script's Stdout and
+// Stderr will be provided by the Run, and will be forwarded to the UI. The
 // script will not get a Stdin.
 //
 // Script runs in a new bash process, and can have multiple lines. It is run
@@ -35,7 +37,6 @@ type scriptTask struct {
 	metadata TaskMetadata
 
 	cmd     *exec.Cmd
-	stdout  io.Writer
 	waiters []chan<- error
 }
 
@@ -50,40 +51,27 @@ func (t *scriptTask) Metadata() TaskMetadata {
 }
 
 func (t *scriptTask) Start(stdout io.Writer) error {
-	_ = t.Stop()
-	defer t.mu.Lock("Start").Unlock()
+	if err := t.Stop(); err != nil {
+		return err
+	}
 
-	t.cmd = nil
-	t.waiters = nil
-
-	if t.script == "" {
+	if !t.hasScript() {
 		return nil
 	}
 
-	t.cmd = exec.Command("/bin/bash", "-c", t.script)
-	t.cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	t.cmd.Dir = t.dir
-	t.cmd.Stdout = stdout
-	t.cmd.Stderr = stdout
-
 	// Start the CMD.
-	if err := t.cmd.Start(); err != nil {
+	if err := t.startCmd(stdout); err != nil {
 		return err
 	}
 
 	// Handle the CMD's exit.
 	go func() {
 		// already exited
-		if t.cmd.ProcessState != nil {
-			if code := t.cmd.ProcessState.ExitCode(); code != 0 {
-				t.notify(fmt.Errorf("exit %d", code))
-			} else {
-				t.notify(nil)
-			}
-			return
+		if state := t.processState(); state != nil {
+			panic("already exited")
 		}
 
-		if state, err := t.cmd.Process.Wait(); err != nil {
+		if state, err := t.process().Wait(); err != nil {
 			t.notify(err)
 		} else if code := state.ExitCode(); code != 0 {
 			t.notify(fmt.Errorf("exit %d", code))
@@ -103,9 +91,83 @@ func (t *scriptTask) Wait() <-chan error {
 	return c
 }
 
+// Stop does its best to stop the task. First it tries SIGINT, then, if the
+// task is still running after 2 seconds, it tries SIGKILL. Then it returns any
+// errors it encountered along the way.
+func (t *scriptTask) Stop() error {
+	defer t.cleanup()
+
+	var errs []error
+
+	if !t.hasScript() {
+		// weird, I forget why we need this...
+		t.notify(nil)
+
+		return errors.Join(errs...)
+	}
+
+	// Never started or already stopped.
+	if !t.hasStarted() || t.hasStopped() {
+		return errors.Join(errs...)
+	}
+
+	// Try to SIGINT the pgroup
+	if err := t.sigint(); err != nil {
+		errs = append(errs, err)
+	}
+
+	// Give it 2 seconds to die gracefully after the SIGINT.
+	select {
+	case <-t.Wait():
+		t.mu.printf("Stop: sigint worked\n")
+		return errors.Join(errs...)
+	case <-time.After(2 * time.Second):
+		t.mu.printf("Stop: timeout\n")
+	}
+
+	// It's still alive. Resort to SIGKILL.
+	if err := t.sigkill(); err != nil {
+		errs = append(errs, err)
+	}
+
+	return errors.Join(errs...)
+}
+
+func (t *scriptTask) startCmd(stdout io.Writer) error {
+	defer t.mu.Lock("startCmd").Unlock()
+	t.cmd = exec.Command("/bin/bash", "-c", t.script)
+	t.cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	t.cmd.Dir = t.dir
+	t.cmd.Stdout = stdout
+	t.cmd.Stderr = stdout
+	if err := t.cmd.Start(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *scriptTask) sigint() error {
+	defer t.mu.Lock("sigint").Unlock()
+	return syscall.Kill(-t.cmd.Process.Pid, syscall.SIGINT)
+}
+
+func (t *scriptTask) sigkill() error {
+	defer t.mu.Lock("sigkill").Unlock()
+	if err := syscall.Kill(-t.cmd.Process.Pid, syscall.SIGKILL); err != nil && !strings.Contains(err.Error(), "no such process") {
+		t.mu.printf("Stop: sigkill error %s\n", err)
+		return err
+	}
+	return nil
+}
+
+func (t *scriptTask) cleanup() {
+	defer t.mu.Lock("cleanup").Unlock()
+	t.cmd = nil
+	t.waiters = nil
+}
+
 func (t *scriptTask) notify(err error) {
 	defer t.mu.Lock("notify").Unlock()
-
 	for _, w := range t.waiters {
 		select {
 		case w <- err:
@@ -115,50 +177,27 @@ func (t *scriptTask) notify(err error) {
 	}
 }
 
-func (t *scriptTask) Stop() error {
-	waitC := t.Wait()
-	t.mu.Lock("Stop")
+func (t *scriptTask) process() *os.Process {
+	defer t.mu.Lock("process").Unlock()
+	return t.cmd.Process
+}
 
-	if t.script == "" {
-		t.mu.Unlock()
-		t.notify(nil)
-		return nil
-	}
+func (t *scriptTask) processState() *os.ProcessState {
+	defer t.mu.Lock("processState").Unlock()
+	return t.cmd.ProcessState
+}
 
-	if t.cmd == nil || t.cmd.ProcessState != nil {
-		// never started or already stopped
-		t.mu.Unlock()
-		return nil
-	}
+func (t *scriptTask) hasScript() bool {
+	defer t.mu.Lock("hasScript").Unlock()
+	return t.script != ""
+}
 
-	// Try to SIGINT the pgroup
-	t.mu.printf("Stop: will sigint\n")
-	if err := syscall.Kill(-t.cmd.Process.Pid, syscall.SIGINT); err != nil {
-		t.mu.printf("Stop: sigint worked\n")
-		t.mu.Unlock()
-		return err
-	}
-	t.mu.printf("Stop: waiting\n")
-	t.mu.Unlock()
+func (t *scriptTask) hasStarted() bool {
+	defer t.mu.Lock("hasStarted").Unlock()
+	return t.cmd != nil
+}
 
-	// Give it 2 seconds to die gracefully after the SIGINT.
-	select {
-	case <-time.After(2 * time.Second):
-		t.mu.printf("Stop: timeout\n")
-	case err := <-waitC:
-		t.mu.printf("Stop: sigint worked\n")
-		return err
-	}
-
-	defer t.mu.Lock("stop 2").Unlock()
-
-	// It's still alive. Resort to SIGKILL.
-	t.mu.printf("Stop: trying sigkill\n")
-	if err := syscall.Kill(-t.cmd.Process.Pid, syscall.SIGKILL); err != nil && !strings.Contains(err.Error(), "no such process") {
-		t.mu.printf("Stop: sigkill error %s\n", err)
-		return err
-	}
-	t.mu.printf("Stop: did sigkill\n")
-
-	return nil
+func (t *scriptTask) hasStopped() bool {
+	defer t.mu.Lock("hasStarted").Unlock()
+	return t.cmd != nil
 }
