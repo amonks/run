@@ -12,6 +12,7 @@ TUI:
 	- colorhash task names in list
 	- /-to-search in pager mode
 	- w-to-save in pager mode
+	- g-to-make-gist in pager mode
 	- interleaved output isn't wrapped. This is correct when logging to
 	  stdout, but is not correct when logging into a TUI.
 
@@ -27,6 +28,7 @@ runner:
 cli:
 	- colorize help output lol why not
 	- flag to output parsed task set as json or something?
+	- fzf-style task selector if run with no args and folder has tasks.toml
 
 doc:
 	- add cli flag reference to readme? or... add the entire -help output
