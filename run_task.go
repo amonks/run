@@ -314,8 +314,6 @@ const (
 )
 
 func (r *Run) handleEvent(ev event) {
-	defer r.mu.Lock("handleEvent:" + ev.eventType()).Unlock()
-
 	switch ev := ev.(type) {
 	case evFatal:
 		r.printf("run", logStyle, "fatal")
@@ -323,7 +321,7 @@ func (r *Run) handleEvent(ev event) {
 		return
 
 	case evTaskReady:
-		taskIDs := r.byDep[ev.task]
+		taskIDs := r.idsByDep(ev.task)
 		if len(taskIDs) > 0 {
 			r.printf(ev.task, logStyle, "ready, invalidating {%s}", strings.Join(taskIDs, ", "))
 			for _, id := range taskIDs {
@@ -333,12 +331,13 @@ func (r *Run) handleEvent(ev event) {
 		}
 
 	case evTaskExit:
-		if r.states[ev.task] == taskStateStopping {
+		state := r.taskState(ev.task)
+		if state == taskStateStopping {
 			r.printf(ev.task, logStyle, "stopped")
-			r.states[ev.task] = taskStateStopped
+			r.setTaskState(ev.task, taskStateStopped)
 			return
 		}
-		if r.states[ev.task] == taskStateRestarting {
+		if state == taskStateRestarting {
 			return
 		}
 
@@ -348,14 +347,14 @@ func (r *Run) handleEvent(ev event) {
 			r.printf(ev.task, errorStyle, "exit: %s", ev.err.Error())
 		}
 
-		r.ran[ev.task] = true
+		r.setTaskRan(ev.task)
 
 		// restart if
 		// - task is long (to keepalive), or,
 		// - run is long and exit was failure (to retry)
-		t := r.tasks[ev.task]
-		if t.Metadata().Type == "long" || (r.runType == RunTypeLong && ev.err != nil) {
-			r.states[ev.task] = taskStateRestarting
+		meta := r.taskMetadata(ev.task)
+		if meta.Type == "long" || (r.getRunType() == RunTypeLong && ev.err != nil) {
+			r.setTaskState(ev.task, taskStateRestarting)
 			go func() {
 				r.printf(ev.task, logStyle, "retrying in 1 second")
 				time.Sleep(1 * time.Second)
@@ -365,25 +364,25 @@ func (r *Run) handleEvent(ev event) {
 			return
 		}
 
-		r.states[ev.task] = taskStateStopped
+		r.setTaskState(ev.task, taskStateStopped)
 
 		// If exit was unexpected and this was a short run, we're done now.
-		if r.runType == RunTypeShort && ev.err != nil {
+		if r.getRunType() == RunTypeShort && ev.err != nil {
 			r.printf("run", logStyle, "failed")
-			go r.stop(ev.err)
+			r.stop(ev.err)
 			return
 		}
 
 		// if exit was exepected success, it should
 		// - invalidate all tasks that list this as a trigger
 		// - invalidate short tasks that list this as a dependency
-		if t.Metadata().Type == "short" && ev.err == nil {
+		if meta.Type == "short" && ev.err == nil {
 			setToInvalidate := map[string]struct{}{}
-			for _, id := range r.byTrigger[ev.task] {
+			for _, id := range r.idsByTrigger(ev.task) {
 				setToInvalidate[id] = struct{}{}
 			}
-			for _, id := range r.byDep[ev.task] {
-				if r.tasks[id].Metadata().Type == "short" || r.states[id] == taskStateNotStarted {
+			for _, id := range r.idsByDep(ev.task) {
+				if r.taskMetadata(id).Type == "short" || r.taskState(id) == taskStateNotStarted {
 					setToInvalidate[id] = struct{}{}
 				}
 			}
@@ -403,17 +402,10 @@ func (r *Run) handleEvent(ev event) {
 		}
 
 		// If this is a short run, check if we are done now
-		if r.runType == RunTypeShort {
-			allStopped := true
-			for _, s := range r.states {
-				if s != taskStateStopped {
-					allStopped = false
-					break
-				}
-			}
-			if allStopped {
+		if r.getRunType() == RunTypeShort {
+			if r.allStopped() {
 				r.printf("run", logStyle, "done")
-				go r.stop(ev.err)
+				r.stop(ev.err)
 				return
 			}
 		}
@@ -424,7 +416,7 @@ func (r *Run) handleEvent(ev event) {
 			evs = append(evs, ev.event+":"+ev.path)
 		}
 		r.printf("run", logStyle, "watched file change: {%s}", strings.Join(evs, ", "))
-		taskIDs := r.byWatch[ev.path]
+		taskIDs := r.idsByWatch(ev.path)
 		if len(taskIDs) > 0 {
 			r.printf("run", logStyle, "invalidating {%s}", strings.Join(taskIDs, ", "))
 			for _, id := range taskIDs {
@@ -434,19 +426,18 @@ func (r *Run) handleEvent(ev event) {
 		}
 
 	case evInvalidateTask:
-		t := r.tasks[ev.task]
+		t := r.getTask(ev.task)
 		for _, dep := range t.Metadata().Dependencies {
-			if !r.ran[dep] {
+			if !r.taskRan(dep) {
 				return
 			}
 		}
 
 		r.printf(ev.task, logStyle, "starting")
-		if r.states[ev.task] == taskStateRunning {
-			r.states[ev.task] = taskStateRestarting
+		if r.taskState(ev.task) == taskStateRunning {
+			r.setTaskState(ev.task, taskStateRestarting)
 		}
-		r.counters[ev.task] += 1
-		counter := r.counters[ev.task]
+		counter := r.incrementCounter(ev.task)
 
 		go func() {
 			if err := t.Start(r.out.Writer(ev.task)); err != nil {
@@ -454,12 +445,10 @@ func (r *Run) handleEvent(ev event) {
 				return
 			}
 
-			r.mu.Lock("set-to-running")
-			if r.counters[ev.task] != counter {
+			if !r.counterIs(ev.task, counter) {
 				return
 			}
-			r.states[ev.task] = taskStateRunning
-			r.mu.Unlock()
+			r.setTaskState(ev.task, taskStateRunning)
 
 			if t.Metadata().Type == "long" {
 				go func() {
@@ -476,16 +465,11 @@ func (r *Run) handleEvent(ev event) {
 			}
 			err := <-t.Wait()
 
-			r.mu.Lock("done-waiting")
-			if r.counters[ev.task] != counter {
-				r.mu.Unlock()
+			if !r.counterIs(ev.task, counter) {
 				return
 			}
-			if r.states[ev.task] == taskStateRunning {
-				r.mu.Unlock()
+			if r.taskState(ev.task) == taskStateRunning {
 				r.send(evTaskExit{ev.task, err})
-			} else {
-				r.mu.Unlock()
 			}
 		}()
 
@@ -495,14 +479,86 @@ func (r *Run) handleEvent(ev event) {
 }
 
 func (r *Run) send(ev event) {
-	r.mu.Lock("send")
-	if r.stopped {
-		r.mu.Unlock()
+	if r.isStopped() {
 		return
 	}
-	r.mu.Unlock()
-
 	r.events <- ev
+}
+
+func (r *Run) isStopped() bool {
+	defer r.mu.Lock("isStopped").Unlock()
+	return r.stopped
+}
+
+func (r *Run) allStopped() bool {
+	defer r.mu.Lock("allStopped").Unlock()
+	for _, state := range r.states {
+		if state != taskStateStopped {
+			return false
+		}
+	}
+	return true
+}
+
+func (r *Run) getRunType() RunType {
+	defer r.mu.Lock("getRunType").Unlock()
+	return r.runType
+}
+
+func (r *Run) idsByWatch(path string) []string {
+	defer r.mu.Lock("idsByWatch").Unlock()
+	return r.byWatch[path]
+}
+
+func (r *Run) idsByTrigger(id string) []string {
+	defer r.mu.Lock("idsByTrigger").Unlock()
+	return r.byTrigger[id]
+}
+
+func (r *Run) idsByDep(id string) []string {
+	defer r.mu.Lock("idsByDep").Unlock()
+	return r.byDep[id]
+}
+
+func (r *Run) getTask(id string) Task {
+	defer r.mu.Lock("task").Unlock()
+	return r.tasks[id]
+}
+
+func (r *Run) taskMetadata(id string) TaskMetadata {
+	defer r.mu.Lock("taskMetadata").Unlock()
+	return r.tasks[id].Metadata()
+}
+
+func (r *Run) taskState(id string) taskState {
+	defer r.mu.Lock("taskState").Unlock()
+	return r.states[id]
+}
+
+func (r *Run) setTaskState(id string, state taskState) {
+	defer r.mu.Lock("setTaskState").Unlock()
+	r.states[id] = state
+}
+
+func (r *Run) taskRan(id string) bool {
+	defer r.mu.Lock("taskRan").Unlock()
+	return r.ran[id]
+}
+
+func (r *Run) setTaskRan(id string) {
+	defer r.mu.Lock("setTaskRan").Unlock()
+	r.ran[id] = true
+}
+
+func (r *Run) incrementCounter(id string) int {
+	defer r.mu.Lock("incrementCounter").Unlock()
+	r.counters[id] += 1
+	return r.counters[id]
+}
+
+func (r *Run) counterIs(id string, val int) bool {
+	defer r.mu.Lock("counterIs").Unlock()
+	return r.counters[id] == val
 }
 
 type event interface {
