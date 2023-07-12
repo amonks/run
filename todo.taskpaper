@@ -1,16 +1,28 @@
 TODO
 
+bugs:
+	- when running a short task in the TUI, run completion does not kill the tui (good) but _does_ log to stdout, which breaks the tui (bad)
+	- if the root task has no cmd, and the run is short, the run never exits
+
 TUI:
 	- see how things look on light backgrounds
 	- the tui spacing feels kind of weird
 	- key shortcut for force-retrigger
+	- mark tasks in ui based on on state
 	- colorhash task names in list
 	- /-to-search in pager mode
 	- w-to-save in pager mode
+	- interleaved output isn't wrapped. This is correct when logging to
+	  stdout, but is not correct when logging into a TUI.
+
+tasks:
+	- validate for cycles
 
 runner:
-	- smells like a deadlock: https://github.com/amonks/run/actions/runs/5517437587/jobs/10060053339
 	- any use-cases for periodic invalidation?
+	- the "run" output is really just "file watches", which we could easily
+	  move into the individual per-task streams. Either get rid of "run" or
+	  do more with it.
 
 cli:
 	- colorize help output lol why not
@@ -20,14 +32,15 @@ doc:
 	- add cli flag reference to readme? or... add the entire -help output
 	  to the README? or... just replace the readme with -help output?
 
-concurrency model:
-	- all these mutexes sure are gross; can we do more message passing instead?
-
 always-tui?:
 	Auto-exit the UI when a short run ends, and then print output on-exit. Maybe
 	best of both words? (the logs don't just disappear, plus you get multiplexing
 	while the thing runs, which might help if it's long-ish). Downside is that if
 	the run is _very_ short, the flash of TUI might be jarring.
+
+bazely caching?:
+	tasks optionally take "inputs" and produce "outputs"
+	dirhash the inputs, save the hashes somewhere, skip reruns if unchanged
 
 input?:
 	Tasks can't take any input. Not flags, not stdin, not nothin else besides.
