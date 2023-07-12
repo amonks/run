@@ -79,6 +79,19 @@
   """
 
 [[task]]
+  id = "reset-snapshot-failures"
+  type = "short"
+  cmd = """
+    cd testdata/examples
+    for d in * ; do
+      if test -f $d/fail.log ; then
+        echo removing $d
+        rm $d/fail.log
+      fi
+    done
+  """
+
+[[task]]
   id = "overwrite-snapshots"
   type = "short"
   cmd = """
