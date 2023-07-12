@@ -1,7 +1,7 @@
 [[task]]
   id = "build"
   type = "short"
-  dependencies = ["test", "screenshots", "generate-docs"]
+  dependencies = ["screenshots", "generate-docs"]
   cmd = """
     echo "Doing a test build..."
     go run github.com/goreleaser/goreleaser release --snapshot --clean
