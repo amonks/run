@@ -1,6 +1,11 @@
 [[task]]
   id = "test"
   type = "short"
-  cmd = "echo 2"
-  dependencies = ["three/test"]
+  cmd = "exit 0"
+  dependencies = ["three/test", "other"]
+
+[[task]]
+  id = "other"
+  type = "short"
+  cmd = "exit 0"
 
