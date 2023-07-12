@@ -258,22 +258,22 @@ func (r *Run) stop(err error) {
 	defer r.mu.Lock("stop").Unlock()
 
 	if r.stopped {
-		r.mu.printf("[run] already stopped\n")
+		r.mu.printf("already stopped")
 		return
 	}
 	r.stopped = true
-	r.mu.printf("[run] stop watches\n")
+	r.mu.printf("stop watches")
 	for _, stop := range r.watches {
 		stop()
 	}
-	r.mu.printf("[run] stopped watches\n")
+	r.mu.printf("stopped watches")
 
-	r.mu.printf("[run] stopping tasks\n")
+	r.mu.printf("stopping tasks")
 	for id, t := range r.tasks {
 		r.states[id] = taskStateStopping
 		t.Stop()
 	}
-	r.mu.printf("[run] stopped tasks\n")
+	r.mu.printf("stopped tasks")
 
 	close(r.events)
 

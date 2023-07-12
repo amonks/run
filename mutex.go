@@ -3,6 +3,7 @@ package run
 import (
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -34,37 +35,37 @@ func init() {
 
 func (mu *mutex) printf(s string, args ...interface{}) {
 	if debug {
+		mu.internal.Lock()
+		defer mu.internal.Unlock()
+
+		s = strings.TrimSpace(s)
+		holder := mu.holder
+		var suffix string
+		if holder != "" {
+			suffix = fmt.Sprintf(" <held by %s>", holder)
+		}
 		d := time.Now().Format(time.StampNano)
-		fmt.Fprintf(logfile, d+" "+s, args...)
+		prefix := fmt.Sprintf("%s [%s] ", d, mu.name)
+		fmt.Fprintf(logfile, prefix+s+suffix+"\n", args...)
 	}
 }
 
 func (mu *mutex) Lock(name string) *mutex {
-	mu.internal.Lock()
-	holder := mu.holder
-	muName := mu.name
-	mu.internal.Unlock()
-
-	var suffix string
-	if holder != "" {
-		suffix = " from " + holder
-	}
-
-	mu.printf("[%s] %s seeks lock%s\n", muName, name, suffix)
+	mu.printf("%s seeks lock", name)
 	mu.mu.Lock()
-	mu.printf("[%s] %s got lock%s\n", muName, name, suffix)
-
-	mu.internal.Lock()
-	mu.holder = name
-	mu.internal.Unlock()
+	mu.printf("%s got lock", name)
 
 	return mu
 }
 
 func (mu *mutex) Unlock() {
-	mu.internal.Lock()
-	mu.printf("[%s] %s unlocks\n", mu.name, mu.holder)
-	mu.holder = ""
+	mu.setHolder("")
+	mu.printf("%s unlocks", mu.name)
 	mu.mu.Unlock()
-	mu.internal.Unlock()
+}
+
+func (mu *mutex) setHolder(name string) {
+	mu.internal.Lock()
+	defer mu.internal.Unlock()
+	mu.holder = name
 }
