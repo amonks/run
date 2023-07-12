@@ -51,31 +51,36 @@ func (t *scriptTask) Metadata() TaskMetadata {
 }
 
 func (t *scriptTask) Start(stdout io.Writer) error {
+	t.mu.printf("Start")
 	if err := t.Stop(); err != nil {
+		t.mu.printf("Start: error stopping")
 		return err
 	}
 
 	if !t.hasScript() {
+		t.mu.printf("Start: no script")
 		return nil
 	}
 
 	// Start the CMD.
 	if err := t.startCmd(stdout); err != nil {
+		t.mu.printf("Start: error starting")
 		return err
 	}
 
 	// Handle the CMD's exit.
 	go func() {
-		// already exited
-		if state := t.processState(); state != nil {
-			panic("already exited")
-		}
-
-		if state, err := t.process().Wait(); err != nil {
+		t.mu.printf("Start: waiting")
+		if process := t.process(); process == nil {
+			return
+		} else if state, err := process.Wait(); err != nil {
+			t.mu.printf("Start: wait err")
 			t.notify(err)
 		} else if code := state.ExitCode(); code != 0 {
+			t.mu.printf("Start: exit !0")
 			t.notify(fmt.Errorf("exit %d", code))
 		} else {
+			t.mu.printf("Start: exit =0")
 			t.notify(nil)
 		}
 	}()
@@ -85,8 +90,12 @@ func (t *scriptTask) Start(stdout io.Writer) error {
 
 func (t *scriptTask) Wait() <-chan error {
 	defer t.mu.Lock("Wait").Unlock()
-
 	c := make(chan error)
+	// close immediately if not running
+	if t.script != "" && (t.cmd == nil || t.cmd.ProcessState != nil) {
+		close(c)
+		return c
+	}
 	t.waiters = append(t.waiters, c)
 	return c
 }
@@ -95,19 +104,19 @@ func (t *scriptTask) Wait() <-chan error {
 // task is still running after 2 seconds, it tries SIGKILL. Then it returns any
 // errors it encountered along the way.
 func (t *scriptTask) Stop() error {
+	t.mu.printf("Stop")
 	defer t.cleanup()
 
 	var errs []error
 
 	if !t.hasScript() {
-		// weird, I forget why we need this...
-		t.notify(nil)
-
+		t.mu.printf("Stop: no script")
 		return errors.Join(errs...)
 	}
 
 	// Never started or already stopped.
-	if !t.hasStarted() || t.hasStopped() {
+	if !t.isRunning() {
+		t.mu.printf("Stop: not running")
 		return errors.Join(errs...)
 	}
 
@@ -119,10 +128,10 @@ func (t *scriptTask) Stop() error {
 	// Give it 2 seconds to die gracefully after the SIGINT.
 	select {
 	case <-t.Wait():
-		t.mu.printf("Stop: sigint worked\n")
+		t.mu.printf("Stop: sigint worked")
 		return errors.Join(errs...)
 	case <-time.After(2 * time.Second):
-		t.mu.printf("Stop: timeout\n")
+		t.mu.printf("Stop: timeout")
 	}
 
 	// It's still alive. Resort to SIGKILL.
@@ -154,7 +163,7 @@ func (t *scriptTask) sigint() error {
 func (t *scriptTask) sigkill() error {
 	defer t.mu.Lock("sigkill").Unlock()
 	if err := syscall.Kill(-t.cmd.Process.Pid, syscall.SIGKILL); err != nil && !strings.Contains(err.Error(), "no such process") {
-		t.mu.printf("Stop: sigkill error %s\n", err)
+		t.mu.printf("Stop: sigkill error %s", err)
 		return err
 	}
 	return nil
@@ -175,15 +184,23 @@ func (t *scriptTask) notify(err error) {
 		}
 		close(w)
 	}
+	t.waiters = nil
+	t.cmd = nil
 }
 
 func (t *scriptTask) process() *os.Process {
 	defer t.mu.Lock("process").Unlock()
+	if t.cmd == nil {
+		return nil
+	}
 	return t.cmd.Process
 }
 
 func (t *scriptTask) processState() *os.ProcessState {
 	defer t.mu.Lock("processState").Unlock()
+	if t.cmd == nil {
+		return nil
+	}
 	return t.cmd.ProcessState
 }
 
@@ -192,12 +209,7 @@ func (t *scriptTask) hasScript() bool {
 	return t.script != ""
 }
 
-func (t *scriptTask) hasStarted() bool {
-	defer t.mu.Lock("hasStarted").Unlock()
-	return t.cmd != nil
-}
-
-func (t *scriptTask) hasStopped() bool {
-	defer t.mu.Lock("hasStarted").Unlock()
-	return t.cmd != nil
+func (t *scriptTask) isRunning() bool {
+	defer t.mu.Lock("isRunning").Unlock()
+	return t.cmd != nil && t.cmd.ProcessState != nil
 }
