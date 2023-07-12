@@ -1,8 +1,13 @@
 TODO
 
 bugs:
-	- when running a short task in the TUI, run completion does not kill the tui (good) but _does_ log to stdout, which breaks the tui (bad)
-	- if the root task has no cmd, and the run is short, the run never exits
+	- when running a short task in the TUI, run completion does not kill
+	  the tui (good) but _does_ log to stdout, which breaks the tui (bad)
+	- if the root task has no cmd, and the run is short, the run never
+	  exits
+	- interleaved output isn't wrapped. This is correct when logging to
+	  stdout, but is not correct when logging into a TUI. Plus the wrapping
+	  extends the window frame down, which is goofy.
 
 TUI:
 	- see how things look on light backgrounds
@@ -13,8 +18,6 @@ TUI:
 	- /-to-search in pager mode
 	- w-to-save in pager mode
 	- g-to-make-gist in pager mode
-	- interleaved output isn't wrapped. This is correct when logging to
-	  stdout, but is not correct when logging into a TUI.
 
 tasks:
 	- validate for cycles
