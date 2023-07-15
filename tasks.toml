@@ -1,7 +1,7 @@
 [[task]]
   id = "build"
   type = "short"
-  dependencies = ["screenshots", "generate-docs"]
+  dependencies = ["screenshots", "generate-docs", "vulncheck"]
   cmd = """
     echo "Doing a test build..."
     go run github.com/goreleaser/goreleaser release --snapshot --clean
@@ -31,6 +31,11 @@
   id = "generate"
   type = "short"
   cmd = "go generate ./..."
+
+[[task]]
+  id = "vulncheck"
+  type = "short"
+  cmd = "go run golang.org/x/vuln/cmd/govulncheck ./..."
 
 [[task]]
   id = "screenshots"

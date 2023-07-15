@@ -16,6 +16,7 @@ require (
 	golang.org/x/mod v0.11.0
 	golang.org/x/term v0.9.0
 	golang.org/x/tools v0.10.0
+	golang.org/x/vuln v1.0.0
 )
 
 require (
