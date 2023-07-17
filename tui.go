@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -14,6 +15,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
+	"github.com/muesli/reflow/truncate"
 	"github.com/muesli/reflow/wordwrap"
 )
 
@@ -161,10 +163,7 @@ func (m *tuiModel) Init() tea.Cmd {
 		}
 		items[i] = listItem(id)
 	}
-	m.listWidth = longestKey + 9
-	if len(m.ids) > 9 {
-		m.listWidth = longestKey + 10
-	}
+	m.listWidth = longestKey + 10
 	m.list = list.New(items, itemDelegate{m}, 0, 0)
 	m.list.SetShowStatusBar(false)
 	m.list.SetFilteringEnabled(false)
@@ -324,7 +323,7 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// preview
 		previewStyle = previewStyle.
-			UnsetMaxWidth().MaxWidth(m.width - m.listWidth).
+			UnsetMaxWidth().MaxWidth(m.width - m.listWidth + 2).
 			UnsetMaxHeight().MaxHeight(m.height - helpHeight)
 		previewStyle = previewStyle.
 			UnsetWidth().Width(previewStyle.GetMaxWidth() - previewStyle.GetHorizontalFrameSize()).
@@ -385,7 +384,10 @@ func (m *tuiModel) passthrough(msg tea.Msg) []tea.Cmd {
 }
 
 func (m *tuiModel) updatePreview() {
-	m.preview.SetContent(wordwrap.String(m.tasks[m.activeTask], previewStyle.GetWidth()-previewStyle.GetHorizontalFrameSize()))
+	width := previewStyle.GetWidth()
+	if width > 0 {
+		m.preview.SetContent(hardwrap(m.tasks[m.activeTask], width-3))
+	}
 }
 func (m *tuiModel) updatePager() {
 	m.pager.SetContent(wordwrap.String(m.tasks[m.activeTask], pagerStyle.GetWidth()-pagerStyle.GetHorizontalFrameSize()))
@@ -595,3 +597,11 @@ var (
 		),
 	}
 )
+
+func hardwrap(s string, width int) string {
+	var b strings.Builder
+	for _, l := range strings.Split(s, "\n") {
+		b.WriteString(truncate.String(l, uint(width))+"\n")
+	}
+	return b.String()
+}

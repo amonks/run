@@ -1,10 +1,5 @@
 TODO
 
-bugs:
-	- interleaved output isn't wrapped. This is correct when logging to
-	  stdout, but is not correct when logging into a TUI. Plus the wrapping
-	  extends the window frame down, which is goofy.
-
 TUI:
 	- see how things look on light backgrounds
 	- the tui spacing feels kind of weird
