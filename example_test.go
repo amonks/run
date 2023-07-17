@@ -25,7 +25,7 @@ func Example() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	ui := run.NewTUI()
+	ui := run.NewTUI(r)
 
 	var wg sync.WaitGroup
 	ready := make(chan struct{})

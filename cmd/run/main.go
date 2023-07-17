@@ -79,7 +79,7 @@ func main() {
 	var ui run.UI
 	switch *fUI {
 	case "tui":
-		ui = run.NewTUI()
+		ui = run.NewTUI(r)
 	case "printer":
 		ui = run.NewPrinter()
 	case "":
@@ -88,7 +88,7 @@ func main() {
 		} else if r.Type() == run.RunTypeShort {
 			ui = run.NewPrinter()
 		} else {
-			ui = run.NewTUI()
+			ui = run.NewTUI(r)
 		}
 	default:
 		fmt.Println("Invalid value for flag -ui. Legal values are 'tui' and 'printer'.")

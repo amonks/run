@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -16,13 +17,15 @@ import (
 	"github.com/muesli/reflow/wordwrap"
 )
 
-func newTUI() UI {
+func newTUI(run *Run) UI {
 	zone.NewGlobal()
-	return &tui{mu: newMutex("tui")}
+	return &tui{mu: newMutex("tui"), run: run}
 }
 
 type tui struct {
 	mu *mutex
+
+	run *Run
 
 	// nil until started
 	p *tea.Program
@@ -80,6 +83,7 @@ var _ UI = &tui{}
 func (a *tui) Start(ctx context.Context, ready chan<- struct{}, stdin io.Reader, stdout io.Writer, ids []string) error {
 	program := tea.NewProgram(
 		&tuiModel{
+			run:    a.run,
 			ids:    append([]string{"interleaved"}, ids...),
 			onInit: func() { ready <- struct{}{} },
 		},
@@ -115,6 +119,8 @@ func (a *tui) Start(ctx context.Context, ready chan<- struct{}, stdin io.Reader,
 }
 
 type tuiModel struct {
+	run *Run
+
 	onInit func()
 
 	ids       []string
@@ -132,6 +138,7 @@ type tuiModel struct {
 
 	tasks map[string]string
 
+	spinner     spinner.Model
 	help        help.Model
 	list        list.Model
 	shortOutput viewport.Model
@@ -143,6 +150,8 @@ func (m *tuiModel) Init() tea.Cmd {
 	fmt.Fprintln(logfile, "init")
 	m.preview = viewport.New(0, 0)
 	m.pager = viewport.New(0, 0)
+	m.spinner = spinner.New()
+	m.spinner.Spinner = spinner.Jump
 
 	longestKey := 0
 	items := make([]list.Item, len(m.ids))
@@ -152,9 +161,9 @@ func (m *tuiModel) Init() tea.Cmd {
 		}
 		items[i] = listItem(id)
 	}
-	m.listWidth = longestKey + 8
+	m.listWidth = longestKey + 9
 	if len(m.ids) > 9 {
-		m.listWidth = longestKey + 9
+		m.listWidth = longestKey + 10
 	}
 	m.list = list.New(items, itemDelegate{m}, 0, 0)
 	m.list.SetShowStatusBar(false)
@@ -168,10 +177,11 @@ func (m *tuiModel) Init() tea.Cmd {
 
 	m.didInit = true
 
-	return func() tea.Msg { return initilaizedMsg{} }
+	cmd := func() tea.Msg { return initializedMsg{} }
+	return tea.Batch(cmd, spinner.Tick)
 }
 
-type initilaizedMsg struct{}
+type initializedMsg struct{}
 
 type writeMsg struct {
 	key     string
@@ -179,11 +189,11 @@ type writeMsg struct {
 }
 
 func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmds []tea.Cmd
+	cmds := []tea.Cmd{}
 
 	switch msg := msg.(type) {
 
-	case initilaizedMsg:
+	case initializedMsg:
 		m.onInit()
 
 	case tea.MouseMsg:
@@ -329,6 +339,11 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.updatePreview()
 		m.updateShortOutput()
 
+	case spinner.TickMsg:
+		var cmd tea.Cmd
+		m.spinner, cmd = m.spinner.Update(msg)
+		cmds = append(cmds, cmd)
+
 	default:
 		cmds = append(cmds, m.passthrough(msg)...)
 	}
@@ -429,17 +444,28 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, item list.Ite
 	}
 	id := string(i)
 
+	spinner := " "
+	status := d.m.run.TaskStatus(string(i))
+	switch status {
+	case TaskStatusNotStarted:
+		spinner = " "
+	case TaskStatusRunning:
+		spinner = d.m.spinner.View()
+	case TaskStatusRestarting:
+		spinner = d.m.spinner.View()
+	case TaskStatusFailed:
+		spinner = "×"
+	case TaskStatusDone:
+		spinner = "✓"
+	}
+
 	style := itemStyle.Copy()
 	var str string
 	if index == m.Index() {
 		style = style.Foreground(lipgloss.Color("#F0F"))
-		str = fmt.Sprintf("> %d. %s", index+1, id)
+		str = fmt.Sprintf("%s > %d. %s", spinner, index+1, id)
 	} else {
-		str = fmt.Sprintf("  %d. %s", index+1, id)
-	}
-
-	if len(d.m.tasks[id]) == 0 {
-		style = style.Italic(true)
+		str = fmt.Sprintf("%s   %d. %s", spinner, index+1, id)
 	}
 
 	fmt.Fprint(w, zone.Mark(id, style.Render(str)))
