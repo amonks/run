@@ -4,7 +4,6 @@ TUI:
 	- see how things look on light backgrounds
 	- the tui spacing feels kind of weird
 	- key shortcut for force-retrigger
-	- mark tasks in ui based on on state
 	- colorhash task names in list
 	- /-to-search in pager mode
 	- w-to-save in pager mode
