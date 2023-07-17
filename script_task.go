@@ -22,7 +22,7 @@ import (
 //     $ bash -c "$CMD" 2&>1 /some/ui
 func ScriptTask(script string, dir string, metadata TaskMetadata) Task {
 	return &scriptTask{
-		mu:       newMutex(fmt.Sprintf("script")),
+		mu:       newMutex(fmt.Sprintf("script:%s", metadata.ID)),
 		dir:      dir,
 		script:   script,
 		metadata: metadata,
