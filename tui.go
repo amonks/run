@@ -250,6 +250,8 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.isPaging = true
 				m.updatePager()
 				m.pager.GotoTop()
+			case key.Matches(msg, listKeymap.restart):
+				m.run.Invalidate(string(m.list.SelectedItem().(listItem)))
 			case key.Matches(msg, listKeymap.exit):
 				return m, tea.Quit
 			}
@@ -523,23 +525,24 @@ func (k pagerKeymaps) FullHelp() [][]key.Binding {
 }
 
 type listKeymaps struct {
-	top    key.Binding
-	bottom key.Binding
-	up     key.Binding
-	down   key.Binding
-	jump   key.Binding
-	open   key.Binding
-	exit   key.Binding
+	top     key.Binding
+	bottom  key.Binding
+	up      key.Binding
+	down    key.Binding
+	jump    key.Binding
+	open    key.Binding
+	restart key.Binding
+	exit    key.Binding
 }
 
 var _ help.KeyMap = listKeymaps{}
 
 func (k listKeymaps) ShortHelp() []key.Binding {
-	return []key.Binding{k.exit, k.open}
+	return []key.Binding{k.exit, k.restart, k.open}
 }
 
 func (k listKeymaps) FullHelp() [][]key.Binding {
-	return [][]key.Binding{{k.exit, k.open}, {k.up, k.down, k.jump}}
+	return [][]key.Binding{{k.up, k.down, k.jump}, {k.restart, k.open}, {k.exit}}
 }
 
 var (
@@ -569,8 +572,12 @@ var (
 			key.WithHelp("q/esc", "exit"),
 		),
 		open: key.NewBinding(
-			key.WithKeys("enter", "o", "p"),
-			key.WithHelp("enter", "open"),
+			key.WithKeys("enter", "o"),
+			key.WithHelp("enter", "open full log"),
+		),
+		restart: key.NewBinding(
+			key.WithKeys("r"),
+			key.WithHelp("r", "restart task"),
 		),
 	}
 
@@ -601,7 +608,7 @@ var (
 func hardwrap(s string, width int) string {
 	var b strings.Builder
 	for _, l := range strings.Split(s, "\n") {
-		b.WriteString(truncate.String(l, uint(width))+"\n")
+		b.WriteString(truncate.String(l, uint(width)) + "\n")
 	}
 	return b.String()
 }

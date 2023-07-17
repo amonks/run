@@ -2,7 +2,6 @@ TODO
 
 TUI:
 	- see how things look on light backgrounds
-	- key shortcut for force-retrigger
 	- colorhash task names in list
 	- /-to-search in pager mode
 	- w-to-save in pager mode
