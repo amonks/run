@@ -1,5 +1,8 @@
 long
 
+run:
+  done
+
 test:
   starting
   running...

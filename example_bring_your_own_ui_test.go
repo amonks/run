@@ -1,6 +1,7 @@
 package run_test
 
 import (
+	"context"
 	"io"
 	"log"
 	"os"
@@ -32,9 +33,7 @@ func Example_bringYourOwnUI() {
 
 	ui := ui{}
 
-	run.Start(ui)
-
-	if err := <-run.Wait(); err != nil {
+	if err := run.Start(context.Background(), ui); err != nil {
 		log.Fatal(err)
 	}
 }

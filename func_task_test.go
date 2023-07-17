@@ -14,31 +14,28 @@ import (
 func TestFuncTask(t *testing.T) {
 	exit, write, f := newControllableFunc()
 	task := run.FuncTask(f, run.TaskMetadata{})
+	ctx := context.Background()
 
 	for i := 0; i < 3; i++ {
 		b := strings.Builder{}
 
-		if err := task.Start(&b); err != nil {
-			t.Fatal(err)
-		}
-
-		select {
-		case <-task.Wait():
-			t.Fatal("task exited unexpectedly")
-		default:
-		}
+		errs := make(chan error)
+		go func() {
+			err := task.Start(ctx, &b)
+			errs <- err
+		}()
 
 		write <- "log"
 
 		errExpected := errors.New("expected")
 
-		waited := make(chan struct{})
+		done := make(chan struct{})
 		go func() {
-			err := <-task.Wait()
+			err := <-errs
 			if err != errExpected {
 				t.Error("unexpected exit value", err)
 			}
-			waited <- struct{}{}
+			done <- struct{}{}
 		}()
 
 		// Make sure we're waiting before we exit. 0.01ms is
@@ -47,10 +44,10 @@ func TestFuncTask(t *testing.T) {
 		time.Sleep(time.Millisecond)
 		exit <- errExpected
 
-		<-waited
+		<-done
 
 		if b.String() != "log" {
-			t.Error("log output nont logged")
+			t.Error("log output not logged")
 		}
 	}
 }

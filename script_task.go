@@ -1,6 +1,7 @@
 package run
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -36,8 +37,7 @@ type scriptTask struct {
 	script   string
 	metadata TaskMetadata
 
-	cmd     *exec.Cmd
-	waiters []chan<- error
+	cmd *exec.Cmd
 }
 
 // *scriptTask implements Task
@@ -50,15 +50,13 @@ func (t *scriptTask) Metadata() TaskMetadata {
 	return meta
 }
 
-func (t *scriptTask) Start(stdout io.Writer) error {
+func (t *scriptTask) Start(ctx context.Context, stdout io.Writer) error {
 	t.mu.printf("Start")
-	if err := t.Stop(); err != nil {
-		t.mu.printf("Start: error stopping")
-		return err
-	}
+	defer t.cleanup()
 
 	if !t.hasScript() {
 		t.mu.printf("Start: no script")
+		<-ctx.Done()
 		return nil
 	}
 
@@ -69,43 +67,33 @@ func (t *scriptTask) Start(stdout io.Writer) error {
 	}
 
 	// Handle the CMD's exit.
+	exit := make(chan error)
 	go func() {
 		t.mu.printf("Start: waiting")
 		if process := t.process(); process == nil {
-			return
+			exit <- nil
 		} else if state, err := process.Wait(); err != nil {
 			t.mu.printf("Start: wait err")
-			t.notify(err)
+			exit <- err
 		} else if code := state.ExitCode(); code != 0 {
 			t.mu.printf("Start: exit !0")
-			t.notify(fmt.Errorf("exit %d", code))
+			exit <- fmt.Errorf("exit %d", code)
 		} else {
 			t.mu.printf("Start: exit =0")
-			t.notify(nil)
+			exit <- nil
 		}
 	}()
 
-	return nil
-}
-
-func (t *scriptTask) Wait() <-chan error {
-	defer t.mu.Lock("Wait").Unlock()
-	c := make(chan error)
-	// close immediately if not running
-	if t.script != "" && (t.cmd == nil || t.cmd.ProcessState != nil) {
-		close(c)
-		return c
+	select {
+	case err := <-exit:
+		return err
+	case <-ctx.Done():
 	}
-	t.waiters = append(t.waiters, c)
-	return c
-}
 
-// Stop does its best to stop the task. First it tries SIGINT, then, if the
-// task is still running after 2 seconds, it tries SIGKILL. Then it returns any
-// errors it encountered along the way.
-func (t *scriptTask) Stop() error {
-	t.mu.printf("Stop")
-	defer t.cleanup()
+	// Do our best to stop the task. First it tries SIGINT, then, if the task is
+	// still running after 2 seconds, it tries SIGKILL. Then return any errors
+	// encountered along the way.
+	t.mu.printf("stop")
 
 	var errs []error
 
@@ -127,7 +115,7 @@ func (t *scriptTask) Stop() error {
 
 	// Give it 2 seconds to die gracefully after the SIGINT.
 	select {
-	case <-t.Wait():
+	case <-exit:
 		t.mu.printf("Stop: sigint worked")
 		return errors.Join(errs...)
 	case <-time.After(2 * time.Second):
@@ -171,20 +159,6 @@ func (t *scriptTask) sigkill() error {
 
 func (t *scriptTask) cleanup() {
 	defer t.mu.Lock("cleanup").Unlock()
-	t.cmd = nil
-	t.waiters = nil
-}
-
-func (t *scriptTask) notify(err error) {
-	defer t.mu.Lock("notify").Unlock()
-	for _, w := range t.waiters {
-		select {
-		case w <- err:
-		default:
-		}
-		close(w)
-	}
-	t.waiters = nil
 	t.cmd = nil
 }
 

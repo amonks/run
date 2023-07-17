@@ -1,6 +1,7 @@
 package run
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -24,8 +25,6 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 	runType := RunTypeShort
 	tasks := map[string]Task{}
 	states := map[string]taskState{}
-	ran := map[string]bool{}
-	counters := map[string]int{}
 	byDep := map[string][]string{}
 	byTrigger := map[string][]string{}
 	byWatch := map[string][]string{}
@@ -71,20 +70,14 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 	run := Run{
 		mu: newMutex("run"),
 
-		dir:      dir,
-		runType:  runType,
-		rootID:   taskID,
-		tasks:    tasks,
-		ran:      ran,
-		states:   states,
-		counters: counters,
-		watches:  map[string]func(){},
+		dir:     dir,
+		runType: runType,
+		rootID:  taskID,
+		tasks:   tasks,
 
 		byDep:     byDep,
 		byTrigger: byTrigger,
 		byWatch:   byWatch,
-
-		events: make(chan event),
 	}
 
 	return &run, nil
@@ -98,26 +91,40 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 type Run struct {
 	mu *mutex
 
-	runType  RunType
-	rootID   string
-	dir      string
-	tasks    Tasks
-	states   map[string]taskState
-	ran      map[string]bool
-	counters map[string]int
-	watches  map[string]func()
+	// read-only
+	runType RunType
+	// read-only
+	rootID string
+	// read-only
+	dir string
+	// read-only
+	tasks Tasks
 
-	byDep     map[string][]string
+	// read-only
+	byDep map[string][]string
+	// read-only
 	byTrigger map[string][]string
-	byWatch   map[string][]string
-
-	events chan event
+	// read-only
+	byWatch map[string][]string
 
 	out MultiWriter
-
-	waiters []chan<- error
-	stopped bool
 }
+
+func runAsync(ctx context.Context, t Task, stdout io.Writer) *worker {
+	ctx, cancel := context.WithCancel(ctx)
+	c := make(chan error)
+	go func() {
+		c <- t.Start(ctx, stdout)
+	}()
+	return &worker{c, cancel}
+}
+
+type worker struct {
+	c      chan error
+	cancel func()
+}
+
+func (w *worker) stop() { w.cancel() }
 
 // MultiWriter is the interface Runs use to display UI. To start a Run, you
 // must pass a MultiWriter into [Run.Start].
@@ -157,8 +164,6 @@ func (r *Run) Tasks() Tasks {
 // If a run is RunTypeLong, it will continue running until it is interrupted.
 // File watches are only used if a run is RunTypeLong.
 func (r *Run) Type() RunType {
-	defer r.mu.Lock("Type").Unlock()
-
 	return r.runType
 }
 
@@ -166,131 +171,204 @@ func (r *Run) printf(id string, style lipgloss.Style, f string, args ...interfac
 	r.out.Writer(id).Write([]byte(style.Render(fmt.Sprintf(f, args...)) + "\n"))
 }
 
-// Start starts the Run. If it returns nil, the Run is started successfully.
-// After starting the run, you can wait for it to end with [Run.Wait], or stop
-// it immediately with [Run.Stop].
-func (r *Run) Start(out MultiWriter) error {
-	defer r.mu.Lock("Start").Unlock()
-
+// Start starts the Run, waits for it to complete, and returns an error.
+// Remember that "long" runs will never complete until canceled.
+func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 	r.out = out
-
-	// Start the event loop. Do this before anything else so that other
-	// things can dispatch events.
-	events := r.events
-	go func() {
-		for {
-			ev, ok := <-events
-			if !ok {
-				return
-			}
-			r.handleEvent(ev)
-		}
-	}()
 
 	// Start all the file watchers. Do this before starting tasks so that
 	// tasks can trigger file watcher events.
-	for p := range r.byWatch {
-		watchP := path.Join(r.dir, p)
+	watches := map[string]func(){}
+	fsevents := make(chan evFSEvent)
+	for _, p := range r.watchedPaths() {
+		watchP := path.Join(r.getDir(), p)
 		r.printf("run", logStyle, "watching %s", watchP)
 		p := p
 		c, stop, err := watch(watchP)
 		if err != nil {
 			return err
 		}
-		r.watches[p] = stop
+		watches[p] = stop
 		go func() {
 			for {
-				evs, ok := <-c
-				if !ok {
+				if evs, ok := <-c; !ok {
 					break
+				} else {
+					fsevents <- evFSEvent{path: p, evs: evs}
 				}
-
-				r.send(evFSEvent{
-					path: p,
-					evs:  evs,
-				})
 			}
 		}()
 	}
 
-	// Start all the zero-dep tasks. When they finish, they'll trigger
-	// their dependents. Start them in alphabetical order to avoid
-	// randomness.
-	var ids []string
-	for id := range r.tasks {
-		ids = append(ids, id)
+	type exit struct {
+		id  string
+		err error
 	}
-	sort.Strings(ids)
-	for _, id := range ids {
+
+	ran := newSafeMap[struct{}]()
+	exits := newSafeMap[chan exit]()
+	allExits := make(chan exit)
+	cancels := newSafeMap[func()]()
+
+	hasAllDeps := func(id string) bool {
+		for _, dep := range r.tasks[id].Metadata().Dependencies {
+			if !ran.has(dep) {
+				return false
+			}
+		}
+		return true
+	}
+
+	start := func(ctx context.Context, id string) {
+		r.printf(id, logStyle, "starting")
+		ctx, cancel := context.WithCancel(ctx)
+		cancels.set(id, cancel)
 		t := r.tasks[id]
+		err := t.Start(ctx, out.Writer(id))
+		select {
+		case exits.get(id) <- exit{id: id, err: err}:
+		case allExits <- exit{id: id, err: err}:
+		}
+		cancels.del(id)
+	}
+
+	// Start all the zero-dep tasks. When they finish, they'll trigger
+	// their dependents.
+	for id, t := range r.tasks {
+		id, t := id, t
 		if len(t.Metadata().Dependencies) > 0 {
 			continue
 		}
-		go r.send(evInvalidateTask{id})
+		go start(ctx, id)
 	}
 
-	return nil
-}
+	// Run the loop! This is in a function just for control flow -- we can
+	// easily break from it by returning.
+	err := func() error {
+		starts := make(chan string)
+		for {
+			select {
+			case ev := <-fsevents:
+				r.printf("run", logStyle, ev.print())
+				invalidations := map[string]struct{}{}
+				for _, id := range r.byWatch[ev.path] {
+					invalidations[id] = struct{}{}
+				}
+				if len(invalidations) > 0 {
+					var ids []string
+					for id := range invalidations {
+						ids = append(ids, id)
+					}
+					r.printf("run", logStyle, "invalidating {%s}", strings.Join(ids, ", "))
+					go func() {
+						for _, id := range ids {
+							starts <- id
+						}
+					}()
+				}
+			case ev := <-allExits:
+				if ev.err != nil {
+					r.printf(ev.id, logStyle, "exit: %s", ev.err)
+				} else {
+					ran.set(ev.id, struct{}{})
+					r.printf(ev.id, logStyle, "exit ok")
+				}
 
-// Wait returns a channel that will emit one error when the Run exits, then
-// close. It is ok to call Wait before calling [Run.Start]. If Wait is called
-// after a Run exits, it will return a closed channel. If Wait is called more
-// than once, it will return different channels, and all of the channels will
-// emit when the Run exits.
-func (r *Run) Wait() <-chan error {
-	defer r.mu.Lock("Wait").Unlock()
+				if r.runType == RunTypeShort {
+					// In short runs, exit when the root task does.
+					if r.rootID == ev.id {
+						return ev.err
+					}
+					// In short runs, exit when any task fails.
+					if ev.err != nil {
+						return ev.err
+					}
+				}
 
-	if r.stopped {
-		c := make(chan error)
-		close(c)
-		return c
+				t := r.tasks[ev.id]
+				tm := t.Metadata()
+				// If the run is "long" and the task exit was
+				// unexpected, retry in 1s.
+				if r.runType == RunTypeLong && ev.err != nil {
+					r.printf(ev.id, logStyle, "retrying in 1 second")
+					go func() {
+						time.Sleep(time.Second)
+						r.printf(ev.id, logStyle, "retrying")
+						starts <- ev.id
+					}()
+					continue
+				}
+				// If the task is "long", retry as a keepalive
+				if tm.Type == "long" {
+					go func() { starts <- ev.id }()
+				}
+
+				// If the task succeeded,
+				// - invalidate all tasks that list this as a trigger, and,
+				// - invalidate "short" or unstarted tasks that
+				//   list this as a dependency and have all of
+				//   their dependencies met.
+				invalidations := map[string]struct{}{}
+				for _, id := range r.byTrigger[ev.id] {
+					invalidations[id] = struct{}{}
+				}
+				for _, id := range r.byDep[ev.id] {
+					isShort := r.tasks[id].Metadata().Type == "short"
+					isRunning := cancels.has(id)
+					isReady := hasAllDeps(id)
+					if isReady && (isShort || !isRunning) {
+						invalidations[id] = struct{}{}
+					}
+				}
+				if len(invalidations) > 0 {
+					var ids []string
+					for id := range invalidations {
+						ids = append(ids, id)
+					}
+					r.printf(ev.id, logStyle, "invalidating {%s}", strings.Join(ids, ", "))
+					go func() {
+						for _, id := range ids {
+							starts <- id
+						}
+					}()
+				}
+			case <-ctx.Done():
+				return nil
+			case id := <-starts:
+				go func() {
+					if cancels.has(id) {
+						cancels.get(id)()
+						<-exits.get(id)
+					}
+					start(ctx, id)
+				}()
+			}
+		}
+	}()
+
+	if err != nil {
+		r.printf("run", errorStyle, "failed")
+	} else {
+		r.printf("run", logStyle, "done")
 	}
 
-	c := make(chan error)
-	r.waiters = append(r.waiters, c)
-	return c
-}
-
-// Stop stops a Run, including all of its tasks and watches, and returns when
-// the Run has stopped. If any waiting channels were created with [Run.Wait],
-// they will emit before Stop returns.
-//
-// It is safe (but useless) to call Stop without previously calling
-// [Run.Start].
-func (r *Run) Stop() {
-	r.stop(nil)
-}
-
-func (r *Run) stop(err error) {
 	defer r.mu.Lock("stop").Unlock()
 
-	if r.stopped {
-		r.mu.printf("already stopped")
-		return
-	}
-	r.stopped = true
 	r.mu.printf("stop watches")
-	for _, stop := range r.watches {
+	for _, stop := range watches {
 		stop()
 	}
 	r.mu.printf("stopped watches")
 
 	r.mu.printf("stopping tasks")
-	for id, t := range r.tasks {
-		r.states[id] = taskStateStopping
-		t.Stop()
+	for _, k := range cancels.keys() {
+		cancel := cancels.get(k)
+		cancel()
 	}
 	r.mu.printf("stopped tasks")
 
-	close(r.events)
-
-	for _, w := range r.waiters {
-		select {
-		case w <- err:
-		default:
-		}
-		close(w)
-	}
+	// TODO: wait for the tasks to all die
+	return err
 }
 
 //go:generate go run golang.org/x/tools/cmd/stringer -type taskState
@@ -320,200 +398,22 @@ const (
 	RunTypeLong
 )
 
-func (r *Run) handleEvent(ev event) {
-	switch ev := ev.(type) {
-	case evFatal:
-		r.mu.printf("handle evFatal: %s", ev.err)
-		r.printf("run", logStyle, "fatal")
-		r.stop(ev.err)
-		return
-
-	case evTaskReady:
-		r.mu.printf("handle evTaskReady: %s", ev.task)
-		taskIDs := r.idsByDep(ev.task)
-		if len(taskIDs) > 0 {
-			r.printf(ev.task, logStyle, "ready, invalidating {%s}", strings.Join(taskIDs, ", "))
-			for _, id := range taskIDs {
-				id := id
-				go r.send(evInvalidateTask{id})
-			}
-		}
-
-	case evTaskExit:
-		r.mu.printf("handle evTaskExit: %s", ev.task)
-		state := r.taskState(ev.task)
-		if state == taskStateStopping {
-			r.printf(ev.task, logStyle, "stopped")
-			r.setTaskState(ev.task, taskStateStopped)
-			return
-		}
-		if state == taskStateRestarting {
-			return
-		}
-
-		if ev.err == nil {
-			r.printf(ev.task, logStyle, "exit ok")
-		} else {
-			r.printf(ev.task, errorStyle, "exit: %s", ev.err.Error())
-		}
-
-		r.setTaskRan(ev.task)
-
-		// restart if
-		// - task is long (to keepalive), or,
-		// - run is long and exit was failure (to retry)
-		meta := r.taskMetadata(ev.task)
-		if meta.Type == "long" || (r.getRunType() == RunTypeLong && ev.err != nil) {
-			r.setTaskState(ev.task, taskStateRestarting)
-			go func() {
-				r.printf(ev.task, logStyle, "retrying in 1 second")
-				time.Sleep(1 * time.Second)
-				r.printf(ev.task, logStyle, "retrying")
-				go r.send(evInvalidateTask{ev.task})
-			}()
-			return
-		}
-
-		r.setTaskState(ev.task, taskStateStopped)
-
-		// If exit was unexpected and this was a short run, we're done now.
-		if r.getRunType() == RunTypeShort && ev.err != nil {
-			r.printf("run", logStyle, "failed")
-			r.stop(ev.err)
-			return
-		}
-
-		// if exit was exepected success, it should
-		// - invalidate all tasks that list this as a trigger
-		// - invalidate short tasks that list this as a dependency
-		if meta.Type == "short" && ev.err == nil {
-			setToInvalidate := map[string]struct{}{}
-			for _, id := range r.idsByTrigger(ev.task) {
-				setToInvalidate[id] = struct{}{}
-			}
-			for _, id := range r.idsByDep(ev.task) {
-				if r.taskMetadata(id).Type == "short" || r.taskState(id) == taskStateNotStarted {
-					setToInvalidate[id] = struct{}{}
-				}
-			}
-			if len(setToInvalidate) > 0 {
-				var tasksToInvalidate []string
-				for id := range setToInvalidate {
-					tasksToInvalidate = append(tasksToInvalidate, id)
-				}
-				r.printf(ev.task, logStyle, "invalidating {%s}", strings.Join(tasksToInvalidate, ", "))
-				go func() {
-					for id := range setToInvalidate {
-						go r.send(evInvalidateTask{id})
-					}
-				}()
-				return
-			}
-		}
-
-		// If this is a short run, check if we are done now
-		if r.getRunType() == RunTypeShort {
-			if r.allStopped() {
-				r.printf("run", logStyle, "done")
-				r.stop(ev.err)
-				return
-			}
-		}
-
-	case evFSEvent:
-		r.mu.printf("handle evFSEvent: %s", ev.path)
-		var evs []string
-		for _, ev := range ev.evs {
-			evs = append(evs, ev.event+":"+ev.path)
-		}
-		r.printf("run", logStyle, "watched file change: {%s}", strings.Join(evs, ", "))
-		taskIDs := r.idsByWatch(ev.path)
-		if len(taskIDs) > 0 {
-			r.printf("run", logStyle, "invalidating {%s}", strings.Join(taskIDs, ", "))
-			for _, id := range taskIDs {
-				id := id
-				go r.send(evInvalidateTask{id})
-			}
-		}
-
-	case evInvalidateTask:
-		r.mu.printf("handle evInvalidateTask: %s", ev.task)
-		t := r.getTask(ev.task)
-		for _, dep := range t.Metadata().Dependencies {
-			if !r.taskRan(dep) {
-				return
-			}
-		}
-
-		r.printf(ev.task, logStyle, "starting")
-		if r.taskState(ev.task) == taskStateRunning {
-			r.setTaskState(ev.task, taskStateRestarting)
-		}
-		counter := r.incrementCounter(ev.task)
-
-		go func() {
-			if err := t.Start(r.out.Writer(ev.task)); err != nil {
-				r.send(evFatal{err})
-				return
-			}
-
-			if !r.counterIs(ev.task, counter) {
-				return
-			}
-			r.setTaskState(ev.task, taskStateRunning)
-
-			if t.Metadata().Type == "long" {
-				go func() {
-					time.Sleep(50 * time.Millisecond)
-					if !r.counterIs(ev.task, counter) {
-						return
-					}
-					r.setTaskRan(ev.task)
-					if r.taskState(ev.task) == taskStateRunning {
-						r.send(evTaskReady{ev.task})
-					}
-				}()
-			}
-			err := <-t.Wait()
-
-			if !r.counterIs(ev.task, counter) {
-				return
-			}
-			if r.taskState(ev.task) == taskStateRunning {
-				r.send(evTaskExit{ev.task, err})
-			}
-		}()
-
-	default:
-		panic(fmt.Errorf("unexpected event type: %+v\n", ev))
-	}
-}
-
-func (r *Run) send(ev event) {
-	if r.isStopped() {
-		return
-	}
-	r.events <- ev
-}
-
-func (r *Run) isStopped() bool {
-	defer r.mu.Lock("isStopped").Unlock()
-	return r.stopped
-}
-
-func (r *Run) allStopped() bool {
-	defer r.mu.Lock("allStopped").Unlock()
-	for _, state := range r.states {
-		if state != taskStateStopped {
-			return false
-		}
-	}
-	return true
-}
-
 func (r *Run) getRunType() RunType {
-	defer r.mu.Lock("getRunType").Unlock()
 	return r.runType
+}
+
+func (r *Run) getDir() string {
+	defer r.mu.Lock("getRunType").Unlock()
+	return r.dir
+}
+
+func (r *Run) watchedPaths() []string {
+	defer r.mu.Lock("watchedPaths").Unlock()
+	var ps []string
+	for p := range r.byWatch {
+		ps = append(ps, p)
+	}
+	return ps
 }
 
 func (r *Run) idsByWatch(path string) []string {
@@ -541,69 +441,16 @@ func (r *Run) taskMetadata(id string) TaskMetadata {
 	return r.tasks[id].Metadata()
 }
 
-func (r *Run) taskState(id string) taskState {
-	defer r.mu.Lock("taskState").Unlock()
-	return r.states[id]
-}
-
-func (r *Run) setTaskState(id string, state taskState) {
-	defer r.mu.Lock("setTaskState").Unlock()
-	r.states[id] = state
-}
-
-func (r *Run) taskRan(id string) bool {
-	defer r.mu.Lock("taskRan").Unlock()
-	return r.ran[id]
-}
-
-func (r *Run) setTaskRan(id string) {
-	defer r.mu.Lock("setTaskRan").Unlock()
-	r.ran[id] = true
-}
-
-func (r *Run) incrementCounter(id string) int {
-	defer r.mu.Lock("incrementCounter").Unlock()
-	r.counters[id] += 1
-	return r.counters[id]
-}
-
-func (r *Run) counterIs(id string, val int) bool {
-	defer r.mu.Lock("counterIs").Unlock()
-	return r.counters[id] == val
-}
-
-type event interface {
-	eventType() string
-}
-
-type evFatal struct {
-	err error
-}
-
-func (e evFatal) eventType() string { return "evFatal" }
-
 type evFSEvent struct {
 	path string
 	evs  []eventInfo
 }
 
-func (e evFSEvent) eventType() string { return "evFSEvent" }
-
-type evTaskReady struct {
-	task string
+func (e evFSEvent) print() string {
+	var b strings.Builder
+	b.WriteString("watched file changes:\n")
+	for _, ev := range e.evs {
+		fmt.Fprintf(&b, "  %s %s\n", ev.event, ev.path)
+	}
+	return strings.TrimSpace(b.String())
 }
-
-func (e evTaskReady) eventType() string { return "evTaskReady" }
-
-type evTaskExit struct {
-	task string
-	err  error
-}
-
-func (e evTaskExit) eventType() string { return "evTaskExit" }
-
-type evInvalidateTask struct {
-	task string
-}
-
-func (e evInvalidateTask) eventType() string { return "evInvalidateTask" }

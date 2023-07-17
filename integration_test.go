@@ -1,6 +1,7 @@
 package run_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -45,10 +46,7 @@ func testExample(t *testing.T, name string) error {
 	} else if err := f.Close(); err != nil {
 		return err
 	}
-
-	defer func() {
-		os.Remove(changedFilePath)
-	}()
+	defer os.Remove(changedFilePath)
 
 	tasks, err := run.Load(path.Join("testdata/examples", name))
 	if err != nil {
@@ -60,30 +58,37 @@ func testExample(t *testing.T, name string) error {
 		return fmt.Errorf("Error running tasks: %s", err)
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
 	ui := newTestUI()
-	r.Start(ui)
 
+	exit := make(chan error)
+
+	// Start the run.
+	go func() { exit <- r.Start(ctx, ui) }()
+
+	// 1 second into the test, change a file so that tests can exercise
+	// file-watching.
 	go func() {
 		time.Sleep(time.Second)
-		if err := os.Remove(changedFilePath); err != nil {
-			panic(err)
-		}
+		os.Remove(changedFilePath)
 	}()
 
-	var exit error
+	var exitErr error
 	if r.Type() == run.RunTypeShort {
-		exit = <-r.Wait()
+		exitErr = <-exit
+		cancel()
 	} else {
 		time.Sleep(5 * time.Second)
-		exit = errors.New("long")
-		r.Stop()
+		exitErr = errors.New("long")
+		cancel()
+		<-exit
 	}
 
 	var log string
-	if exit == nil {
+	if exitErr == nil {
 		log = "ok" + "\n\n" + ui.String()
 	} else {
-		log = exit.Error() + "\n\n" + ui.String()
+		log = exitErr.Error() + "\n\n" + ui.String()
 	}
 
 	logfilePath := path.Join("testdata/examples", name, "out.log")
@@ -108,8 +113,6 @@ func testExample(t *testing.T, name string) error {
 		diff := dmp.DiffMain(string(expected), log, false)
 		return fmt.Errorf("Unexpected output from example '%s', saved to fail.log:\n%s", name, dmp.DiffPrettyText(diff))
 	}
-
-	r.Stop()
 
 	return nil
 }

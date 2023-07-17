@@ -1,6 +1,7 @@
 package run
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -21,9 +22,7 @@ type Tasks map[string]Task
 //
 // A Task must be safe to access concurrently from multiple goroutines.
 type Task interface {
-	Start(stdout io.Writer) error
-	Wait() <-chan error
-	Stop() error
+	Start(ctx context.Context, stdout io.Writer) error
 	Metadata() TaskMetadata
 }
 
