@@ -90,9 +90,10 @@ var notProd map[string]struct{}
 func init() {
 	devDeps := []string{
 		"github.com/goreleaser/goreleaser",
-		"golang.org/x/mod",
-		"golang.org/x/tools",
 		"github.com/sergi/go-diff",
+		"golang.org/x/mod",
+		"golang.org/x/tools/cmd/stringer",
+		"golang.org/x/vuln/cmd/govulncheck",
 	}
 	notProd = make(map[string]struct{}, len(devDeps))
 	for _, m := range devDeps {
