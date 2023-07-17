@@ -73,6 +73,8 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 
 		taskStatus: taskStatus,
 
+		starts: make(chan string),
+
 		dir:     dir,
 		runType: runType,
 		rootID:  taskID,
@@ -95,6 +97,8 @@ type Run struct {
 	mu *mutex
 
 	taskStatus *safeMap[TaskStatus]
+
+	starts chan string
 
 	// read-only
 	runType RunType
@@ -170,8 +174,22 @@ func (r *Run) Tasks() Tasks {
 	return r.tasks
 }
 
+// TaskStatus, given a task ID, returns that task's TaskStatus.
 func (r *Run) TaskStatus(id string) TaskStatus {
 	return r.taskStatus.get(id)
+}
+
+// Invalidate asks a task to rerun. It will block until the Run gets the
+// message (which is BEFORE the task is restarted).
+func (r *Run) Invalidate(id string) {
+	if _, ok := r.tasks[id]; !ok {
+		return
+	}
+	switch r.TaskStatus(id) {
+	case TaskStatusRunning, TaskStatusDone, TaskStatusFailed:
+		r.starts <- id
+	default:
+	}
 }
 
 // Type returns the RunType of a run. It is RunTypeLong if any task is "long",
@@ -244,15 +262,24 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 		}
 
 		r.printf(id, logStyle, "starting")
+
 		ctx, cancel := context.WithCancel(ctx)
 		cancels.set(id, cancel)
+
+		exits.set(id, make(chan exit))
 		r.taskStatus.set(id, TaskStatusRunning)
 		err := t.Start(ctx, out.Writer(id))
+		cancels.del(id)
+
 		select {
 		case exits.get(id) <- exit{id: id, err: err}:
-		case allExits <- exit{id: id, err: err}:
+			return
+		default:
 		}
-		cancels.del(id)
+		select {
+		case allExits <- exit{id: id, err: err}:
+		case exits.get(id) <- exit{id: id, err: err}:
+		}
 	}
 
 	// Start all the zero-dep tasks. When they finish, they'll trigger
@@ -268,7 +295,6 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 	// Run the loop! This is in a function just for control flow -- we can
 	// easily break from it by returning.
 	err := func() error {
-		starts := make(chan string)
 		for {
 			select {
 			case ev := <-fsevents:
@@ -285,10 +311,19 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 					r.printf("run", logStyle, "invalidating {%s}", strings.Join(ids, ", "))
 					go func() {
 						for _, id := range ids {
-							starts <- id
+							r.starts <- id
 						}
 					}()
 				}
+			case id := <-r.starts:
+				go func() {
+					if cancels.has(id) {
+						cancel, exit := cancels.get(id), exits.get(id)
+						cancel()
+						<-exit
+					}
+					start(ctx, id)
+				}()
 			case ev := <-allExits:
 				if ev.err != nil {
 					r.printf(ev.id, logStyle, "exit: %s", ev.err)
@@ -320,14 +355,14 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 						r.taskStatus.set(ev.id, TaskStatusRestarting)
 						time.Sleep(time.Second)
 						r.printf(ev.id, logStyle, "retrying")
-						starts <- ev.id
+						r.starts <- ev.id
 					}()
 					continue
 				}
 				// If the task is "long", retry as a keepalive
 				if tm.Type == "long" {
 					r.taskStatus.set(ev.id, TaskStatusRestarting)
-					go func() { starts <- ev.id }()
+					go func() { r.starts <- ev.id }()
 				}
 
 				// If the task succeeded,
@@ -355,20 +390,13 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 					r.printf(ev.id, logStyle, "invalidating {%s}", strings.Join(ids, ", "))
 					go func() {
 						for _, id := range ids {
-							starts <- id
+							r.starts <- id
 						}
 					}()
 				}
 			case <-ctx.Done():
+				r.printf("run", logStyle, "run canceled")
 				return nil
-			case id := <-starts:
-				go func() {
-					if cancels.has(id) {
-						cancels.get(id)()
-						<-exits.get(id)
-					}
-					start(ctx, id)
-				}()
 			}
 		}
 	}()
