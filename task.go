@@ -37,18 +37,30 @@ type TaskMetadata struct {
 	// Type specifies how we manage a task.
 	//
 	// If the Type is "long",
-	//   - We will restart the task if it exits.
+	//   - We will restart the task if it returns.
 	//   - If the long task A is a dependency or trigger of
 	//     task B, we will begin B as soon as A starts.
 	//
 	// If the Type is "short",
-	//   - If the task exits 0, we will consider it done.
-	//   - If the task exits !0, we will wait 1 second and rerun it.
+	//   - If the Start returns nil, we will consider it done.
+	//   - If the Start returns an error, we will wait 1 second and rerun it.
 	//   - If the short task A is a dependency or trigger of task B, we will
 	//     wait for A to complete before starting B.
 	//
-	// Any Type besides "long" or "short" is invalid. There is no default
-	// type: every task must specify its type.
+	// If the Type is "group",
+	//   - We won't ever call task.Start.
+	//   - For the purposes of invalidation, we will treat a group task as
+	//     complete as soon as all of its dependencies are complete.
+	//   - Groups define a collection of dependencies which can be used by
+	//     other tasks. For example, imagine the group task Build, which
+	//     depends on Build-Frontend and Build-Backend. Tasks like Install
+	//     and Publish can depend on Build, and Build's definition can be
+	//     updated in one place.
+	//   - Groups can only have "dependencies", not "triggers" or "watch".
+	//     It is invalid to have a group with no dependencies.
+	//
+	// Any Type besides "long", "short", or "group" is invalid. There is no
+	// default type: every task must specify its type.
 	Type string
 
 	// Dependencies are other tasks IDs which should always run alongside
@@ -133,28 +145,51 @@ func (tf Tasks) validateTask(ids map[string]struct{}, t Task) []error {
 	}
 
 	if meta.ID == "interleaved" || meta.ID == "run" {
-		problems = append(problems, fmt.Errorf("'%s' is reserved and cannot be used as a task ID", meta.ID))
+		problems = append(problems, fmt.Errorf("'%s' is reserved and cannot be used as a task ID.", meta.ID))
 	}
 
 	for _, c := range meta.ID {
 		if unicode.IsSpace(c) {
-			problems = append(problems, fmt.Errorf("task IDs cannot contain whitespace characters"))
+			problems = append(problems, fmt.Errorf("Task IDs cannot contain whitespace characters."))
 		}
 	}
 
-	if meta.Type != "long" && meta.Type != "short" {
-		problems = append(problems, fmt.Errorf("task '%s' has invalid type '%s', must be 'long' or 'short'", meta.ID, meta.Type))
+	if meta.Type != "long" && meta.Type != "short" && meta.Type != "group" {
+		problems = append(problems, fmt.Errorf("Task '%s' has invalid type '%s'; must be 'long', 'short', or 'group'.", meta.ID, meta.Type))
+	}
+
+	if meta.Type == "group" {
+		if len(meta.Dependencies) == 0 {
+			problems = append(problems, fmt.Errorf("Task '%s' is a group, but has no dependencies. Groups must include at least one dependency.", meta.ID))
+		}
+		if len(meta.Triggers) > 0 {
+			problems = append(problems, fmt.Errorf("Task '%s' is a group, but has triggers. Groups may not have triggers.", meta.ID))
+		}
+		if len(meta.Watch) > 0 {
+			problems = append(problems, fmt.Errorf("Task '%s' is a group, but has watch. Groups may not have watch.", meta.ID))
+		}
+		if s, isScript := t.(*scriptTask); isScript {
+			if s.script != "" {
+				problems = append(problems, fmt.Errorf("Task '%s' is a group, but has a cmd. The cmd will not be executed.", meta.ID))
+			}
+		}
+	} else {
+		if s, isScript := t.(*scriptTask); isScript {
+			if s.script == "" {
+				problems = append(problems, fmt.Errorf("Task '%s' is not a group, but has no cmd. It should be a group.", meta.ID))
+			}
+		}
 	}
 
 	for _, id := range meta.Dependencies {
 		if _, ok := ids[id]; !ok {
-			problems = append(problems, fmt.Errorf("task '%s' lists dependency '%s', which is not the ID of a task", meta.ID, id))
+			problems = append(problems, fmt.Errorf("Task '%s' lists dependency '%s', which is not the ID of a task.", meta.ID, id))
 		}
 	}
 
 	for _, id := range meta.Triggers {
 		if _, ok := ids[id]; !ok {
-			problems = append(problems, fmt.Errorf("task '%s' lists trigger '%s', which is not the ID of a task", meta.ID, id))
+			problems = append(problems, fmt.Errorf("Task '%s' lists trigger '%s', which is not the ID of a task.", meta.ID, id))
 		}
 	}
 

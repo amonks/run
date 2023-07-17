@@ -1,11 +1,10 @@
         run  watching src.css
              watching src.js
 
-  css/build  starting
-
    js/build  starting
 
-  css/build  Building CSS
+  css/build  starting
+             Building CSS
 
    js/build  Building JS
 
@@ -16,4 +15,6 @@
              exit ok
              invalidating {build}
 
-      build  starting
+      build  exit ok
+
+        run  done

@@ -1,8 +1,6 @@
 TODO
 
 bugs:
-	- if the root task has no cmd, and the run is short, the run never
-	  exits
 	- interleaved output isn't wrapped. This is correct when logging to
 	  stdout, but is not correct when logging into a TUI. Plus the wrapping
 	  extends the window frame down, which is goofy.
