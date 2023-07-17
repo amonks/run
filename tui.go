@@ -463,16 +463,16 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, item list.Ite
 		spinner = "✓"
 	}
 
-	style := itemStyle.Copy()
 	var str string
+	var marker string
+	style := itemStyle.Copy().Foreground(lipgloss.Color(colorHash(id)))
 	if index == m.Index() {
-		style = style.Foreground(lipgloss.Color("#F0F"))
-		str = fmt.Sprintf("%s > %d. %s", spinner, index+1, id)
+		marker = ">"
 	} else {
-		str = fmt.Sprintf("%s   %d. %s", spinner, index+1, id)
+		marker = " "
 	}
-
-	fmt.Fprint(w, zone.Mark(id, style.Render(str)))
+	str = fmt.Sprintf("%s %s %d. %s", spinner, marker, index, style.Render(id))
+	fmt.Fprint(w, zone.Mark(id, str))
 }
 
 var (
