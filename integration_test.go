@@ -20,6 +20,10 @@ import (
 )
 
 func TestIntegrationExamples(t *testing.T) {
+	if os.Getenv("SKIP_FLAKY_TESTS") == "true" {
+		t.Skip()
+	}
+
 	exs, err := ioutil.ReadDir("testdata/examples")
 	if err != nil {
 		t.Error(err)
