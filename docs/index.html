@@ -291,6 +291,9 @@ func Example_bringYourOwnUI() {
 					<dd>&nbsp; &nbsp; <a href="#Run.IDs">func (r *Run) IDs() []string</a></dd>
 				
 					
+					<dd>&nbsp; &nbsp; <a href="#Run.Invalidate">func (r *Run) Invalidate(id string)</a></dd>
+				
+					
 					<dd>&nbsp; &nbsp; <a href="#Run.Start">func (r *Run) Start(ctx context.Context, out MultiWriter) error</a></dd>
 				
 					
@@ -440,7 +443,7 @@ func Example_bringYourOwnUI() {
 		
 			
 			
-			<h2 id="MultiWriter">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L151">MultiWriter</a>
+			<h2 id="MultiWriter">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L155">MultiWriter</a>
 				<a class="permalink" href="#MultiWriter">&#xb6;</a>
 				
 				
@@ -468,7 +471,7 @@ must pass a MultiWriter into <a href="#Run.Start">Run.Start</a>.
 		
 			
 			
-			<h2 id="Run">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L94">Run</a>
+			<h2 id="Run">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L96">Run</a>
 				<a class="permalink" href="#Run">&#xb6;</a>
 				
 				
@@ -511,7 +514,7 @@ in the README.
 
 			
 				
-				<h3 id="Run.IDs">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L158">IDs</a>
+				<h3 id="Run.IDs">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L162">IDs</a>
 					<a class="permalink" href="#Run.IDs">&#xb6;</a>
 					
 					
@@ -526,7 +529,21 @@ includes the IDs of each Task that will be used in the run, plus the id
 				
 			
 				
-				<h3 id="Run.Start">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L193">Start</a>
+				<h3 id="Run.Invalidate">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L184">Invalidate</a>
+					<a class="permalink" href="#Run.Invalidate">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (r *<a href="#Run">Run</a>) Invalidate(id <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>)</pre>
+				<p>Invalidate asks a task to rerun. It will block until the Run gets the
+message (which is BEFORE the task is restarted).
+
+				
+				
+				
+			
+				
+				<h3 id="Run.Start">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L211">Start</a>
 					<a class="permalink" href="#Run.Start">&#xb6;</a>
 					
 					
@@ -540,19 +557,20 @@ Remember that &quot;long&quot; runs will never complete until canceled.
 				
 			
 				
-				<h3 id="Run.TaskStatus">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L173">TaskStatus</a>
+				<h3 id="Run.TaskStatus">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L178">TaskStatus</a>
 					<a class="permalink" href="#Run.TaskStatus">&#xb6;</a>
 					
 					
 				</h3>
 				<pre>func (r *<a href="#Run">Run</a>) TaskStatus(id <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>) <a href="#TaskStatus">TaskStatus</a></pre>
-				
+				<p>TaskStatus, given a task ID, returns that task&apos;s TaskStatus.
+
 				
 				
 				
 			
 				
-				<h3 id="Run.Tasks">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L169">Tasks</a>
+				<h3 id="Run.Tasks">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L173">Tasks</a>
 					<a class="permalink" href="#Run.Tasks">&#xb6;</a>
 					
 					
@@ -565,7 +583,7 @@ Remember that &quot;long&quot; runs will never complete until canceled.
 				
 			
 				
-				<h3 id="Run.Type">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L183">Type</a>
+				<h3 id="Run.Type">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L201">Type</a>
 					<a class="permalink" href="#Run.Type">&#xb6;</a>
 					
 					
@@ -584,7 +602,7 @@ File watches are only used if a run is RunTypeLong.
 		
 			
 			
-			<h2 id="RunType">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L405">RunType</a>
+			<h2 id="RunType">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L441">RunType</a>
 				<a class="permalink" href="#RunType">&#xb6;</a>
 				
 				
@@ -666,7 +684,7 @@ passing it into <a href="#RunTask">RunTask</a>.
 				
 			
 				
-				<h3 id="ScriptTask">func <a href="https://github.com/amonks/run/blob/main/script_task.go#L24">ScriptTask</a>
+				<h3 id="ScriptTask">func <a href="https://github.com/amonks/run/blob/main/script_task.go#L26">ScriptTask</a>
 					<a class="permalink" href="#ScriptTask">&#xb6;</a>
 					
 					
@@ -787,7 +805,7 @@ $ bash -c &quot;$CMD&quot; 2&amp;&gt;1 /some/ui
 		
 			
 			
-			<h2 id="TaskStatus">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L119">TaskStatus</a>
+			<h2 id="TaskStatus">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L123">TaskStatus</a>
 				<a class="permalink" href="#TaskStatus">&#xb6;</a>
 				
 				

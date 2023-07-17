@@ -10,6 +10,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 // ScriptTask produces a runnable Task from a bash script and working
@@ -33,6 +35,8 @@ func ScriptTask(script string, dir string, metadata TaskMetadata) Task {
 type scriptTask struct {
 	mu *mutex
 
+	stdout io.Writer
+
 	dir      string
 	script   string
 	metadata TaskMetadata
@@ -53,6 +57,8 @@ func (t *scriptTask) Metadata() TaskMetadata {
 func (t *scriptTask) Start(ctx context.Context, stdout io.Writer) error {
 	t.mu.printf("Start")
 	defer t.cleanup()
+
+	t.stdout = stdout
 
 	if !t.hasScript() {
 		t.mu.printf("Start: no script")
@@ -88,14 +94,16 @@ func (t *scriptTask) Start(ctx context.Context, stdout io.Writer) error {
 	case err := <-exit:
 		return err
 	case <-ctx.Done():
+		t.printf(logStyle, "canceled; stopping")
 	}
+
+	err := ctx.Err()
 
 	// Do our best to stop the task. First it tries SIGINT, then, if the task is
 	// still running after 2 seconds, it tries SIGKILL. Then return any errors
 	// encountered along the way.
-	t.mu.printf("stop")
 
-	var errs []error
+	errs := []error{err}
 
 	if !t.hasScript() {
 		t.mu.printf("Stop: no script")
@@ -128,6 +136,11 @@ func (t *scriptTask) Start(ctx context.Context, stdout io.Writer) error {
 	}
 
 	return errors.Join(errs...)
+}
+
+func (t *scriptTask) printf(style lipgloss.Style, f string, args ...interface{}) {
+	s := style.Render(fmt.Sprintf(f, args...))
+	fmt.Fprintln(t.stdout, s)
 }
 
 func (t *scriptTask) startCmd(stdout io.Writer) error {
@@ -185,5 +198,5 @@ func (t *scriptTask) hasScript() bool {
 
 func (t *scriptTask) isRunning() bool {
 	defer t.mu.Lock("isRunning").Unlock()
-	return t.cmd != nil && t.cmd.ProcessState != nil
+	return t.cmd != nil && t.cmd.ProcessState == nil
 }
