@@ -24,10 +24,11 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 
 	runType := RunTypeShort
 	tasks := map[string]Task{}
-	states := map[string]taskState{}
 	byDep := map[string][]string{}
 	byTrigger := map[string][]string{}
 	byWatch := map[string][]string{}
+
+	taskStatus := newSafeMap[TaskStatus]()
 
 	var ingestTask func(string) error
 	ingestTask = func(id string) error {
@@ -45,7 +46,7 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 		}
 
 		tasks[id] = t
-		states[id] = taskStateNotStarted
+		taskStatus.set(id, TaskStatusNotStarted)
 
 		for _, d := range t.Metadata().Triggers {
 			byTrigger[d] = append(byTrigger[d], id)
@@ -70,6 +71,8 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 	run := Run{
 		mu: newMutex("run"),
 
+		taskStatus: taskStatus,
+
 		dir:     dir,
 		runType: runType,
 		rootID:  taskID,
@@ -91,6 +94,8 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 type Run struct {
 	mu *mutex
 
+	taskStatus *safeMap[TaskStatus]
+
 	// read-only
 	runType RunType
 	// read-only
@@ -109,6 +114,18 @@ type Run struct {
 
 	out MultiWriter
 }
+
+//go:generate go run golang.org/x/tools/cmd/stringer -type TaskStatus
+type TaskStatus int
+
+const (
+	taskStatusInvalid TaskStatus = iota
+	TaskStatusNotStarted
+	TaskStatusRunning
+	TaskStatusRestarting
+	TaskStatusFailed
+	TaskStatusDone
+)
 
 func runAsync(ctx context.Context, t Task, stdout io.Writer) *worker {
 	ctx, cancel := context.WithCancel(ctx)
@@ -139,8 +156,6 @@ type MultiWriter interface {
 // includes the IDs of each Task that will be used in the run, plus the id
 // "run", which the Run uses for messaging about the run itself.
 func (r *Run) IDs() []string {
-	defer r.mu.Lock("IDs").Unlock()
-
 	var ids []string
 	for id := range r.tasks {
 		ids = append(ids, id)
@@ -152,9 +167,11 @@ func (r *Run) IDs() []string {
 
 // Tasks returns the Tasks that a Run would execute.
 func (r *Run) Tasks() Tasks {
-	defer r.mu.Lock("tasks").Unlock()
-
 	return r.tasks
+}
+
+func (r *Run) TaskStatus(id string) TaskStatus {
+	return r.taskStatus.get(id)
 }
 
 // Type returns the RunType of a run. It is RunTypeLong if any task is "long",
@@ -224,6 +241,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 		ctx, cancel := context.WithCancel(ctx)
 		cancels.set(id, cancel)
 		t := r.tasks[id]
+		r.taskStatus.set(id, TaskStatusRunning)
 		err := t.Start(ctx, out.Writer(id))
 		select {
 		case exits.get(id) <- exit{id: id, err: err}:
@@ -269,7 +287,9 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 			case ev := <-allExits:
 				if ev.err != nil {
 					r.printf(ev.id, logStyle, "exit: %s", ev.err)
+					r.taskStatus.set(ev.id, TaskStatusFailed)
 				} else {
+					r.taskStatus.set(ev.id, TaskStatusDone)
 					ran.set(ev.id, struct{}{})
 					r.printf(ev.id, logStyle, "exit ok")
 				}
@@ -292,6 +312,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 				if r.runType == RunTypeLong && ev.err != nil {
 					r.printf(ev.id, logStyle, "retrying in 1 second")
 					go func() {
+						r.taskStatus.set(ev.id, TaskStatusRestarting)
 						time.Sleep(time.Second)
 						r.printf(ev.id, logStyle, "retrying")
 						starts <- ev.id
@@ -300,6 +321,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 				}
 				// If the task is "long", retry as a keepalive
 				if tm.Type == "long" {
+					r.taskStatus.set(ev.id, TaskStatusRestarting)
 					go func() { starts <- ev.id }()
 				}
 
@@ -352,8 +374,6 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 		r.printf("run", logStyle, "done")
 	}
 
-	defer r.mu.Lock("stop").Unlock()
-
 	r.mu.printf("stop watches")
 	for _, stop := range watches {
 		stop()
@@ -370,17 +390,6 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 	// TODO: wait for the tasks to all die
 	return err
 }
-
-//go:generate go run golang.org/x/tools/cmd/stringer -type taskState
-type taskState int
-
-const (
-	taskStateNotStarted taskState = iota
-	taskStateRunning
-	taskStateRestarting
-	taskStateStopping
-	taskStateStopped
-)
 
 // A Run's RunType is RunTypeLong if any task is "long", otherwise it is
 // RunTypeShort.
@@ -403,12 +412,10 @@ func (r *Run) getRunType() RunType {
 }
 
 func (r *Run) getDir() string {
-	defer r.mu.Lock("getRunType").Unlock()
 	return r.dir
 }
 
 func (r *Run) watchedPaths() []string {
-	defer r.mu.Lock("watchedPaths").Unlock()
 	var ps []string
 	for p := range r.byWatch {
 		ps = append(ps, p)
@@ -417,27 +424,22 @@ func (r *Run) watchedPaths() []string {
 }
 
 func (r *Run) idsByWatch(path string) []string {
-	defer r.mu.Lock("idsByWatch").Unlock()
 	return r.byWatch[path]
 }
 
 func (r *Run) idsByTrigger(id string) []string {
-	defer r.mu.Lock("idsByTrigger").Unlock()
 	return r.byTrigger[id]
 }
 
 func (r *Run) idsByDep(id string) []string {
-	defer r.mu.Lock("idsByDep").Unlock()
 	return r.byDep[id]
 }
 
 func (r *Run) getTask(id string) Task {
-	defer r.mu.Lock("task").Unlock()
 	return r.tasks[id]
 }
 
 func (r *Run) taskMetadata(id string) TaskMetadata {
-	defer r.mu.Lock("taskMetadata").Unlock()
 	return r.tasks[id].Metadata()
 }
 

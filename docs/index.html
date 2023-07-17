@@ -294,6 +294,9 @@ func Example_bringYourOwnUI() {
 					<dd>&nbsp; &nbsp; <a href="#Run.Start">func (r *Run) Start(ctx context.Context, out MultiWriter) error</a></dd>
 				
 					
+					<dd>&nbsp; &nbsp; <a href="#Run.TaskStatus">func (r *Run) TaskStatus(id string) TaskStatus</a></dd>
+				
+					
 					<dd>&nbsp; &nbsp; <a href="#Run.Tasks">func (r *Run) Tasks() Tasks</a></dd>
 				
 					
@@ -325,6 +328,14 @@ func Example_bringYourOwnUI() {
 				
 			
 				
+				<dd><a href="#TaskStatus">type TaskStatus</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#TaskStatus.String">func (i TaskStatus) String() string</a></dd>
+				
+			
+				
 				<dd><a href="#Tasks">type Tasks</a></dd>
 				
 					
@@ -345,7 +356,7 @@ func Example_bringYourOwnUI() {
 					<dd>&nbsp; &nbsp; <a href="#NewPrinter">func NewPrinter() UI</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#NewTUI">func NewTUI() UI</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#NewTUI">func NewTUI(run *Run) UI</a></dd>
 				
 				
 			
@@ -398,7 +409,7 @@ func Example_bringYourOwnUI() {
 			
 				<a href="https://github.com/amonks/run/blob/main/taskfile.go">taskfile.go</a>
 			
-				<a href="https://github.com/amonks/run/blob/main/taskstate_string.go">taskstate_string.go</a>
+				<a href="https://github.com/amonks/run/blob/main/taskstatus_string.go">taskstatus_string.go</a>
 			
 				<a href="https://github.com/amonks/run/blob/main/tui.go">tui.go</a>
 			
@@ -429,7 +440,7 @@ func Example_bringYourOwnUI() {
 		
 			
 			
-			<h2 id="MultiWriter">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L134">MultiWriter</a>
+			<h2 id="MultiWriter">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L151">MultiWriter</a>
 				<a class="permalink" href="#MultiWriter">&#xb6;</a>
 				
 				
@@ -457,7 +468,7 @@ must pass a MultiWriter into <a href="#Run.Start">Run.Start</a>.
 		
 			
 			
-			<h2 id="Run">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L91">Run</a>
+			<h2 id="Run">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L94">Run</a>
 				<a class="permalink" href="#Run">&#xb6;</a>
 				
 				
@@ -500,7 +511,7 @@ in the README.
 
 			
 				
-				<h3 id="Run.IDs">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L141">IDs</a>
+				<h3 id="Run.IDs">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L158">IDs</a>
 					<a class="permalink" href="#Run.IDs">&#xb6;</a>
 					
 					
@@ -515,7 +526,7 @@ includes the IDs of each Task that will be used in the run, plus the id
 				
 			
 				
-				<h3 id="Run.Start">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L176">Start</a>
+				<h3 id="Run.Start">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L193">Start</a>
 					<a class="permalink" href="#Run.Start">&#xb6;</a>
 					
 					
@@ -529,7 +540,19 @@ Remember that &quot;long&quot; runs will never complete until canceled.
 				
 			
 				
-				<h3 id="Run.Tasks">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L154">Tasks</a>
+				<h3 id="Run.TaskStatus">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L173">TaskStatus</a>
+					<a class="permalink" href="#Run.TaskStatus">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (r *<a href="#Run">Run</a>) TaskStatus(id <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>) <a href="#TaskStatus">TaskStatus</a></pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="Run.Tasks">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L169">Tasks</a>
 					<a class="permalink" href="#Run.Tasks">&#xb6;</a>
 					
 					
@@ -542,7 +565,7 @@ Remember that &quot;long&quot; runs will never complete until canceled.
 				
 			
 				
-				<h3 id="Run.Type">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L166">Type</a>
+				<h3 id="Run.Type">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L183">Type</a>
 					<a class="permalink" href="#Run.Type">&#xb6;</a>
 					
 					
@@ -561,7 +584,7 @@ File watches are only used if a run is RunTypeLong.
 		
 			
 			
-			<h2 id="RunType">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L391">RunType</a>
+			<h2 id="RunType">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L400">RunType</a>
 				<a class="permalink" href="#RunType">&#xb6;</a>
 				
 				
@@ -752,6 +775,49 @@ $ bash -c &quot;$CMD&quot; 2&amp;&gt;1 /some/ui
 		
 			
 			
+			<h2 id="TaskStatus">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L119">TaskStatus</a>
+				<a class="permalink" href="#TaskStatus">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type TaskStatus <a href="https://pkg.go.dev/pkg/builtin/#int">int</a></pre>
+
+			
+				
+				<pre>const (
+    <span id="TaskStatusNotStarted">TaskStatusNotStarted</span> <a href="#TaskStatus">TaskStatus</a>
+    <span id="TaskStatusRunning">TaskStatusRunning</span>
+    <span id="TaskStatusRestarting">TaskStatusRestarting</span>
+    <span id="TaskStatusFailed">TaskStatusFailed</span>
+    <span id="TaskStatusDone">TaskStatusDone</span>
+)</pre>
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+				
+				<h3 id="TaskStatus.String">func (TaskStatus) <a href="https://github.com/amonks/run/blob/main/taskstatus_string.go#L23">String</a>
+					<a class="permalink" href="#TaskStatus.String">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (i <a href="#TaskStatus">TaskStatus</a>) String() <a href="https://pkg.go.dev/pkg/builtin/#string">string</a></pre>
+				
+				
+				
+				
+			
+		
+			
+			
 			<h2 id="Tasks">type <a href="https://github.com/amonks/run/blob/main/task.go#L16">Tasks</a>
 				<a class="permalink" href="#Tasks">&#xb6;</a>
 				
@@ -864,7 +930,7 @@ streams to its Stdout. The output is suitable for piping to a file.
 					
 					
 				</h3>
-				<pre>func NewTUI() <a href="#UI">UI</a></pre>
+				<pre>func NewTUI(run *<a href="#Run">Run</a>) <a href="#UI">UI</a></pre>
 				<p>NewTUI produces an interactive terminal UI for displaying mulitplexed
 streams. The UI shows a list of the streams, and allows keyboard and mouse
 navigation for selecting a particular stream to inspect.

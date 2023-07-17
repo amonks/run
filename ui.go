@@ -12,7 +12,7 @@ import (
 // The UI can be passed into [Run.Start] to display a run's execution.
 //
 // The UI is safe to access concurrently from multiple goroutines.
-func NewTUI() UI { return newTUI() }
+func NewTUI(run *Run) UI { return newTUI(run) }
 
 // NewPrinter produces a non-interactive UI for displaying interleaved
 // multiplexed streams. The UI prints interleaved output from all of the
