@@ -323,11 +323,13 @@ const (
 func (r *Run) handleEvent(ev event) {
 	switch ev := ev.(type) {
 	case evFatal:
+		r.mu.printf("handle evFatal: %s", ev.err)
 		r.printf("run", logStyle, "fatal")
 		r.stop(ev.err)
 		return
 
 	case evTaskReady:
+		r.mu.printf("handle evTaskReady: %s", ev.task)
 		taskIDs := r.idsByDep(ev.task)
 		if len(taskIDs) > 0 {
 			r.printf(ev.task, logStyle, "ready, invalidating {%s}", strings.Join(taskIDs, ", "))
@@ -338,6 +340,7 @@ func (r *Run) handleEvent(ev event) {
 		}
 
 	case evTaskExit:
+		r.mu.printf("handle evTaskExit: %s", ev.task)
 		state := r.taskState(ev.task)
 		if state == taskStateStopping {
 			r.printf(ev.task, logStyle, "stopped")
@@ -418,6 +421,7 @@ func (r *Run) handleEvent(ev event) {
 		}
 
 	case evFSEvent:
+		r.mu.printf("handle evFSEvent: %s", ev.path)
 		var evs []string
 		for _, ev := range ev.evs {
 			evs = append(evs, ev.event+":"+ev.path)
@@ -433,6 +437,7 @@ func (r *Run) handleEvent(ev event) {
 		}
 
 	case evInvalidateTask:
+		r.mu.printf("handle evInvalidateTask: %s", ev.task)
 		t := r.getTask(ev.task)
 		for _, dep := range t.Metadata().Dependencies {
 			if !r.taskRan(dep) {
