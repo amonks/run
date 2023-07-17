@@ -1,8 +1,6 @@
 TODO
 
 bugs:
-	- when running a short task in the TUI, run completion does not kill
-	  the tui (good) but _does_ log to stdout, which breaks the tui (bad)
 	- if the root task has no cmd, and the run is short, the run never
 	  exits
 	- interleaved output isn't wrapped. This is correct when logging to

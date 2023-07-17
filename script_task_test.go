@@ -1,6 +1,7 @@
 package run_test
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -10,23 +11,17 @@ import (
 
 func TestScriptTaskOK(t *testing.T) {
 	task := run.ScriptTask("sleep 0.1; exit 0", ".", run.TaskMetadata{})
+	ctx := context.Background()
 	for i := 0; i < 3; i++ {
 		b := strings.Builder{}
 
-		if err := task.Start(&b); err != nil {
-			t.Fatal(err)
-		}
-
-		select {
-		case <-task.Wait():
-			t.Fatal("task exited unexpectedly")
-		default:
-		}
+		exit := make(chan error)
+		go func() { exit <- task.Start(ctx, &b) }()
 
 		select {
 		case <-time.After(200 * time.Millisecond):
 			t.Fatal("timeout")
-		case err := <-task.Wait():
+		case err := <-exit:
 			if err != nil {
 				t.Fatal("unexpected err")
 			}
@@ -36,25 +31,19 @@ func TestScriptTaskOK(t *testing.T) {
 
 func TestScriptTaskFail(t *testing.T) {
 	task := run.ScriptTask("sleep 0.1; exit 1", ".", run.TaskMetadata{})
+	ctx := context.Background()
 	for i := 0; i < 3; i++ {
 		b := strings.Builder{}
 
-		if err := task.Start(&b); err != nil {
-			t.Fatal(err)
-		}
-
-		select {
-		case <-task.Wait():
-			t.Fatal("task exited unexpectedly")
-		default:
-		}
+		exit := make(chan error)
+		go func() { exit <- task.Start(ctx, &b) }()
 
 		select {
 		case <-time.After(200 * time.Millisecond):
 			t.Fatal("timeout")
-		case err := <-task.Wait():
+		case err := <-exit:
 			if err == nil {
-				t.Fatal("expected err")
+				t.Fatal("expected success")
 			}
 		}
 	}

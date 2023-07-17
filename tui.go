@@ -1,6 +1,7 @@
 package run
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"strconv"
@@ -27,8 +28,6 @@ type tui struct {
 	p *tea.Program
 
 	interleaved UI
-
-	waiters []chan<- error
 }
 
 // *tui implements MultiWriter
@@ -41,16 +40,11 @@ func (a *tui) Writer(id string) io.Writer {
 		panic("getting writer from unstarted tui")
 	}
 
-	var send func(tea.Msg)
-	if a.p != nil {
-		send = a.p.Send
-	}
-
 	return tuiWriter{
 		mu:                newMutex("writer:" + id),
 		id:                id,
 		interleavedWriter: a.interleaved,
-		send:              send,
+		send:              a.p.Send,
 	}
 }
 
@@ -83,64 +77,41 @@ func (w tuiWriter) Write(bs []byte) (int, error) {
 // *tui implements UI
 var _ UI = &tui{}
 
-func (a *tui) Start(stdin io.Reader, stdout io.Writer, ids []string) error {
-	a.mu.Lock("Start")
-
-	// already started
-	if a.p != nil {
-		a.mu.Unlock()
-		return nil
-	}
-
-	ready := make(chan struct{})
-	a.p = tea.NewProgram(
-		&tuiModel{ids: append([]string{"interleaved"}, ids...), onInit: func() { ready <- struct{}{}; close(ready) }},
+func (a *tui) Start(ctx context.Context, ready chan<- struct{}, stdin io.Reader, stdout io.Writer, ids []string) error {
+	program := tea.NewProgram(
+		&tuiModel{
+			ids:    append([]string{"interleaved"}, ids...),
+			onInit: func() { ready <- struct{}{} },
+		},
 		tea.WithAltScreen(),
+		tea.WithContext(ctx),
 		tea.WithMouseCellMotion())
+	a.p = program
 
-	a.mu.Unlock()
 	interleavedWriter := a.Writer("interleaved")
-	defer a.mu.Lock("start 2").Unlock()
-
+	a.mu.printf("will make printer")
 	p := NewPrinter()
-	p.Start(nil, interleavedWriter, ids)
+	a.mu.printf("made printer")
+	go p.Start(ctx, nil, nil, interleavedWriter, ids)
+	a.mu.printf("started")
 	a.interleaved = p
+
+	exit := make(chan error)
 
 	go func() {
 		// run the bubbletea Program
-		_, err := a.p.Run()
+		if _, err := program.Run(); err != nil && err != tea.ErrProgramKilled {
+			exit <- err
+			return
+		}
 
 		// When it exits, notify Waiters that the UI is done.
-		a.notify(err)
+		exit <- nil
 	}()
 
-	<-ready
+	err := <-exit
 
-	return nil
-}
-
-func (a *tui) Wait() <-chan error {
-	defer a.mu.Lock("Wait").Unlock()
-
-	c := make(chan error)
-	a.waiters = append(a.waiters, c)
-	return c
-}
-
-func (a *tui) notify(err error) {
-	defer a.mu.Lock("notify").Unlock()
-
-	for _, w := range a.waiters {
-		select {
-		case w <- err:
-		default:
-		}
-		close(w)
-	}
-}
-
-func (a *tui) Stop() error {
-	return nil
+	return err
 }
 
 type tuiModel struct {

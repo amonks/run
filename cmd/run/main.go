@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
+	"os/signal"
 	"reflect"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/amonks/run"
@@ -92,42 +95,48 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := ui.Start(os.Stdin, os.Stdout, r.IDs()); err != nil {
-		fmt.Println("Error starting run:")
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	if err := r.Start(ui); err != nil {
-		ui.Stop()
-		fmt.Println("Error starting UI:")
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
+	ctx, cancel := context.WithCancel(context.Background())
 	var wg sync.WaitGroup
+	wg.Add(2)
 
-	wg.Add(1)
+	uiReady := make(chan struct{})
+
 	go func() {
 		defer wg.Done()
-		if err := <-ui.Wait(); err != nil {
-			fmt.Println("UI failed:")
-			fmt.Println(err)
+		err := ui.Start(ctx, uiReady, os.Stdin, os.Stdout, r.IDs())
+		if err != nil && err != context.Canceled {
+			fmt.Println("Error running ui:", err)
 		}
-		r.Stop()
+		if err != context.Canceled {
+			cancel()
+		}
 	}()
 
-	wg.Add(1)
+	<-uiReady
+
 	go func() {
 		defer wg.Done()
-		if err := <-r.Wait(); err != nil {
-			fmt.Println("Run failed:")
-			fmt.Println(err)
+		err := r.Start(ctx, ui)
+		if err != nil && err != context.Canceled {
+			fmt.Println("Error running tasks:", err)
 		}
-		ui.Stop()
+		if *fUI != "tui" && err != context.Canceled {
+			cancel()
+		}
 	}()
 
-	wg.Wait()
+	allDone := make(chan struct{})
+	go func() { wg.Wait(); allDone <- struct{}{} }()
+
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGHUP, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+
+	select {
+	case <-sigs:
+		cancel()
+		<-allDone
+	case <-allDone:
+	}
 }
 
 func tasklistText(ids []string) string {

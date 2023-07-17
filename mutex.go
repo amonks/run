@@ -60,7 +60,7 @@ func (mu *mutex) Lock(name string) *mutex {
 
 func (mu *mutex) Unlock() {
 	mu.setHolder("")
-	mu.printf("%s unlocks", mu.name)
+	mu.printf("unlocks")
 	mu.mu.Unlock()
 }
 

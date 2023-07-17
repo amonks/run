@@ -2,102 +2,47 @@ package run
 
 import (
 	"context"
-	"fmt"
 	"io"
-	"os/exec"
 )
 
 // FuncTask produces a runnable Task from a go function. metadata.Dir is ignored.
 func FuncTask(fn func(ctx context.Context, w io.Writer) error, metadata TaskMetadata) Task {
 	return &funcTask{
-		mu:       newMutex(fmt.Sprintf("funcTask")),
 		fn:       fn,
 		metadata: metadata,
 	}
 }
 
 type funcTask struct {
-	mu *mutex
+	fn func(ctx context.Context, w io.Writer) error
 
-	fn       func(ctx context.Context, w io.Writer) error
-	cancel   func()
+	// read-only
 	metadata TaskMetadata
-
-	cmd     *exec.Cmd
-	stdout  io.Writer
-	waiters []chan<- error
 }
 
 // *funcTask implements Task
 var _ Task = &funcTask{}
 
 func (t *funcTask) Metadata() TaskMetadata {
-	defer t.mu.Lock("Metadata").Unlock()
-
 	meta := t.metadata
 	return meta
 }
 
-func (t *funcTask) Start(stdout io.Writer) error {
-	if err := t.Stop(); err != nil {
-		return err
-	}
-
-	defer t.mu.Lock("Start").Unlock()
-
+func (t *funcTask) Start(ctx context.Context, stdout io.Writer) error {
 	ctx, cancel := context.WithCancel(context.Background())
-	t.cancel = cancel
-	t.waiters = nil
+	exit := make(chan error)
 
 	// Run the func!
 	go func() {
-		err := t.fn(ctx, stdout)
-		t.notify(err)
+		exit <- t.fn(ctx, stdout)
 	}()
 
-	return nil
-}
-
-func (t *funcTask) Wait() <-chan error {
-	defer t.mu.Lock("Wait").Unlock()
-
-	c := make(chan error)
-	if t.cancel == nil {
-		close(c)
-		return c
+	select {
+	case err := <-exit:
+		cancel()
+		return err
+	case <-ctx.Done():
+		cancel()
+		return <-exit
 	}
-	t.waiters = append(t.waiters, c)
-	return c
-}
-
-func (t *funcTask) notify(err error) {
-	defer t.mu.Lock("notify").Unlock()
-
-	for _, w := range t.waiters {
-		select {
-		case w <- err:
-		default:
-		}
-		close(w)
-	}
-
-	t.cancel = nil
-	t.waiters = nil
-}
-
-func (t *funcTask) Stop() error {
-	if !t.isRunning() {
-		return nil
-	}
-	t.cancel()
-	w := t.Wait()
-
-	<-w
-
-	return nil
-}
-
-func (t *funcTask) isRunning() bool {
-	defer t.mu.Lock("hasStarted").Unlock()
-	return t.cancel != nil
 }

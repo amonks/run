@@ -1,6 +1,7 @@
 package run_test
 
 import (
+	"context"
 	"log"
 	"os"
 	"sync"
@@ -22,28 +23,31 @@ func Example() {
 		log.Fatal(err)
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	ui := run.NewTUI()
-	ui.Start(os.Stdin, os.Stdout, r.IDs())
-	r.Start(ui)
 
 	var wg sync.WaitGroup
+	ready := make(chan struct{})
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := <-ui.Wait(); err != nil {
+		if err := ui.Start(ctx, ready, os.Stdin, os.Stdout, r.IDs()); err != nil {
 			log.Fatal(err)
 		}
-		r.Stop()
+		cancel()
 	}()
 
+	<-ready
+
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := <-r.Wait(); err != nil {
+		if err := r.Start(ctx, ui); err != nil {
 			log.Fatal(err)
 		}
-		ui.Stop()
+		cancel()
 	}()
 
 	wg.Wait()

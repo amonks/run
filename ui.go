@@ -1,6 +1,9 @@
 package run
 
-import "io"
+import (
+	"context"
+	"io"
+)
 
 // NewTUI produces an interactive terminal UI for displaying mulitplexed
 // streams. The UI shows a list of the streams, and allows keyboard and mouse
@@ -9,7 +12,7 @@ import "io"
 // The UI can be passed into [Run.Start] to display a run's execution.
 //
 // The UI is safe to access concurrently from multiple goroutines.
-func NewTUI() UI     { return newTUI() }
+func NewTUI() UI { return newTUI() }
 
 // NewPrinter produces a non-interactive UI for displaying interleaved
 // multiplexed streams. The UI prints interleaved output from all of the
@@ -26,11 +29,11 @@ func NewPrinter() UI { return newPrinter() }
 //
 // The functions [NewTUI] and [NewPrinter] produce implementors of UI.
 type UI interface {
-	Start(stdin io.Reader, stdout io.Writer, ids []string) error
-	Wait() <-chan error
-	Stop() error
+	Start(ctx context.Context, ready chan<- struct{}, stdin io.Reader, stdout io.Writer, ids []string) error
 	Writer(id string) io.Writer
 }
+
+type ready struct{}
 
 // UIs implement MultiWriter
 func init() {

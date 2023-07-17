@@ -2,12 +2,16 @@ long
 
 run:
   watching testdata/examples/long-with-trigger/changed-file
-  watched file change: {Remove:testdata/examples/long-with-trigger/changed-file}
+  watched file changes:                                    
+    Remove testdata/examples/long-with-trigger/changed-file
   invalidating {trigger}
+  done
 
 test:
   starting
+  exit ok
   starting
+  exit ok
   starting
 
 trigger:

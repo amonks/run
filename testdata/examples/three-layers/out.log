@@ -3,7 +3,6 @@ ok
 other:
   starting
   exit ok
-  invalidating {test}
 
 run:
   done
@@ -15,7 +14,6 @@ test:
 two/other:
   starting
   exit ok
-  invalidating {two/test}
 
 two/test:
   starting

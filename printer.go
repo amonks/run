@@ -1,6 +1,7 @@
 package run
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"strings"
@@ -17,7 +18,6 @@ type printer struct {
 	stdout    io.Writer
 	keyLength int
 	lastKey   string
-	waiters   []chan<- error
 }
 
 // *printer implements MultiWriter
@@ -39,9 +39,7 @@ func (w printerWriter) Write(bs []byte) (int, error) {
 	return len(bs), nil
 }
 
-func (p *printer) Start(_ io.Reader, stdout io.Writer, ids []string) error {
-	defer p.mu.Lock("Start").Unlock()
-
+func (p *printer) Start(ctx context.Context, ready chan<- struct{}, _ io.Reader, stdout io.Writer, ids []string) error {
 	p.stdout = stdout
 	p.keyLength = 0
 	for _, id := range ids {
@@ -49,31 +47,11 @@ func (p *printer) Start(_ io.Reader, stdout io.Writer, ids []string) error {
 			p.keyLength = len(id)
 		}
 	}
-	return nil
-}
 
-func (p *printer) Wait() <-chan error {
-	defer p.mu.Lock("Wait").Unlock()
+	ready <- struct{}{}
 
-	c := make(chan error)
-	p.waiters = append(p.waiters, c)
-	return c
-}
+	<-ctx.Done()
 
-func (p *printer) notify(err error) {
-	defer p.mu.Lock("notify").Unlock()
-
-	for _, w := range p.waiters {
-		select {
-		case w <- err:
-		default:
-		}
-		close(w)
-	}
-}
-
-func (p *printer) Stop() error {
-	p.notify(nil)
 	return nil
 }
 

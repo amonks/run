@@ -6,5 +6,8 @@ prereq:
   exit ok
   invalidating {test}
 
+run:
+  done
+
 test:
   starting
