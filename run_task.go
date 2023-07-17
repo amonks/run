@@ -485,7 +485,7 @@ func (r *Run) handleEvent(ev event) {
 		}()
 
 	default:
-		fmt.Printf("unexpected event type: %+v\n", ev)
+		panic(fmt.Errorf("unexpected event type: %+v\n", ev))
 	}
 }
 
