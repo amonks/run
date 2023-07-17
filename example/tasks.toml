@@ -11,7 +11,7 @@
 
 [[task]]
   id = "build"
-  type = "short"
+  type = "group"
   dependencies = ["css/build", "js/build"]
 
 [[task]]

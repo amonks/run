@@ -237,10 +237,15 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 	}
 
 	start := func(ctx context.Context, id string) {
+		t := r.tasks[id]
+		if t.Metadata().Type == "group" {
+			allExits <- exit{id: id, err: nil}
+			return
+		}
+
 		r.printf(id, logStyle, "starting")
 		ctx, cancel := context.WithCancel(ctx)
 		cancels.set(id, cancel)
-		t := r.tasks[id]
 		r.taskStatus.set(id, TaskStatusRunning)
 		err := t.Start(ctx, out.Writer(id))
 		select {
