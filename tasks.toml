@@ -114,6 +114,13 @@
   type = "short"
   cmd = """
     godoc -http=0.0.0.0:3335 &
+    godocpid=$!
+
+    function kill_godoc() {
+      kill $godocpid
+    }
+
+    trap kill_godoc SIGINT
 
     sha=$(git rev-parse --short HEAD)
 
@@ -125,6 +132,9 @@
     done
 
     wget --quiet --mirror --page-requisites --no-parent http://localhost:3335/pkg/github.com/amonks/run
+
+    kill_godoc
+    trap - SIGINT
 
     cd localhost:3335
     mv pkg/github.com/amonks/run index.html
