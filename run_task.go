@@ -415,12 +415,15 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 
 	r.mu.printf("stopping tasks")
 	for _, k := range cancels.keys() {
+		if !cancels.has(k) {
+			continue
+		}
 		cancel := cancels.get(k)
 		cancel()
+		<-exits.get(k)
 	}
 	r.mu.printf("stopped tasks")
 
-	// TODO: wait for the tasks to all die
 	return err
 }
 
