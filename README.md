@@ -68,7 +68,7 @@ page][releases].
 Alternately, if you already use go, you can install Run with the go command
 line tool:
 
-    $ go install github.com/amonks/run@latest
+    $ go install github.com/amonks/run/cmd/run@latest
 
 [releases]: https://github.com/amonks/run/releases
 
