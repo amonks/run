@@ -24,10 +24,11 @@ var (
 	fDir  = flag.String("dir", ".", "Look for a root taskfile in the given directory.")
 	fList = flag.Bool("list", false, "Display the task list and exit. If run is invoked with both -list and a task ID, that task's dependencies are displayed.")
 
-	fVersion = flag.Bool("version", false, "Display the version and exit.")
-	fHelp    = flag.Bool("help", false, "Display the help text and exit.")
-	fCredits = flag.Bool("credits", false, "Display the open source credits and exit.")
-	fLicense = flag.Bool("license", false, "Display the license info and exit.")
+	fVersion      = flag.Bool("version", false, "Display the version and exit.")
+	fHelp         = flag.Bool("help", false, "Display the help text and exit.")
+	fCredits      = flag.Bool("credits", false, "Display the open source credits and exit.")
+	fContributors = flag.Bool("contributors", false, "Display the contributors list and exit.")
+	fLicense      = flag.Bool("license", false, "Display the license info and exit.")
 )
 
 func main() {
@@ -41,6 +42,9 @@ func main() {
 		os.Exit(0)
 	} else if *fCredits {
 		fmt.Println("\n" + creditsText())
+		os.Exit(0)
+	} else if *fContributors {
+		fmt.Println("\n" + contributorsText())
 		os.Exit(0)
 	} else if *fLicense {
 		fmt.Println("\n" + licenseText())
@@ -245,6 +249,10 @@ func versionText() string {
 
 func creditsText() string {
 	return "CREDITS\n\n" + indent.String(wordwrap.String(run.Credits, 78), 2)
+}
+
+func contributorsText() string {
+	return "CONTRIBUTORS\n\n" + indent.String(wordwrap.String(run.Contributors, 78), 2)
 }
 
 var statement = "Run is free for noncommercial and small-business use, with a guarantee that fair, reasonable, and nondiscriminatory paid-license terms will be available for everyone else."
