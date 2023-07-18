@@ -1,6 +1,7 @@
 # Contributors
 
 - Andrew Monks <a@monks.co>
+- Sarah Schulte <s@cgs.dev>
 
 ---
 
