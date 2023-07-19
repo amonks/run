@@ -55,7 +55,7 @@ func main() {
 }
 ```
 
-Run can be used and extended programatically through its Go API. See [the
+Run can be used and extended programmatically through its Go API. See [the
 godoc][godoc]
 
 [godoc]: https://amonks.github.io/run
@@ -225,8 +225,26 @@ Run prints its output if either,
 
 ## Programmatic Use
 
-Run can be used and extended programatically through its Go API. For more
+Run can be used and extended programmatically through its Go API. For more
 information, including a conceptual overview of the architecture, example code,
 and reference documentation, see [the godoc][godoc].
 
 [godoc]: https://amonks.github.io/run
+
+# Attribution and License
+
+Run is free for noncommercial and small-business use, with a guarantee that
+fair, reasonable, and nondiscriminatory paid-license terms will be available
+for everyone else. See LICENSE.md or invoke the program with `-license` for
+more details.
+
+Commercial licenses are available for 5$ per seat per month (billed yearly) by
+emailing a@monks.co. Discounts may be available for large deals, project
+contributors, markets with low purchasing power, customers I am fond of, or
+any other reason, at my discretion. Never hurts to ask.
+
+Run is made by Andrew Monks, with help from outside contributors. See
+CONTRIBUTORS.md for more details.
+
+Additionally, Run makes use of a variety of open source software. See
+CREDITS.txt for more details.
