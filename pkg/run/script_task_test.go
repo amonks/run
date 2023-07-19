@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/amonks/run"
+	"github.com/amonks/run/pkg/run"
 )
 
 func TestScriptTaskOK(t *testing.T) {

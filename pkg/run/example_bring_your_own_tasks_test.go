@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/amonks/run"
+	"github.com/amonks/run/pkg/run"
 )
 
 // In this example, we generate our own Task and run it.

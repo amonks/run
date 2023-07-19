@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/amonks/run"
+	"github.com/amonks/run/pkg/run"
 	"github.com/muesli/reflow/indent"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )

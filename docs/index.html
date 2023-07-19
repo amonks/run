@@ -65,7 +65,7 @@
 		
 		<div id="short-nav">
 			<dl>
-			<dd><code>import "github.com/amonks/run"</code></dd>
+			<dd><code>import "github.com/amonks/run/pkg/run"</code></dd>
 			</dl>
 			<dl>
 			<dd><a href="#pkg-overview" class="overviewLink">Overview</a></dd>
@@ -219,7 +219,7 @@ import (
     &#34;log&#34;
     &#34;os&#34;
 
-    &#34;github.com/amonks/run&#34;
+    &#34;github.com/amonks/run/pkg/run&#34;
 )
 
 <span class="comment">// ui implements MultiWriter</span>
@@ -270,8 +270,6 @@ func Example_bringYourOwnUI() {
 			<div id="manual-nav">
 			<dl>
 			
-			
-				<dd><a href="#pkg-variables">Variables</a></dd>
 			
 			
 			
@@ -388,39 +386,37 @@ func Example_bringYourOwnUI() {
 			<p>
 			<span style="font-size:90%">
 			
-				<a href="https://github.com/amonks/run/blob/main/color.go">color.go</a>
+				<a href="https://github.com/amonks/run/blob/main/pkg/run/color.go">color.go</a>
 			
-				<a href="https://github.com/amonks/run/blob/main/func_task.go">func_task.go</a>
+				<a href="https://github.com/amonks/run/blob/main/pkg/run/func_task.go">func_task.go</a>
 			
-				<a href="https://github.com/amonks/run/blob/main/legal.go">legal.go</a>
+				<a href="https://github.com/amonks/run/blob/main/pkg/run/mutex.go">mutex.go</a>
 			
-				<a href="https://github.com/amonks/run/blob/main/mutex.go">mutex.go</a>
+				<a href="https://github.com/amonks/run/blob/main/pkg/run/output_writer.go">output_writer.go</a>
 			
-				<a href="https://github.com/amonks/run/blob/main/output_writer.go">output_writer.go</a>
+				<a href="https://github.com/amonks/run/blob/main/pkg/run/printer.go">printer.go</a>
 			
-				<a href="https://github.com/amonks/run/blob/main/printer.go">printer.go</a>
+				<a href="https://github.com/amonks/run/blob/main/pkg/run/run.go">run.go</a>
 			
-				<a href="https://github.com/amonks/run/blob/main/run.go">run.go</a>
+				<a href="https://github.com/amonks/run/blob/main/pkg/run/run_task.go">run_task.go</a>
 			
-				<a href="https://github.com/amonks/run/blob/main/run_task.go">run_task.go</a>
+				<a href="https://github.com/amonks/run/blob/main/pkg/run/runtype_string.go">runtype_string.go</a>
 			
-				<a href="https://github.com/amonks/run/blob/main/runtype_string.go">runtype_string.go</a>
+				<a href="https://github.com/amonks/run/blob/main/pkg/run/safe_map.go">safe_map.go</a>
 			
-				<a href="https://github.com/amonks/run/blob/main/safe_map.go">safe_map.go</a>
+				<a href="https://github.com/amonks/run/blob/main/pkg/run/script_task.go">script_task.go</a>
 			
-				<a href="https://github.com/amonks/run/blob/main/script_task.go">script_task.go</a>
+				<a href="https://github.com/amonks/run/blob/main/pkg/run/task.go">task.go</a>
 			
-				<a href="https://github.com/amonks/run/blob/main/task.go">task.go</a>
+				<a href="https://github.com/amonks/run/blob/main/pkg/run/taskfile.go">taskfile.go</a>
 			
-				<a href="https://github.com/amonks/run/blob/main/taskfile.go">taskfile.go</a>
+				<a href="https://github.com/amonks/run/blob/main/pkg/run/taskstatus_string.go">taskstatus_string.go</a>
 			
-				<a href="https://github.com/amonks/run/blob/main/taskstatus_string.go">taskstatus_string.go</a>
+				<a href="https://github.com/amonks/run/blob/main/pkg/run/tui.go">tui.go</a>
 			
-				<a href="https://github.com/amonks/run/blob/main/tui.go">tui.go</a>
+				<a href="https://github.com/amonks/run/blob/main/pkg/run/ui.go">ui.go</a>
 			
-				<a href="https://github.com/amonks/run/blob/main/ui.go">ui.go</a>
-			
-				<a href="https://github.com/amonks/run/blob/main/watch.go">watch.go</a>
+				<a href="https://github.com/amonks/run/blob/main/pkg/run/watch.go">watch.go</a>
 			
 			</span>
 			</p>
@@ -432,23 +428,11 @@ func Example_bringYourOwnUI() {
 
 		
 		
-			<h2 id="pkg-variables">Variables</h2>
-			
-				
-				<pre>var <span id="Contributors">Contributors</span> <a href="https://pkg.go.dev/pkg/builtin/#string">string</a></pre>
-			
-				
-				<pre>var <span id="Credits">Credits</span> <a href="https://pkg.go.dev/pkg/builtin/#string">string</a></pre>
-			
-				
-				<pre>var <span id="License">License</span> <a href="https://pkg.go.dev/pkg/builtin/#string">string</a></pre>
-			
-		
 		
 		
 			
 			
-			<h2 id="MultiWriter">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L137">MultiWriter</a>
+			<h2 id="MultiWriter">type <a href="https://github.com/amonks/run/blob/main/pkg/run/run_task.go#L137">MultiWriter</a>
 				<a class="permalink" href="#MultiWriter">&#xb6;</a>
 				
 				
@@ -476,7 +460,7 @@ must pass a MultiWriter into <a href="#Run.Start">Run.Start</a>.
 		
 			
 			
-			<h2 id="Run">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L96">Run</a>
+			<h2 id="Run">type <a href="https://github.com/amonks/run/blob/main/pkg/run/run_task.go#L96">Run</a>
 				<a class="permalink" href="#Run">&#xb6;</a>
 				
 				
@@ -503,7 +487,7 @@ must pass a MultiWriter into <a href="#Run.Start">Run.Start</a>.
 
 			
 				
-				<h3 id="RunTask">func <a href="https://github.com/amonks/run/blob/main/run_task.go#L20">RunTask</a>
+				<h3 id="RunTask">func <a href="https://github.com/amonks/run/blob/main/pkg/run/run_task.go#L20">RunTask</a>
 					<a class="permalink" href="#RunTask">&#xb6;</a>
 					
 					
@@ -519,7 +503,7 @@ in the README.
 
 			
 				
-				<h3 id="Run.IDs">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L144">IDs</a>
+				<h3 id="Run.IDs">func (*Run) <a href="https://github.com/amonks/run/blob/main/pkg/run/run_task.go#L144">IDs</a>
 					<a class="permalink" href="#Run.IDs">&#xb6;</a>
 					
 					
@@ -534,7 +518,7 @@ includes the IDs of each Task that will be used in the run, plus the id
 				
 			
 				
-				<h3 id="Run.Invalidate">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L166">Invalidate</a>
+				<h3 id="Run.Invalidate">func (*Run) <a href="https://github.com/amonks/run/blob/main/pkg/run/run_task.go#L166">Invalidate</a>
 					<a class="permalink" href="#Run.Invalidate">&#xb6;</a>
 					
 					
@@ -548,7 +532,7 @@ message (which is BEFORE the task is restarted).
 				
 			
 				
-				<h3 id="Run.Start">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L189">Start</a>
+				<h3 id="Run.Start">func (*Run) <a href="https://github.com/amonks/run/blob/main/pkg/run/run_task.go#L189">Start</a>
 					<a class="permalink" href="#Run.Start">&#xb6;</a>
 					
 					
@@ -562,7 +546,7 @@ Remember that &quot;long&quot; runs will never complete until canceled.
 				
 			
 				
-				<h3 id="Run.TaskStatus">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L160">TaskStatus</a>
+				<h3 id="Run.TaskStatus">func (*Run) <a href="https://github.com/amonks/run/blob/main/pkg/run/run_task.go#L160">TaskStatus</a>
 					<a class="permalink" href="#Run.TaskStatus">&#xb6;</a>
 					
 					
@@ -575,7 +559,7 @@ Remember that &quot;long&quot; runs will never complete until canceled.
 				
 			
 				
-				<h3 id="Run.Tasks">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L155">Tasks</a>
+				<h3 id="Run.Tasks">func (*Run) <a href="https://github.com/amonks/run/blob/main/pkg/run/run_task.go#L155">Tasks</a>
 					<a class="permalink" href="#Run.Tasks">&#xb6;</a>
 					
 					
@@ -588,7 +572,7 @@ Remember that &quot;long&quot; runs will never complete until canceled.
 				
 			
 				
-				<h3 id="Run.Type">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L183">Type</a>
+				<h3 id="Run.Type">func (*Run) <a href="https://github.com/amonks/run/blob/main/pkg/run/run_task.go#L183">Type</a>
 					<a class="permalink" href="#Run.Type">&#xb6;</a>
 					
 					
@@ -607,7 +591,7 @@ File watches are only used if a run is RunTypeLong.
 		
 			
 			
-			<h2 id="RunType">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L423">RunType</a>
+			<h2 id="RunType">type <a href="https://github.com/amonks/run/blob/main/pkg/run/run_task.go#L423">RunType</a>
 				<a class="permalink" href="#RunType">&#xb6;</a>
 				
 				
@@ -638,7 +622,7 @@ File watches are only used if a run is RunTypeLong.
 
 			
 				
-				<h3 id="RunType.String">func (RunType) <a href="https://github.com/amonks/run/blob/main/runtype_string.go#L20">String</a>
+				<h3 id="RunType.String">func (RunType) <a href="https://github.com/amonks/run/blob/main/pkg/run/runtype_string.go#L20">String</a>
 					<a class="permalink" href="#RunType.String">&#xb6;</a>
 					
 					
@@ -652,7 +636,7 @@ File watches are only used if a run is RunTypeLong.
 		
 			
 			
-			<h2 id="Task">type <a href="https://github.com/amonks/run/blob/main/task.go#L24">Task</a>
+			<h2 id="Task">type <a href="https://github.com/amonks/run/blob/main/pkg/run/task.go#L24">Task</a>
 				<a class="permalink" href="#Task">&#xb6;</a>
 				
 				
@@ -677,7 +661,7 @@ passing it into <a href="#RunTask">RunTask</a>.
 
 			
 				
-				<h3 id="FuncTask">func <a href="https://github.com/amonks/run/blob/main/func_task.go#L11">FuncTask</a>
+				<h3 id="FuncTask">func <a href="https://github.com/amonks/run/blob/main/pkg/run/func_task.go#L11">FuncTask</a>
 					<a class="permalink" href="#FuncTask">&#xb6;</a>
 					
 					
@@ -689,7 +673,7 @@ passing it into <a href="#RunTask">RunTask</a>.
 				
 			
 				
-				<h3 id="ScriptTask">func <a href="https://github.com/amonks/run/blob/main/script_task.go#L26">ScriptTask</a>
+				<h3 id="ScriptTask">func <a href="https://github.com/amonks/run/blob/main/pkg/run/script_task.go#L26">ScriptTask</a>
 					<a class="permalink" href="#ScriptTask">&#xb6;</a>
 					
 					
@@ -713,7 +697,7 @@ $ bash -c &quot;$CMD&quot; 2&amp;&gt;1 /some/ui
 		
 			
 			
-			<h2 id="TaskMetadata">type <a href="https://github.com/amonks/run/blob/main/task.go#L31">TaskMetadata</a>
+			<h2 id="TaskMetadata">type <a href="https://github.com/amonks/run/blob/main/pkg/run/task.go#L31">TaskMetadata</a>
 				<a class="permalink" href="#TaskMetadata">&#xb6;</a>
 				
 				
@@ -810,7 +794,7 @@ $ bash -c &quot;$CMD&quot; 2&amp;&gt;1 /some/ui
 		
 			
 			
-			<h2 id="TaskStatus">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L121">TaskStatus</a>
+			<h2 id="TaskStatus">type <a href="https://github.com/amonks/run/blob/main/pkg/run/run_task.go#L121">TaskStatus</a>
 				<a class="permalink" href="#TaskStatus">&#xb6;</a>
 				
 				
@@ -839,7 +823,7 @@ $ bash -c &quot;$CMD&quot; 2&amp;&gt;1 /some/ui
 
 			
 				
-				<h3 id="TaskStatus.String">func (TaskStatus) <a href="https://github.com/amonks/run/blob/main/taskstatus_string.go#L23">String</a>
+				<h3 id="TaskStatus.String">func (TaskStatus) <a href="https://github.com/amonks/run/blob/main/pkg/run/taskstatus_string.go#L23">String</a>
 					<a class="permalink" href="#TaskStatus.String">&#xb6;</a>
 					
 					
@@ -853,7 +837,7 @@ $ bash -c &quot;$CMD&quot; 2&amp;&gt;1 /some/ui
 		
 			
 			
-			<h2 id="Tasks">type <a href="https://github.com/amonks/run/blob/main/task.go#L16">Tasks</a>
+			<h2 id="Tasks">type <a href="https://github.com/amonks/run/blob/main/pkg/run/task.go#L16">Tasks</a>
 				<a class="permalink" href="#Tasks">&#xb6;</a>
 				
 				
@@ -874,7 +858,7 @@ Tasks into <a href="#RunTask">RunTask</a>.
 
 			
 				
-				<h3 id="Load">func <a href="https://github.com/amonks/run/blob/main/taskfile.go#L13">Load</a>
+				<h3 id="Load">func <a href="https://github.com/amonks/run/blob/main/pkg/run/taskfile.go#L13">Load</a>
 					<a class="permalink" href="#Load">&#xb6;</a>
 					
 					
@@ -889,7 +873,7 @@ Tasks.
 
 			
 				
-				<h3 id="Tasks.IDs">func (Tasks) <a href="https://github.com/amonks/run/blob/main/task.go#L105">IDs</a>
+				<h3 id="Tasks.IDs">func (Tasks) <a href="https://github.com/amonks/run/blob/main/pkg/run/task.go#L105">IDs</a>
 					<a class="permalink" href="#Tasks.IDs">&#xb6;</a>
 					
 					
@@ -901,7 +885,7 @@ Tasks.
 				
 			
 				
-				<h3 id="Tasks.Validate">func (Tasks) <a href="https://github.com/amonks/run/blob/main/task.go#L118">Validate</a>
+				<h3 id="Tasks.Validate">func (Tasks) <a href="https://github.com/amonks/run/blob/main/pkg/run/task.go#L118">Validate</a>
 					<a class="permalink" href="#Tasks.Validate">&#xb6;</a>
 					
 					
@@ -919,7 +903,7 @@ describing the problems with the task set.
 		
 			
 			
-			<h2 id="UI">type <a href="https://github.com/amonks/run/blob/main/ui.go#L31">UI</a>
+			<h2 id="UI">type <a href="https://github.com/amonks/run/blob/main/pkg/run/ui.go#L31">UI</a>
 				<a class="permalink" href="#UI">&#xb6;</a>
 				
 				
@@ -944,7 +928,7 @@ stopped. Since UIs implement <a href="#MultiWriter">MultiWriter</a>, they can be
 
 			
 				
-				<h3 id="NewPrinter">func <a href="https://github.com/amonks/run/blob/main/ui.go#L24">NewPrinter</a>
+				<h3 id="NewPrinter">func <a href="https://github.com/amonks/run/blob/main/pkg/run/ui.go#L24">NewPrinter</a>
 					<a class="permalink" href="#NewPrinter">&#xb6;</a>
 					
 					
@@ -960,7 +944,7 @@ streams to its Stdout. The output is suitable for piping to a file.
 				
 			
 				
-				<h3 id="NewTUI">func <a href="https://github.com/amonks/run/blob/main/ui.go#L15">NewTUI</a>
+				<h3 id="NewTUI">func <a href="https://github.com/amonks/run/blob/main/pkg/run/ui.go#L15">NewTUI</a>
 					<a class="permalink" href="#NewTUI">&#xb6;</a>
 					
 					
@@ -986,8 +970,6 @@ navigation for selecting a particular stream to inspect.
 
 
 
-	
-	
 
 
 
