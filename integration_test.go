@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"sort"
@@ -24,7 +23,7 @@ func TestIntegrationExamples(t *testing.T) {
 		t.Skip()
 	}
 
-	exs, err := ioutil.ReadDir("testdata/examples")
+	exs, err := os.ReadDir("testdata/examples")
 	if err != nil {
 		t.Error(err)
 	}

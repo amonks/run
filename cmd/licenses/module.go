@@ -17,59 +17,8 @@ package main
 
 import (
 	"fmt"
-	"strings"
-	"unicode"
 	"unicode/utf8"
 )
-
-// fileNameOK reports whether r can appear in a file name.
-// For now we allow all Unicode letters but otherwise limit to pathOK plus a few more punctuation characters.
-// If we expand the set of allowed characters here, we have to
-// work harder at detecting potential case-folding and normalization collisions.
-// See note about "safe encoding" below.
-func fileNameOK(r rune) bool {
-	if r < utf8.RuneSelf {
-		// Entire set of ASCII punctuation, from which we remove characters:
-		//     ! " # $ % & ' ( ) * + , - . / : ; < = > ? @ [ \ ] ^ _ ` { | } ~
-		// We disallow some shell special characters: " ' * < > ? ` |
-		// (Note that some of those are disallowed by the Windows file system as well.)
-		// We also disallow path separators / : and \ (fileNameOK is only called on path element characters).
-		// We allow spaces (U+0020) in file names.
-		const allowed = "!#$%&()+,-.=@[]^_{}~ "
-		if '0' <= r && r <= '9' || 'A' <= r && r <= 'Z' || 'a' <= r && r <= 'z' {
-			return true
-		}
-		for i := 0; i < len(allowed); i++ {
-			if rune(allowed[i]) == r {
-				return true
-			}
-		}
-		return false
-	}
-	// It may be OK to add more ASCII punctuation here, but only carefully.
-	// For example Windows disallows < > \, and macOS disallows :, so we must not allow those.
-	return unicode.IsLetter(r)
-}
-
-// splitGopkgIn is like SplitPathVersion but only for gopkg.in paths.
-func splitGopkgIn(path string) (prefix, pathMajor string, ok bool) {
-	if !strings.HasPrefix(path, "gopkg.in/") {
-		return path, "", false
-	}
-	i := len(path)
-	for i > 0 && ('0' <= path[i-1] && path[i-1] <= '9') {
-		i--
-	}
-	if i <= 1 || path[i-1] != 'v' || path[i-2] != '.' {
-		// All gopkg.in paths must end in vN for some N.
-		return path, "", false
-	}
-	prefix, pathMajor = path[:i-2], path[i-2:]
-	if len(pathMajor) <= 2 || pathMajor[2] == '0' && pathMajor != ".v0" {
-		return path, "", false
-	}
-	return prefix, pathMajor, true
-}
 
 // Safe encodings
 //

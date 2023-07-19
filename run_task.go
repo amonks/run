@@ -131,22 +131,6 @@ const (
 	TaskStatusDone
 )
 
-func runAsync(ctx context.Context, t Task, stdout io.Writer) *worker {
-	ctx, cancel := context.WithCancel(ctx)
-	c := make(chan error)
-	go func() {
-		c <- t.Start(ctx, stdout)
-	}()
-	return &worker{c, cancel}
-}
-
-type worker struct {
-	c      chan error
-	cancel func()
-}
-
-func (w *worker) stop() { w.cancel() }
-
 // MultiWriter is the interface Runs use to display UI. To start a Run, you
 // must pass a MultiWriter into [Run.Start].
 //
@@ -443,10 +427,6 @@ const (
 	RunTypeLong
 )
 
-func (r *Run) getRunType() RunType {
-	return r.runType
-}
-
 func (r *Run) getDir() string {
 	return r.dir
 }
@@ -457,26 +437,6 @@ func (r *Run) watchedPaths() []string {
 		ps = append(ps, p)
 	}
 	return ps
-}
-
-func (r *Run) idsByWatch(path string) []string {
-	return r.byWatch[path]
-}
-
-func (r *Run) idsByTrigger(id string) []string {
-	return r.byTrigger[id]
-}
-
-func (r *Run) idsByDep(id string) []string {
-	return r.byDep[id]
-}
-
-func (r *Run) getTask(id string) Task {
-	return r.tasks[id]
-}
-
-func (r *Run) taskMetadata(id string) TaskMetadata {
-	return r.tasks[id].Metadata()
 }
 
 type evFSEvent struct {

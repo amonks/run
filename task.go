@@ -115,18 +115,18 @@ func (ts Tasks) IDs() []string {
 // the set is invalid. If the error is not nill, its
 // [error.Error] will return a formatted multiline string
 // describing the problems with the task set.
-func (tf Tasks) Validate() error {
+func (ts Tasks) Validate() error {
 	var problems []string
 
 	ids := map[string]struct{}{}
-	for id, t := range tf {
+	for id, t := range ts {
 		if id != t.Metadata().ID {
 			problems = append(problems, fmt.Sprintf("- task '%s' has mismatched key '%s'", t.Metadata().ID, id))
 		}
 		ids[t.Metadata().ID] = struct{}{}
 	}
-	for _, t := range tf {
-		for _, err := range tf.validateTask(ids, t) {
+	for _, t := range ts {
+		for _, err := range ts.validateTask(ids, t) {
 			problems = append(problems, "- "+err.Error())
 		}
 	}
@@ -136,12 +136,12 @@ func (tf Tasks) Validate() error {
 	return nil
 }
 
-func (tf Tasks) validateTask(ids map[string]struct{}, t Task) []error {
+func (ts Tasks) validateTask(ids map[string]struct{}, t Task) []error {
 	var problems []error
 
 	meta := t.Metadata()
 	if meta.ID == "" {
-		problems = append(problems, errors.New("task has no ID"))
+		problems = append(problems, errors.New("Task has no ID."))
 	}
 
 	if meta.ID == "interleaved" || meta.ID == "run" {

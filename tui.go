@@ -177,7 +177,7 @@ func (m *tuiModel) Init() tea.Cmd {
 	m.didInit = true
 
 	cmd := func() tea.Msg { return initializedMsg{} }
-	return tea.Batch(cmd, spinner.Tick)
+	return tea.Batch(cmd, m.spinner.Tick)
 }
 
 type initializedMsg struct{}
@@ -476,8 +476,6 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, item list.Ite
 }
 
 var (
-	debugStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#CCC"))
 	logStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#CCC")).
 			Italic(true)

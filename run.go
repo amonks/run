@@ -1,4 +1,4 @@
-// Run runs a collection of programs specified in tasks.toml files, and
+// Package run runs a collection of programs specified in tasks.toml files, and
 // provides a UI for inspecting their execution. Run displays long-lived
 // processes in an interactive TUI. Run also works well for short-lived
 // processes, and its interleaved output can be sent to a file.
