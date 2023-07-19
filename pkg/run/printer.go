@@ -9,12 +9,13 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func newPrinter() UI {
-	return &printer{mu: newMutex("printer")}
+func newPrinter(run *Run) UI {
+	return &printer{mu: newMutex("printer"), run: run}
 }
 
 type printer struct {
 	mu        *mutex
+	run       *Run
 	stdout    io.Writer
 	keyLength int
 	lastKey   string
@@ -39,10 +40,10 @@ func (w printerWriter) Write(bs []byte) (int, error) {
 	return len(bs), nil
 }
 
-func (p *printer) Start(ctx context.Context, ready chan<- struct{}, _ io.Reader, stdout io.Writer, ids []string) error {
+func (p *printer) Start(ctx context.Context, ready chan<- struct{}, _ io.Reader, stdout io.Writer) error {
 	p.stdout = stdout
 	p.keyLength = 0
-	for _, id := range ids {
+	for _, id := range p.run.IDs() {
 		if len(id) > p.keyLength {
 			p.keyLength = len(id)
 		}
