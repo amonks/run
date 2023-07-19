@@ -19,10 +19,6 @@ import (
 )
 
 func TestIntegrationExamples(t *testing.T) {
-	if os.Getenv("SKIP_FLAKY_TESTS") == "true" {
-		t.Skip()
-	}
-
 	exs, err := os.ReadDir("testdata/examples")
 	if err != nil {
 		t.Error(err)
@@ -31,6 +27,12 @@ func TestIntegrationExamples(t *testing.T) {
 	for _, ex := range exs {
 		name := ex.Name()
 		t.Run(name, func(t *testing.T) {
+			if os.Getenv("SKIP_FLAKY_TESTS") == "true" &&
+				name == "long-with-trigger" {
+
+				t.Skip()
+			}
+
 			if err := testExample(t, name); err != nil {
 				t.Error(err)
 			}
