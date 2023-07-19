@@ -94,6 +94,7 @@ func init() {
 		"golang.org/x/mod",
 		"golang.org/x/tools/cmd/stringer",
 		"golang.org/x/vuln/cmd/govulncheck",
+		"honnef.co/go/tools/cmd/staticcheck",
 	}
 	notProd = make(map[string]struct{}, len(devDeps))
 	for _, m := range devDeps {
