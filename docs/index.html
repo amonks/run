@@ -83,7 +83,7 @@
 			</div>
 			<div class="expanded">
 				<h2 class="toggleButton" title="Click to hide Overview section">Overview ▾</h2>
-				<p>Run runs a collection of programs specified in tasks.toml files, and
+				<p>Package run runs a collection of programs specified in tasks.toml files, and
 provides a UI for inspecting their execution. Run displays long-lived
 processes in an interactive TUI. Run also works well for short-lived
 processes, and its interleaved output can be sent to a file.
@@ -349,7 +349,7 @@ func Example_bringYourOwnUI() {
 					<dd>&nbsp; &nbsp; <a href="#Tasks.IDs">func (ts Tasks) IDs() []string</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#Tasks.Validate">func (tf Tasks) Validate() error</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#Tasks.Validate">func (ts Tasks) Validate() error</a></dd>
 				
 			
 				
@@ -395,6 +395,8 @@ func Example_bringYourOwnUI() {
 				<a href="https://github.com/amonks/run/blob/main/legal.go">legal.go</a>
 			
 				<a href="https://github.com/amonks/run/blob/main/mutex.go">mutex.go</a>
+			
+				<a href="https://github.com/amonks/run/blob/main/output_writer.go">output_writer.go</a>
 			
 				<a href="https://github.com/amonks/run/blob/main/printer.go">printer.go</a>
 			
@@ -446,7 +448,7 @@ func Example_bringYourOwnUI() {
 		
 			
 			
-			<h2 id="MultiWriter">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L155">MultiWriter</a>
+			<h2 id="MultiWriter">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L137">MultiWriter</a>
 				<a class="permalink" href="#MultiWriter">&#xb6;</a>
 				
 				
@@ -517,7 +519,7 @@ in the README.
 
 			
 				
-				<h3 id="Run.IDs">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L162">IDs</a>
+				<h3 id="Run.IDs">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L144">IDs</a>
 					<a class="permalink" href="#Run.IDs">&#xb6;</a>
 					
 					
@@ -532,7 +534,7 @@ includes the IDs of each Task that will be used in the run, plus the id
 				
 			
 				
-				<h3 id="Run.Invalidate">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L184">Invalidate</a>
+				<h3 id="Run.Invalidate">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L166">Invalidate</a>
 					<a class="permalink" href="#Run.Invalidate">&#xb6;</a>
 					
 					
@@ -546,7 +548,7 @@ message (which is BEFORE the task is restarted).
 				
 			
 				
-				<h3 id="Run.Start">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L211">Start</a>
+				<h3 id="Run.Start">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L189">Start</a>
 					<a class="permalink" href="#Run.Start">&#xb6;</a>
 					
 					
@@ -560,7 +562,7 @@ Remember that &quot;long&quot; runs will never complete until canceled.
 				
 			
 				
-				<h3 id="Run.TaskStatus">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L178">TaskStatus</a>
+				<h3 id="Run.TaskStatus">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L160">TaskStatus</a>
 					<a class="permalink" href="#Run.TaskStatus">&#xb6;</a>
 					
 					
@@ -573,7 +575,7 @@ Remember that &quot;long&quot; runs will never complete until canceled.
 				
 			
 				
-				<h3 id="Run.Tasks">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L173">Tasks</a>
+				<h3 id="Run.Tasks">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L155">Tasks</a>
 					<a class="permalink" href="#Run.Tasks">&#xb6;</a>
 					
 					
@@ -586,7 +588,7 @@ Remember that &quot;long&quot; runs will never complete until canceled.
 				
 			
 				
-				<h3 id="Run.Type">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L201">Type</a>
+				<h3 id="Run.Type">func (*Run) <a href="https://github.com/amonks/run/blob/main/run_task.go#L183">Type</a>
 					<a class="permalink" href="#Run.Type">&#xb6;</a>
 					
 					
@@ -605,7 +607,7 @@ File watches are only used if a run is RunTypeLong.
 		
 			
 			
-			<h2 id="RunType">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L436">RunType</a>
+			<h2 id="RunType">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L423">RunType</a>
 				<a class="permalink" href="#RunType">&#xb6;</a>
 				
 				
@@ -687,7 +689,7 @@ passing it into <a href="#RunTask">RunTask</a>.
 				
 			
 				
-				<h3 id="ScriptTask">func <a href="https://github.com/amonks/run/blob/main/script_task.go#L27">ScriptTask</a>
+				<h3 id="ScriptTask">func <a href="https://github.com/amonks/run/blob/main/script_task.go#L26">ScriptTask</a>
 					<a class="permalink" href="#ScriptTask">&#xb6;</a>
 					
 					
@@ -808,7 +810,7 @@ $ bash -c &quot;$CMD&quot; 2&amp;&gt;1 /some/ui
 		
 			
 			
-			<h2 id="TaskStatus">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L123">TaskStatus</a>
+			<h2 id="TaskStatus">type <a href="https://github.com/amonks/run/blob/main/run_task.go#L121">TaskStatus</a>
 				<a class="permalink" href="#TaskStatus">&#xb6;</a>
 				
 				
@@ -904,7 +906,7 @@ Tasks.
 					
 					
 				</h3>
-				<pre>func (tf <a href="#Tasks">Tasks</a>) Validate() <a href="https://pkg.go.dev/pkg/builtin/#error">error</a></pre>
+				<pre>func (ts <a href="#Tasks">Tasks</a>) Validate() <a href="https://pkg.go.dev/pkg/builtin/#error">error</a></pre>
 				<p>Validate inspects a set of Tasks and returns an error if
 the set is invalid. If the error is not nill, its
 [error.Error] will return a formatted multiline string
