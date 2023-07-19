@@ -21,7 +21,7 @@ func NewTUI(run *Run) UI { return newTUI(run) }
 // The UI can be passed into [Run.Start] to display a run's execution.
 //
 // The UI is safe to access concurrently from multiple goroutines.
-func NewPrinter() UI { return newPrinter() }
+func NewPrinter(run *Run) UI { return newPrinter(run) }
 
 // A UI is essentially a multiplexed [io.Writer] that can be started and
 // stopped. Since UIs implement [MultiWriter], they can be passed into
@@ -29,7 +29,7 @@ func NewPrinter() UI { return newPrinter() }
 //
 // The functions [NewTUI] and [NewPrinter] produce implementors of UI.
 type UI interface {
-	Start(ctx context.Context, ready chan<- struct{}, stdin io.Reader, stdout io.Writer, ids []string) error
+	Start(ctx context.Context, ready chan<- struct{}, stdin io.Reader, stdout io.Writer) error
 	Writer(id string) io.Writer
 }
 

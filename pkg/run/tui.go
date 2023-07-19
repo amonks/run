@@ -82,11 +82,11 @@ func (w tuiWriter) Write(bs []byte) (int, error) {
 // *tui implements UI
 var _ UI = &tui{}
 
-func (a *tui) Start(ctx context.Context, ready chan<- struct{}, stdin io.Reader, stdout io.Writer, ids []string) error {
+func (a *tui) Start(ctx context.Context, ready chan<- struct{}, stdin io.Reader, stdout io.Writer) error {
 	program := tea.NewProgram(
 		&tuiModel{
 			run:    a.run,
-			ids:    append([]string{"interleaved"}, ids...),
+			ids:    append([]string{"interleaved"}, a.run.IDs()...),
 			onInit: func() { ready <- struct{}{} },
 		},
 		tea.WithAltScreen(),
@@ -96,9 +96,9 @@ func (a *tui) Start(ctx context.Context, ready chan<- struct{}, stdin io.Reader,
 
 	interleavedWriter := a.Writer("interleaved")
 	a.mu.printf("will make printer")
-	p := NewPrinter()
+	p := NewPrinter(a.run)
 	a.mu.printf("made printer")
-	go p.Start(ctx, nil, nil, interleavedWriter, ids)
+	go p.Start(ctx, nil, nil, interleavedWriter)
 	a.mu.printf("started")
 	a.interleaved = p
 

@@ -39,24 +39,25 @@ can be sent to a file.
 ```go
 package main
 
-import "github.com/amonks/run"
+import "github.com/amonks/run/pkg/run"
 
 func main() {
-	tasks, err := run.Load(".")
-	if err != nil {
-		log.Fatal(err)
-	}
+	tasks, _ := run.Load(".")
+	r, _ := run.RunTask(".", tasks, "dev")
+	ui := run.NewTUI(r)
 
-	r := run.RunTask(tasks, "dev")
+	ctx := context.Background()
+	uiReady := make(chan struct{})
 
-	ui := run.NewTUI()
-	ui.Start(os.Stdin, os.Stdout, r.IDs())
-	run.Start(ui)
+	go ui.Start(ctx, uiReady, os.Stdin, os.Stdout)
+	<- uiReady
+
+	r.Start(ctx, ui) // blocks until done
 }
 ```
 
 Run can be used and extended programmatically through its Go API. See [the
-godoc][godoc]
+godoc][godoc].
 
 [godoc]: https://amonks.github.io/run
 

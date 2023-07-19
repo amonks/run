@@ -86,12 +86,12 @@ func main() {
 	case "tui":
 		ui = run.NewTUI(r)
 	case "printer":
-		ui = run.NewPrinter()
+		ui = run.NewPrinter(r)
 	case "":
 		if !term.IsTerminal(int(os.Stdout.Fd())) {
-			ui = run.NewPrinter()
+			ui = run.NewPrinter(r)
 		} else if r.Type() == run.RunTypeShort {
-			ui = run.NewPrinter()
+			ui = run.NewPrinter(r)
 		} else {
 			ui = run.NewTUI(r)
 		}
@@ -108,7 +108,7 @@ func main() {
 
 	go func() {
 		defer wg.Done()
-		err := ui.Start(ctx, uiReady, os.Stdin, os.Stdout, r.IDs())
+		err := ui.Start(ctx, uiReady, os.Stdin, os.Stdout)
 		if err != nil && err != context.Canceled {
 			fmt.Println("Error running ui:", err)
 		}

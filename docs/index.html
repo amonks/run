@@ -121,44 +121,17 @@ which isn&#39;t too much more complex.
 		
 			<p>Code:</p>
 			<pre class="code">
-tasks, err := run.Load(&#34;.&#34;)
-if err != nil {
-    log.Fatal(err)
-}
-
-r, err := run.RunTask(&#34;.&#34;, tasks, &#34;dev&#34;)
-if err != nil {
-    log.Fatal(err)
-}
-
-ctx, cancel := context.WithCancel(context.Background())
-
+tasks, _ := run.Load(&#34;.&#34;)
+r, _ := run.RunTask(&#34;.&#34;, tasks, &#34;dev&#34;)
 ui := run.NewTUI(r)
 
-var wg sync.WaitGroup
-ready := make(chan struct{})
+ctx := context.Background()
+uiReady := make(chan struct{})
 
-wg.Add(1)
-go func() {
-    defer wg.Done()
-    if err := ui.Start(ctx, ready, os.Stdin, os.Stdout, r.IDs()); err != nil {
-        log.Fatal(err)
-    }
-    cancel()
-}()
+go ui.Start(ctx, uiReady, os.Stdin, os.Stdout)
+&lt;-uiReady
 
-&lt;-ready
-
-wg.Add(1)
-go func() {
-    defer wg.Done()
-    if err := r.Start(ctx, ui); err != nil {
-        log.Fatal(err)
-    }
-    cancel()
-}()
-
-wg.Wait()
+r.Start(ctx, ui) <span class="comment">// blocks until done</span>
 </pre>
 			
 		
@@ -354,7 +327,7 @@ func Example_bringYourOwnUI() {
 				<dd><a href="#UI">type UI</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#NewPrinter">func NewPrinter() UI</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#NewPrinter">func NewPrinter(run *Run) UI</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#NewTUI">func NewTUI(run *Run) UI</a></dd>
@@ -914,7 +887,7 @@ stopped. Since UIs implement <a href="#MultiWriter">MultiWriter</a>, they can be
 <p>The functions <a href="#NewTUI">NewTUI</a> and <a href="#NewPrinter">NewPrinter</a> produce implementors of UI.
 
 			<pre>type UI interface {
-    Start(ctx <a href="https://pkg.go.dev/pkg/context/">context</a>.<a href="https://pkg.go.dev/pkg/context/#Context">Context</a>, ready chan&lt;- struct{}, stdin <a href="https://pkg.go.dev/pkg/io/">io</a>.<a href="https://pkg.go.dev/pkg/io/#Reader">Reader</a>, stdout <a href="https://pkg.go.dev/pkg/io/">io</a>.<a href="https://pkg.go.dev/pkg/io/#Writer">Writer</a>, ids []<a href="https://pkg.go.dev/pkg/builtin/#string">string</a>) <a href="https://pkg.go.dev/pkg/builtin/#error">error</a>
+    Start(ctx <a href="https://pkg.go.dev/pkg/context/">context</a>.<a href="https://pkg.go.dev/pkg/context/#Context">Context</a>, ready chan&lt;- struct{}, stdin <a href="https://pkg.go.dev/pkg/io/">io</a>.<a href="https://pkg.go.dev/pkg/io/#Reader">Reader</a>, stdout <a href="https://pkg.go.dev/pkg/io/">io</a>.<a href="https://pkg.go.dev/pkg/io/#Writer">Writer</a>) <a href="https://pkg.go.dev/pkg/builtin/#error">error</a>
     Writer(id <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>) <a href="https://pkg.go.dev/pkg/io/">io</a>.<a href="https://pkg.go.dev/pkg/io/#Writer">Writer</a>
 }</pre>
 
@@ -933,7 +906,7 @@ stopped. Since UIs implement <a href="#MultiWriter">MultiWriter</a>, they can be
 					
 					
 				</h3>
-				<pre>func NewPrinter() <a href="#UI">UI</a></pre>
+				<pre>func NewPrinter(run *<a href="#Run">Run</a>) <a href="#UI">UI</a></pre>
 				<p>NewPrinter produces a non-interactive UI for displaying interleaved
 multiplexed streams. The UI prints interleaved output from all of the
 streams to its Stdout. The output is suitable for piping to a file.
