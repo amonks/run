@@ -3,18 +3,28 @@ long
 run:
   watching testdata/examples/long-with-trigger/changed-file
   watched file changes:                                    
+    Create testdata/examples/long-with-trigger/changed-file
+  invalidating {trigger}
+  watched file changes:                                    
     Remove testdata/examples/long-with-trigger/changed-file
   invalidating {trigger}
+  run canceled
   done
 
 test:
   starting
-  exit ok
+  canceled; stopping
   starting
-  exit ok
+  canceled; stopping
   starting
+  canceled; stopping
+  starting
+  canceled; stopping
 
 trigger:
+  starting
+  exit ok
+  invalidating {test}
   starting
   exit ok
   invalidating {test}

@@ -1,8 +1,10 @@
 long
 
 run:
+  run canceled
   done
 
 test:
   starting
   running...
+  canceled; stopping
