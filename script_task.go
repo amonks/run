@@ -184,14 +184,6 @@ func (t *scriptTask) process() *os.Process {
 	return t.cmd.Process
 }
 
-func (t *scriptTask) processState() *os.ProcessState {
-	defer t.mu.Lock("processState").Unlock()
-	if t.cmd == nil {
-		return nil
-	}
-	return t.cmd.ProcessState
-}
-
 func (t *scriptTask) hasScript() bool {
 	defer t.mu.Lock("hasScript").Unlock()
 	return t.script != ""

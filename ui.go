@@ -33,8 +33,6 @@ type UI interface {
 	Writer(id string) io.Writer
 }
 
-type ready struct{}
-
 // UIs implement MultiWriter
 func init() {
 	var ui UI = nil
