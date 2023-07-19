@@ -1,7 +1,7 @@
 [[task]]
   id = "build"
   type = "short"
-  dependencies = ["screenshots", "generate-docs", "vulncheck"]
+  dependencies = ["screenshots", "generate-docs", "validate"]
   cmd = """
     echo "Doing a test build..."
     go run github.com/goreleaser/goreleaser release --snapshot --clean
@@ -17,11 +17,6 @@
   """
 
 [[task]]
-  id = "test"
-  type = "short"
-  cmd = "go test -v ."
-
-[[task]]
   id = "install"
   type = "short"
   dependencies = ["generate"]
@@ -33,9 +28,24 @@
   cmd = "go generate ./..."
 
 [[task]]
+  id = "validate"
+  type = "group"
+  dependencies = ["generate", "test", "vulncheck", "staticcheck"]
+
+[[task]]
+  id = "test"
+  type = "short"
+  cmd = "go test ."
+
+[[task]]
   id = "vulncheck"
   type = "short"
   cmd = "go run golang.org/x/vuln/cmd/govulncheck ./..."
+
+[[task]]
+  id = "staticcheck"
+  type = "short"
+  cmd = "go run honnef.co/go/tools/cmd/staticcheck ./..."
 
 [[task]]
   id = "screenshots"
