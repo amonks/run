@@ -91,6 +91,7 @@ func init() {
 	devDeps := []string{
 		"github.com/goreleaser/goreleaser",
 		"github.com/sergi/go-diff",
+		"github.com/stretchr/testify/assert",
 		"golang.org/x/mod",
 		"golang.org/x/tools/cmd/stringer",
 		"golang.org/x/vuln/cmd/govulncheck",
