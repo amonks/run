@@ -12,8 +12,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/amonks/run/pkg/run"
 	meta "github.com/amonks/run"
+	"github.com/amonks/run/pkg/run"
 	"github.com/carlmjohnson/versioninfo"
 	"github.com/muesli/reflow/indent"
 	"github.com/muesli/reflow/wordwrap"
