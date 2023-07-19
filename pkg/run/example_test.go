@@ -6,7 +6,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/amonks/run"
+	"github.com/amonks/run/pkg/run"
 )
 
 // In this example, we use components from Run to build our own version of

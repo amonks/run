@@ -12,7 +12,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/amonks/run"
+	"github.com/amonks/run/pkg/run"
+	meta "github.com/amonks/run"
 	"github.com/carlmjohnson/versioninfo"
 	"github.com/muesli/reflow/indent"
 	"github.com/muesli/reflow/wordwrap"
@@ -248,11 +249,11 @@ func versionText() string {
 }
 
 func creditsText() string {
-	return "CREDITS\n\n" + indent.String(wordwrap.String(run.Credits, 78), 2)
+	return "CREDITS\n\n" + indent.String(wordwrap.String(meta.Credits, 78), 2)
 }
 
 func contributorsText() string {
-	return "CONTRIBUTORS\n\n" + indent.String(wordwrap.String(run.Contributors, 78), 2)
+	return "CONTRIBUTORS\n\n" + indent.String(wordwrap.String(meta.Contributors, 78), 2)
 }
 
 var statement = "Run is free for noncommercial and small-business use, with a guarantee that fair, reasonable, and nondiscriminatory paid-license terms will be available for everyone else."
@@ -266,7 +267,7 @@ func licenseText() string {
 	b.WriteString(indent.String(wordwrap.String(statement, 70), 2) + "\n")
 	b.WriteString("\n")
 	b.WriteString("\n")
-	b.WriteString(indent.String(wordwrap.String(run.License, 70), 2))
+	b.WriteString(indent.String(wordwrap.String(meta.License, 70), 2))
 	return b.String()
 }
 

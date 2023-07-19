@@ -136,18 +136,18 @@
 
     for (( ; ; )); do
       sleep 0.5
-      if [[ $(curl -so /dev/null -w '%{http_code}' "http://localhost:3335/pkg/github.com/amonks/run/") -eq 200 ]]; then
+      if [[ $(curl -so /dev/null -w '%{http_code}' "http://localhost:3335/pkg/github.com/amonks/run/pkg/run/") -eq 200 ]]; then
         break
       fi
     done
 
-    wget --quiet --mirror --page-requisites --no-parent http://localhost:3335/pkg/github.com/amonks/run
+    wget --quiet --mirror --page-requisites --no-parent http://localhost:3335/pkg/github.com/amonks/run/pkg/run
 
     kill_godoc
     trap - SIGINT
 
     cd localhost:3335
-    mv pkg/github.com/amonks/run index.html
+    mv pkg/github.com/amonks/run/pkg/run index.html
     rm -r pkg
 
     # Make links outside the module use pkg.go.dev.

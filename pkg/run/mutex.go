@@ -12,6 +12,11 @@ func newMutex(name string) *mutex {
 	return &mutex{name: name}
 }
 
+// Mutex wraps sync.Mutex, providing these additional features:
+//  - You can `defer Lock(...).Unlock()` in a single line
+//  - If `debug` is true, mutex lock/unlock info will be logged to
+//    mutex.log.
+//  - You can log additional info to mutex.log with [mutex.printf].
 type mutex struct {
 	name     string
 	holder   string
