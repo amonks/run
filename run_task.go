@@ -115,8 +115,6 @@ type Run struct {
 	byTrigger map[string][]string
 	// read-only
 	byWatch map[string][]string
-
-	out MultiWriter
 }
 
 //go:generate go run golang.org/x/tools/cmd/stringer -type TaskStatus
@@ -186,14 +184,19 @@ func (r *Run) Type() RunType {
 	return r.runType
 }
 
-func (r *Run) printf(id string, style lipgloss.Style, f string, args ...interface{}) {
-	r.out.Writer(id).Write([]byte(style.Render(fmt.Sprintf(f, args...)) + "\n"))
-}
-
 // Start starts the Run, waits for it to complete, and returns an error.
 // Remember that "long" runs will never complete until canceled.
 func (r *Run) Start(ctx context.Context, out MultiWriter) error {
-	r.out = out
+	writers := newSafeMap[io.Writer]()
+	for _, id := range r.IDs() {
+		writers.set(id, newOutputWriter(out.Writer(id)))
+	}
+
+	printf := func(id string, style lipgloss.Style, f string, args ...interface{}) {
+		w := writers.get(id)
+		s := fmt.Sprintf(f, args...)
+		w.Write([]byte(style.Render(s)+ "\n"))
+	}
 
 	// Start all the file watchers. Do this before starting tasks so that
 	// tasks can trigger file watcher events.
@@ -201,7 +204,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 	fsevents := make(chan evFSEvent)
 	for _, p := range r.watchedPaths() {
 		watchP := path.Join(r.getDir(), p)
-		r.printf("run", logStyle, "watching %s", watchP)
+		printf("run", logStyle, "watching %s", watchP)
 		p := p
 		c, stop, err := watch(watchP)
 		if err != nil {
@@ -245,7 +248,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 			return
 		}
 
-		r.printf(id, logStyle, "starting")
+		printf(id, logStyle, "starting")
 
 		ctx, cancel := context.WithCancel(ctx)
 		cancels.set(id, cancel)
@@ -282,7 +285,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 		for {
 			select {
 			case ev := <-fsevents:
-				r.printf("run", logStyle, ev.print())
+				printf("run", logStyle, ev.print())
 				invalidations := map[string]struct{}{}
 				for _, id := range r.byWatch[ev.path] {
 					invalidations[id] = struct{}{}
@@ -292,7 +295,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 					for id := range invalidations {
 						ids = append(ids, id)
 					}
-					r.printf("run", logStyle, "invalidating {%s}", strings.Join(ids, ", "))
+					printf("run", logStyle, "invalidating {%s}", strings.Join(ids, ", "))
 					go func() {
 						for _, id := range ids {
 							r.starts <- id
@@ -310,12 +313,12 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 				}()
 			case ev := <-allExits:
 				if ev.err != nil {
-					r.printf(ev.id, logStyle, "exit: %s", ev.err)
+					printf(ev.id, logStyle, "exit: %s", ev.err)
 					r.taskStatus.set(ev.id, TaskStatusFailed)
 				} else {
 					r.taskStatus.set(ev.id, TaskStatusDone)
 					ran.set(ev.id, struct{}{})
-					r.printf(ev.id, logStyle, "exit ok")
+					printf(ev.id, logStyle, "exit ok")
 				}
 
 				if r.runType == RunTypeShort {
@@ -334,11 +337,11 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 				// If the run is "long" and the task exit was
 				// unexpected, retry in 1s.
 				if r.runType == RunTypeLong && ev.err != nil {
-					r.printf(ev.id, logStyle, "retrying in 1 second")
+					printf(ev.id, logStyle, "retrying in 1 second")
 					go func() {
 						r.taskStatus.set(ev.id, TaskStatusRestarting)
 						time.Sleep(time.Second)
-						r.printf(ev.id, logStyle, "retrying")
+						printf(ev.id, logStyle, "retrying")
 						r.starts <- ev.id
 					}()
 					continue
@@ -371,7 +374,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 					for id := range invalidations {
 						ids = append(ids, id)
 					}
-					r.printf(ev.id, logStyle, "invalidating {%s}", strings.Join(ids, ", "))
+					printf(ev.id, logStyle, "invalidating {%s}", strings.Join(ids, ", "))
 					go func() {
 						for _, id := range ids {
 							r.starts <- id
@@ -379,16 +382,16 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 					}()
 				}
 			case <-ctx.Done():
-				r.printf("run", logStyle, "run canceled")
+				printf("run", logStyle, "run canceled")
 				return nil
 			}
 		}
 	}()
 
 	if err != nil {
-		r.printf("run", errorStyle, "failed")
+		printf("run", errorStyle, "failed")
 	} else {
-		r.printf("run", logStyle, "done")
+		printf("run", logStyle, "done")
 	}
 
 	r.mu.printf("stop watches")

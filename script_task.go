@@ -1,7 +1,6 @@
 package run
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -59,7 +58,7 @@ func (t *scriptTask) Start(ctx context.Context, stdout io.Writer) error {
 	t.mu.printf("Start")
 	defer t.cleanup()
 
-	t.stdout = &lineBufferedWriter{w: bufio.NewWriter(stdout)}
+	t.stdout = stdout
 
 	if !t.hasScript() {
 		t.mu.printf("Start: no script")
@@ -194,20 +193,3 @@ func (t *scriptTask) isRunning() bool {
 	return t.cmd != nil && t.cmd.ProcessState == nil
 }
 
-type lineBufferedWriter struct {
-	w *bufio.Writer
-}
-
-func (w *lineBufferedWriter) Write(p []byte) (n int, err error) {
-	for _, c := range p {
-		if err = w.w.WriteByte(c); err != nil {
-			break
-		}
-
-		n++
-		if c == '\n' {
-			w.w.Flush()
-		}
-	}
-	return n, err
-}
