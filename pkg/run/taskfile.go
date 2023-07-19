@@ -117,6 +117,7 @@ func (t taskfileTask) withDir(dir string) taskfileTask {
 		return t
 	}
 	t.ID = path.Join(dir, t.ID)
+	t.dir = dir
 	for i, dep := range t.Dependencies {
 		t.Dependencies[i] = path.Join(dir, dep)
 	}
