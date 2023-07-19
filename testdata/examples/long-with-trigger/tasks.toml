@@ -2,6 +2,7 @@
   id = "test"
   type = "long"
   triggers = ["trigger"]
+  cmd = "sleep 10"
 
 [[task]]
   id = "trigger"

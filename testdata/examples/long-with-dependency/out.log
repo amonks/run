@@ -7,7 +7,9 @@ prereq:
   invalidating {test}
 
 run:
+  run canceled
   done
 
 test:
   starting
+  canceled; stopping

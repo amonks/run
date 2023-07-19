@@ -1,6 +1,7 @@
 [[task]]
   id = "test"
   type = "long"
+  cmd = "sleep 10"
   dependencies = ["prereq"]
 
 [[task]]
