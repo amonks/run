@@ -1,6 +1,8 @@
 package run
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
 	"path"
 	"strings"
@@ -10,7 +12,7 @@ import (
 
 // Load loads a task file from the specified directory, producing a set of
 // Tasks.
-func Load(root string) (Tasks, error) {
+func Load(cwd string) (Tasks, error) {
 	allTasks := map[string]taskfileTask{}
 
 	seenDirs := map[string]struct{}{}
@@ -21,19 +23,18 @@ func Load(root string) (Tasks, error) {
 		}
 		seenDirs[dir] = struct{}{}
 
-		relativeDir := strings.TrimPrefix(dir, root)
-		relativeDir = strings.TrimPrefix(relativeDir, "/")
+		relativeDir := strings.TrimPrefix(dir, "/")
 		if relativeDir == "" {
 			relativeDir = "."
 		}
 
-		theseTasks, err := load(dir)
+		theseTasks, err := load(cwd, dir)
 		if err != nil {
 			return err
 		}
 		depSet := map[string]struct{}{}
 		for _, t := range theseTasks {
-			t := t.withDir(relativeDir)
+			t := t.withDir(cwd, relativeDir)
 
 			allTasks[t.ID] = t
 			for _, dep := range t.Dependencies {
@@ -63,7 +64,7 @@ func Load(root string) (Tasks, error) {
 		return nil
 	}
 
-	if err := ingestTaskMap(root); err != nil {
+	if err := ingestTaskMap("."); err != nil {
 		return nil, err
 	}
 
@@ -71,6 +72,20 @@ func Load(root string) (Tasks, error) {
 	for id, t := range allTasks {
 		tf[id] = t.toCMDTask()
 	}
+
+	// Print taskfile as JSON. This is useful for debugging.
+	if false {
+		jsonStructure := map[string]taskfileTask{}
+		for id, t := range allTasks {
+			jsonStructure[id] = t
+		}
+		if bs, err := json.MarshalIndent(jsonStructure, "", "  "); err != nil {
+			panic(err)
+		} else {
+			fmt.Println(string(bs))
+		}
+	}
+
 	if err := tf.Validate(); err != nil {
 		return nil, err
 	}
@@ -78,8 +93,8 @@ func Load(root string) (Tasks, error) {
 	return tf, nil
 }
 
-func load(dir string) (map[string]taskfileTask, error) {
-	f, err := os.ReadFile(path.Join(dir, "tasks.toml"))
+func load(cwd, dir string) (map[string]taskfileTask, error) {
+	f, err := os.ReadFile(path.Join(cwd, dir, "tasks.toml"))
 	if err != nil {
 		return nil, err
 	}
@@ -112,12 +127,12 @@ type taskfileTask struct {
 	dir string
 }
 
-func (t taskfileTask) withDir(dir string) taskfileTask {
+func (t taskfileTask) withDir(cwd, dir string) taskfileTask {
 	if dir == "." {
 		return t
 	}
 	t.ID = path.Join(dir, t.ID)
-	t.dir = dir
+	t.dir = path.Join(cwd, dir)
 	for i, dep := range t.Dependencies {
 		t.Dependencies[i] = path.Join(dir, dep)
 	}
