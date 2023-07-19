@@ -7,18 +7,20 @@ import (
 	"os/exec"
 	"path"
 	"strings"
-
-	"golang.org/x/mod/modfile"
 )
 
 func main() {
-	bs, err := os.ReadFile("go.mod")
-	if err != nil {
+	cmd := exec.Command("go", "build", "./cmd/run")
+	defer os.Remove("run")
+
+	if err := cmd.Run(); err != nil {
 		panic(err)
 	}
 
-	f, err := modfile.Parse("go.mod", bs, nil)
-	if err != nil {
+	cmd = exec.Command("bash", "-c", `go version -m ./run | awk '$1=="dep" { print $2 "@" $3 }'`)
+	var w strings.Builder
+	cmd.Stdout = &w
+	if err := cmd.Run(); err != nil {
 		panic(err)
 	}
 
@@ -29,18 +31,16 @@ func main() {
 
 	var out []string
 
-	for _, r := range f.Require {
-		if used, err := isUsed(r.Mod.Path); err != nil {
-			panic(err)
-		} else if !used {
-			continue
-		}
-		fmt.Fprintln(os.Stderr, "used:", r.Mod.Path)
-		modpath, err := EncodePath(r.Mod.String())
+	for _, dep := range strings.Split(w.String(), "\n") {
+		depPathname, err := EncodePath(strings.TrimSpace(dep))
 		if err != nil {
 			panic(err)
 		}
-		dir := path.Join(gopath, "pkg/mod", modpath)
+		if depPathname == "" {
+			continue
+		}
+		fmt.Fprintln(os.Stderr, "used:", dep)
+		dir := path.Join(gopath, "pkg/mod", depPathname)
 
 		fs, err := os.ReadDir(dir)
 		if err != nil {
@@ -60,46 +60,13 @@ func main() {
 				panic(err)
 			}
 
-			out = append(out, r.Mod.String()+"\n"+strings.Repeat("=", len(r.Mod.String()))+"\n\n"+string(bs))
+			out = append(out, dep+"\n"+strings.Repeat("=", len(dep))+"\n\n"+string(bs))
 			break
 		}
 	}
 
 	if err := os.WriteFile(os.Args[len(os.Args)-1], []byte(strings.Join(out, "\n\n\n")), 0644); err != nil {
 		panic(err)
-	}
-}
-
-func isUsed(path string) (bool, error) {
-	cmd := exec.Command("go", "mod", "why", "-m", path)
-	w := &strings.Builder{}
-	cmd.Stdout = w
-	if err := cmd.Run(); err != nil {
-		return false, err
-	}
-	for _, l := range strings.Split(w.String(), "\n") {
-		if _, ok := notProd[l]; ok {
-			return false, nil
-		}
-	}
-	return true, nil
-}
-
-var notProd map[string]struct{}
-
-func init() {
-	devDeps := []string{
-		"github.com/goreleaser/goreleaser",
-		"github.com/sergi/go-diff",
-		"github.com/stretchr/testify/assert",
-		"golang.org/x/mod",
-		"golang.org/x/tools/cmd/stringer",
-		"golang.org/x/vuln/cmd/govulncheck",
-		"honnef.co/go/tools/cmd/staticcheck",
-	}
-	notProd = make(map[string]struct{}, len(devDeps))
-	for _, m := range devDeps {
-		notProd[m] = struct{}{}
 	}
 }
 

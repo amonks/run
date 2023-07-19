@@ -14,7 +14,6 @@ require (
 	github.com/rjeczalik/notify v0.9.3
 	github.com/sergi/go-diff v1.3.1
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/mod v0.12.0
 	golang.org/x/term v0.10.0
 	golang.org/x/tools v0.11.0
 	golang.org/x/vuln v1.0.0
@@ -230,6 +229,7 @@ require (
 	golang.org/x/crypto v0.11.0 // indirect
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20221208152030-732eee02a75a // indirect
+	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/net v0.12.0 // indirect
 	golang.org/x/oauth2 v0.9.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
