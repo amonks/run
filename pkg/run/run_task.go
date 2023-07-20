@@ -195,7 +195,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 	printf := func(id string, style lipgloss.Style, f string, args ...interface{}) {
 		w := writers.get(id)
 		s := fmt.Sprintf(f, args...)
-		w.Write([]byte(style.Render(s)+ "\n"))
+		w.Write([]byte(style.Render(s) + "\n"))
 	}
 
 	// Start all the file watchers. Do this before starting tasks so that
@@ -255,7 +255,8 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 
 		exits.set(id, make(chan exit))
 		r.taskStatus.set(id, TaskStatusRunning)
-		err := t.Start(ctx, out.Writer(id))
+		w := writers.get(id)
+		err := t.Start(ctx, w)
 		cancels.del(id)
 
 		select {
