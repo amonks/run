@@ -97,7 +97,7 @@
   id = "reset-snapshot-failures"
   type = "short"
   cmd = """
-    cd pkg/run/testdata/examples
+    cd pkg/run/testdata/snapshots
     for d in * ; do
       if test -f $d/fail.log ; then
         echo removing $d
@@ -110,7 +110,7 @@
   id = "overwrite-snapshots"
   type = "short"
   cmd = """
-    cd pkg/run/testdata/examples
+    cd pkg/run/testdata/snapshots
     for d in * ; do
       if test -f $d/fail.log ; then
         echo overwriting $d
