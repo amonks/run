@@ -4,17 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path"
 	"sort"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
 	"github.com/amonks/run/pkg/run"
-	"github.com/muesli/reflow/indent"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
@@ -65,13 +62,16 @@ func testExample(t *testing.T, name string) error {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	ui := newTestUI()
+	ui := run.NewPrinter(r)
 
 	exit := make(chan error)
 
 	// Start the run.
+	uiReady := make(chan struct{})
+	var b strings.Builder
+	go ui.Start(ctx, uiReady, nil, &b)
+	<-uiReady
 	go func() { exit <- r.Start(ctx, ui) }()
-
 	// 1 second into the test, change a file so that tests can exercise
 	// file-watching.
 	go func() {
@@ -92,9 +92,9 @@ func testExample(t *testing.T, name string) error {
 
 	var log string
 	if exitErr == nil {
-		log = "ok" + "\n\n" + ui.String()
+		log = "ok" + "\n\n" + b.String()
 	} else {
-		log = exitErr.Error() + "\n\n" + ui.String()
+		log = exitErr.Error() + "\n\n" + b.String()
 	}
 
 	logfilePath := path.Join("testdata/snapshots", name, "out.log")
@@ -111,83 +111,57 @@ func testExample(t *testing.T, name string) error {
 		return fmt.Errorf("Error reading logfile: %s", err)
 	}
 
-	if string(expected) != log {
+	deinterleavedExpectation := deinterleave(string(expected))
+	deinterleavedResult := deinterleave(log)
+
+	if deinterleavedResult != deinterleavedExpectation {
 		errFilePath := path.Join("testdata/snapshots", name, "fail.log")
 		if err := os.WriteFile(errFilePath, []byte(log), 0644); err != nil {
 			return err
 		}
-		diff := dmp.DiffMain(string(expected), log, false)
+		diff := dmp.DiffMain(deinterleavedExpectation, deinterleavedResult, false)
 		return fmt.Errorf("Unexpected output from example '%s', saved to fail.log:\n%s", name, dmp.DiffPrettyText(diff))
 	}
 
 	return nil
 }
 
-func newTestUI() *testUI {
-	return &testUI{
-		bufs: map[string]*strings.Builder{},
+func deinterleave(interleaved string) string {
+	streams := map[string][]string{}
+	lines := strings.Split(interleaved, "\n")
+	indent := strings.Index(lines[2], "starting")
+	if indent == -1 {
+		indent = strings.Index(lines[2], "watching")
 	}
-}
-
-type testUI struct {
-	bufs map[string]*strings.Builder
-	mu   sync.Mutex
-}
-
-// ui implements run.MultiWriter
-var _ run.MultiWriter = &testUI{}
-
-func (ui *testUI) Writer(id string) io.Writer {
-	ui.mu.Lock()
-	defer ui.mu.Unlock()
-
-	return &testWriter{
-		id: id,
-		ui: ui,
+	if indent == -1 {
+		panic("\n" + lines[2] + "\n\n" + lines[0] + "\n" + lines[1] + "\n" + lines[2] + "\n" + lines[3])
 	}
-}
-
-func (ui *testUI) Write(id string, bs []byte) (int, error) {
-	ui.mu.Lock()
-	defer ui.mu.Unlock()
-
-	if _, ok := ui.bufs[id]; !ok {
-		ui.bufs[id] = &strings.Builder{}
+	var id string
+	for i := 2; i < len(lines); i++ {
+		l := lines[i]
+		if strings.TrimSpace(l) == "" {
+			continue
+		}
+		possibleID := strings.TrimSpace(l[:indent])
+		if possibleID != "" {
+			id = possibleID
+		}
+		streams[id] = append(streams[id], l[indent:])
 	}
-	return ui.bufs[id].Write(bs)
-}
-
-func (ui *testUI) String() string {
-	ui.mu.Lock()
-	defer ui.mu.Unlock()
 
 	var ids []string
-	for id := range ui.bufs {
+	for id := range streams {
 		ids = append(ids, id)
 	}
-
 	sort.Strings(ids)
 
-	out := make([]string, len(ids))
-	for i, id := range ids {
-		out[i] = id + ":\n" + indent.String(ui.bufs[id].String(), 2)
+	out := lines[0] + "\n"
+	for _, id := range ids {
+		out += id
+		for _, line := range streams[id] {
+			out += "  " + line + "\n"
+		}
+		out += "\n"
 	}
-
-	return strings.Join(out, "\n")
-}
-
-// testWriter implements io.Writer
-var _ io.Writer = &testWriter{}
-
-type testWriter struct {
-	mu sync.Mutex
-	id string
-	ui *testUI
-}
-
-func (w *testWriter) Write(bs []byte) (int, error) {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	return w.ui.Write(w.id, bs)
+	return out
 }

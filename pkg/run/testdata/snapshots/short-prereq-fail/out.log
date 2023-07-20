@@ -1,9 +1,7 @@
 exit 1
 
-prereq:
-  starting
-  prereq fail
-  exit: exit 1
+  prereq  starting
+          prereq fail
+          exit: exit 1
 
-run:
-  failed
+     run  failed

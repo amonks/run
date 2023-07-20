@@ -1,8 +1,6 @@
 exit 1
 
-run:
-  failed
+  test  starting
+        exit: exit 1
 
-test:
-  starting
-  exit: exit 1
+   run  failed

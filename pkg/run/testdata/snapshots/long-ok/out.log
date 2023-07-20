@@ -1,10 +1,8 @@
 long
 
-run:
-  run canceled
-  done
+  test  starting
+        running...
+        canceled; stopping
 
-test:
-  starting
-  running...
-  canceled; stopping
+   run  run canceled
+        done

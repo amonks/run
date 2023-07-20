@@ -1,15 +1,12 @@
 ok
 
-prereq:
-  starting
-  prereq ok
-  exit ok
-  invalidating {test}
+  prereq  starting
+          prereq ok
+          exit ok
+          invalidating {test}
 
-run:
-  done
+    test  starting
+          test ok
+          exit ok
 
-test:
-  starting
-  test ok
-  exit ok
+     run  done
