@@ -93,7 +93,7 @@ Task files are called "tasks.toml". They specify one or more tasks.
 There's an example project in the [example folder][example], where you can see
 a realistic configuration.
 
-[example]: https://github.com/amonks/run/tree/amonks/table/example
+[example]: https://github.com/amonks/run/tree/main/example
 
 Let's go through the fields that can be specified on tasks.
 
@@ -156,7 +156,7 @@ dependency "css/build" specifies the task with ID "build" in the tasks file
 
 Triggers are other task IDs which should always be run alongside this task, and
 whose success should cause this task to re-execute. If a task A lists B as a
-dependency, and both A and B are running, successful execution of B will always
+trigger, and both A and B are running, successful execution of B will always
 trigger an execution of A.
 
 Triggers can be task IDs from child directories. For example, the trigger
