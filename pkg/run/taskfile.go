@@ -128,9 +128,6 @@ type taskfileTask struct {
 }
 
 func (t taskfileTask) withDir(cwd, dir string) taskfileTask {
-	if dir == "." {
-		return t
-	}
 	t.ID = path.Join(dir, t.ID)
 	t.dir = path.Join(cwd, dir)
 	for i, dep := range t.Dependencies {
@@ -138,6 +135,9 @@ func (t taskfileTask) withDir(cwd, dir string) taskfileTask {
 	}
 	for i, dep := range t.Triggers {
 		t.Triggers[i] = path.Join(dir, dep)
+	}
+	for i, p := range t.Watch {
+		t.Watch[i] = path.Join(dir, p)
 	}
 	return t
 }

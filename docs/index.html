@@ -313,7 +313,7 @@ func Example_bringYourOwnUI() {
 				<dd><a href="#Tasks">type Tasks</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#Load">func Load(root string) (Tasks, error)</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#Load">func Load(cwd string) (Tasks, error)</a></dd>
 				
 				
 					
@@ -831,12 +831,12 @@ Tasks into <a href="#RunTask">RunTask</a>.
 
 			
 				
-				<h3 id="Load">func <a href="https://github.com/amonks/run/blob/main/pkg/run/taskfile.go#L13">Load</a>
+				<h3 id="Load">func <a href="https://github.com/amonks/run/blob/main/pkg/run/taskfile.go#L15">Load</a>
 					<a class="permalink" href="#Load">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func Load(root <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>) (<a href="#Tasks">Tasks</a>, <a href="https://pkg.go.dev/pkg/builtin/#error">error</a>)</pre>
+				<pre>func Load(cwd <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>) (<a href="#Tasks">Tasks</a>, <a href="https://pkg.go.dev/pkg/builtin/#error">error</a>)</pre>
 				<p>Load loads a task file from the specified directory, producing a set of
 Tasks.
 

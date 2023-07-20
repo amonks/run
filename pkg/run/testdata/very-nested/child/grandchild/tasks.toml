@@ -1,0 +1,5 @@
+[[task]]
+  id="test"
+  type="short"
+  cmd="touch grandchild.stamp"
+  watch=["file"]

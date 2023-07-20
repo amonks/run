@@ -1,12 +1,12 @@
 long
 
 run:
-  watching testdata/examples/long-with-trigger/changed-file
-  watched file changes:                                    
-    Create testdata/examples/long-with-trigger/changed-file
+  watching testdata/snapshots/long-with-trigger/changed-file
+  watched file changes:                                     
+    Create testdata/snapshots/long-with-trigger/changed-file
   invalidating {trigger}
-  watched file changes:                                    
-    Remove testdata/examples/long-with-trigger/changed-file
+  watched file changes:                                     
+    Remove testdata/snapshots/long-with-trigger/changed-file
   invalidating {trigger}
   run canceled
   done

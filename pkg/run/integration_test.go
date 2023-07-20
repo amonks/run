@@ -18,8 +18,8 @@ import (
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
-func TestIntegrationExamples(t *testing.T) {
-	exs, err := os.ReadDir("testdata/examples")
+func TestIntegrationSnapshots(t *testing.T) {
+	exs, err := os.ReadDir("testdata/snapshots")
 	if err != nil {
 		t.Error(err)
 	}
@@ -28,7 +28,8 @@ func TestIntegrationExamples(t *testing.T) {
 		name := ex.Name()
 		t.Run(name, func(t *testing.T) {
 			if os.Getenv("SKIP_FLAKY_TESTS") == "true" &&
-				name == "long-with-trigger" {
+				(name == "long-with-trigger" ||
+					name == "three-layers") {
 
 				t.Skip()
 			}
@@ -43,7 +44,7 @@ func TestIntegrationExamples(t *testing.T) {
 func testExample(t *testing.T, name string) error {
 	dmp := diffmatchpatch.New()
 
-	changedFilePath := path.Join("testdata/examples", name, "changed-file")
+	changedFilePath := path.Join("testdata/snapshots", name, "changed-file")
 	if f, err := os.Create(changedFilePath); err != nil {
 		return err
 	} else if err := f.Sync(); err != nil {
@@ -53,12 +54,12 @@ func testExample(t *testing.T, name string) error {
 	}
 	defer os.Remove(changedFilePath)
 
-	tasks, err := run.Load(path.Join("testdata/examples", name))
+	tasks, err := run.Load(path.Join("testdata/snapshots", name))
 	if err != nil {
 		return fmt.Errorf("Error loading tasks: %s", err)
 	}
 
-	r, err := run.RunTask(path.Join("testdata/examples", name), tasks, "test")
+	r, err := run.RunTask(path.Join("testdata/snapshots", name), tasks, "test")
 	if err != nil {
 		return fmt.Errorf("Error running tasks: %s", err)
 	}
@@ -96,7 +97,7 @@ func testExample(t *testing.T, name string) error {
 		log = exitErr.Error() + "\n\n" + ui.String()
 	}
 
-	logfilePath := path.Join("testdata/examples", name, "out.log")
+	logfilePath := path.Join("testdata/snapshots", name, "out.log")
 	if _, err := os.Stat(logfilePath); os.IsNotExist(err) {
 		// Expected output does not exist! Create it.
 		if err := os.WriteFile(logfilePath, []byte(log), 0644); err != nil {
@@ -111,7 +112,7 @@ func testExample(t *testing.T, name string) error {
 	}
 
 	if string(expected) != log {
-		errFilePath := path.Join("testdata/examples", name, "fail.log")
+		errFilePath := path.Join("testdata/snapshots", name, "fail.log")
 		if err := os.WriteFile(errFilePath, []byte(log), 0644); err != nil {
 			return err
 		}

@@ -1,5 +1,5 @@
-        run  watching src.css
-             watching src.js
+        run  watching js/src.js
+             watching css/src.css
 
    js/build  starting
 

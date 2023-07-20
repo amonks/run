@@ -1,0 +1,7 @@
+[[task]]
+  id="test"
+  type="short"
+  dependencies=["grandchild/test"]
+  cmd="touch child.stamp"
+  watch=["file"]
+
