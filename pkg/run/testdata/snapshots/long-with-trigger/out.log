@@ -1,33 +1,39 @@
 long
 
-run:
-  watching testdata/snapshots/long-with-trigger/changed-file
-  watched file changes:                                     
-    Create testdata/snapshots/long-with-trigger/changed-file
-  invalidating {trigger}
-  watched file changes:                                     
-    Remove testdata/snapshots/long-with-trigger/changed-file
-  invalidating {trigger}
-  run canceled
-  done
+      run  watching testdata/snapshots/long-with-trigger/changed-file
 
-test:
-  starting
-  canceled; stopping
-  starting
-  canceled; stopping
-  starting
-  canceled; stopping
-  starting
-  canceled; stopping
+  trigger  starting
 
-trigger:
-  starting
-  exit ok
-  invalidating {test}
-  starting
-  exit ok
-  invalidating {test}
-  starting
-  exit ok
-  invalidating {test}
+     test  starting
+
+  trigger  exit ok
+           invalidating {test}
+
+     test  canceled; stopping
+           starting
+
+      run  watched file changes:
+           Create testdata/snapshots/long-with-trigger/changed-file
+           invalidating {trigger}
+
+  trigger  starting
+           exit ok
+           invalidating {test}
+
+     test  canceled; stopping
+           starting
+
+      run  watched file changes:
+           Remove testdata/snapshots/long-with-trigger/changed-file
+           invalidating {trigger}
+
+  trigger  starting
+           exit ok
+           invalidating {test}
+
+     test  canceled; stopping
+           starting
+           canceled; stopping
+
+      run  run canceled
+           done

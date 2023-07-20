@@ -1,26 +1,23 @@
 ok
 
-other:
-  starting
-  exit ok
+           other  starting
 
-run:
-  done
+  two/three/test  starting
 
-test:
-  starting
-  exit ok
+       two/other  starting
 
-two/other:
-  starting
-  exit ok
+  two/three/test  exit ok
 
-two/test:
-  starting
-  exit ok
-  invalidating {test}
+           other  exit ok
 
-two/three/test:
-  starting
-  exit ok
-  invalidating {two/test}
+       two/other  exit ok
+                  invalidating {two/test}
+
+        two/test  starting
+                  exit ok
+                  invalidating {test}
+
+            test  starting
+                  exit ok
+
+             run  done

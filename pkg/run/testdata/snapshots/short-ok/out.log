@@ -1,9 +1,7 @@
 ok
 
-run:
-  done
+  test  starting
+        ok
+        exit ok
 
-test:
-  starting
-  ok
-  exit ok
+   run  done

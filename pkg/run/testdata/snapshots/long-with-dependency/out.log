@@ -1,15 +1,13 @@
 long
 
-prereq:
-  starting
-  prereq
-  exit ok
-  invalidating {test}
+  prereq  starting
+          prereq
+          exit ok
+          invalidating {test}
 
-run:
-  run canceled
-  done
+    test  starting
 
-test:
-  starting
-  canceled; stopping
+     run  run canceled
+          done
+
+    test  canceled; stopping

@@ -1,20 +1,18 @@
 long
 
-run:
-  run canceled
-  done
+  test  starting
+        running...
+        exit: exit 1
+        retrying in 1 second
+        retrying
+        starting
+        running...
+        exit: exit 1
+        retrying in 1 second
+        retrying
+        starting
+        running...
+        canceled; stopping
 
-test:
-  starting
-  running...
-  exit: exit 1
-  retrying in 1 second
-  retrying
-  starting
-  running...
-  exit: exit 1
-  retrying in 1 second
-  retrying
-  starting
-  running...
-  canceled; stopping
+   run  run canceled
+        done
