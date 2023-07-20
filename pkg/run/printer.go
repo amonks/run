@@ -63,9 +63,8 @@ func (p *printer) Write(key, message string) {
 		panic("nil stdout in printer")
 	}
 
-	lines := strings.Split(strings.TrimSpace(message), "\n")
+	lines := strings.Split(message, "\n")
 	for _, l := range lines {
-		l = strings.TrimSpace(l)
 		if l == "" {
 			continue
 		}
