@@ -2,6 +2,7 @@
 
 - Andrew Monks <a@monks.co>
 - Sarah Schulte <s@cgs.dev>
+- Eric Shreve <eric@shreve.dev>
 
 ---
 
