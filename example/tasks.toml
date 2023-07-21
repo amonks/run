@@ -20,9 +20,9 @@
   cmd = """
     while true; do
       sleep 5
-      echo "touching js file" && date > src.js
+      echo "touching js file" && date > js/src.js
       sleep 5
-      echo "touching css file" && date > src.css
+      echo "touching css file" && date > css/src.css
     done
   """
 
