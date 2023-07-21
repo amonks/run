@@ -8,13 +8,14 @@ ok
 
   two/three/test  exit ok
 
-           other  exit ok
-
        two/other  exit ok
                   invalidating {two/test}
 
         two/test  starting
-                  exit ok
+
+           other  exit ok
+
+        two/test  exit ok
                   invalidating {test}
 
             test  starting

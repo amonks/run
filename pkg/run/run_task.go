@@ -201,12 +201,13 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 	// Start all the file watchers. Do this before starting tasks so that
 	// tasks can trigger file watcher events.
 	watches := map[string]func(){}
+	var watcher watcher
 	fsevents := make(chan evFSEvent)
 	for _, p := range r.watchedPaths() {
 		watchP := path.Join(r.getDir(), p)
 		printf("run", logStyle, "watching %s", watchP)
 		p := p
-		c, stop, err := watch(watchP)
+		c, stop, err := watcher.watch(watchP)
 		if err != nil {
 			return err
 		}

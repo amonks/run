@@ -166,15 +166,19 @@ Triggers can be task IDs from child directories. For example, the trigger
 ### Watch
 
 Watch specifies file paths where, if a change to the file path is detected, we
-should restart the task. Recursive paths are specified with the suffix "/...".
+should restart the task. Watch supports globs, and does **not** support the
+"./..." style used typical of Go command line tools.
 
 For example,
 
-- `"."` watches for changes to the working directory only, but not changes
-  within subdirectories.
-- `"./..."` watches for changes at any level within the working directory.
-- `"./some/path/file.txt"` watches for changes to the file, which may or may
-  not already exist.
+- `"."` watches for changes to the working directory only,
+  but not changes within subdirectories.
+- `"**"` watches for changes at any level within the
+  working directory.
+- `"./some/path/file.txt"` watches for changes to the file,
+  which must already exist.
+- `"./src/website/**/*.js"` watches for changes to
+  javascript files within src/website.
 
 ### CMD
 

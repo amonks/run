@@ -1,11 +1,14 @@
 package run
 
 import (
+	"fmt"
 	"os"
+	"path"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/gobwas/glob"
 	"github.com/rjeczalik/notify"
 )
 
@@ -14,7 +17,15 @@ type eventInfo struct {
 	event string
 }
 
-func watch(watchPath string) (<-chan []eventInfo, func(), error) {
+type watcher struct{}
+
+func (w *watcher) watch(inputPath string) (<-chan []eventInfo, func(), error) {
+	if strings.HasPrefix(inputPath, "/") {
+		return nil, nil, fmt.Errorf("watch '%s' is invalid because it is not a relative path", inputPath)
+	} else if strings.Contains(inputPath, "..") {
+		return nil, nil, fmt.Errorf("watch '%s' is invalid because it contains the substring '..'", inputPath)
+	}
+
 	var stopped bool
 
 	cwd, err := os.Getwd()
@@ -22,15 +33,20 @@ func watch(watchPath string) (<-chan []eventInfo, func(), error) {
 		return nil, nil, err
 	}
 
+	watchPath, globToMatch := w.split(inputPath)
+
 	// Start listening for events
-	c := make(chan notify.EventInfo)
+	c := make(chan notify.EventInfo, 1)
 	out := make(chan eventInfo)
 
 	go func() {
 		for ev := range c {
-			out <- eventInfo{
-				path:  strings.TrimPrefix(ev.Path(), cwd+"/"),
-				event: strings.TrimPrefix(ev.Event().String(), "notify."),
+			p := strings.TrimPrefix(ev.Path(), cwd+"/")
+			if globToMatch == nil || globToMatch.Match(p) {
+				out <- eventInfo{
+					path:  p,
+					event: strings.TrimPrefix(ev.Event().String(), "notify."),
+				}
 			}
 		}
 		close(out)
@@ -50,7 +66,7 @@ func watch(watchPath string) (<-chan []eventInfo, func(), error) {
 		stop()
 	}
 
-	return debounce(500*time.Millisecond, out), stop, nil
+	return w.debounce(500*time.Millisecond, out), stop, nil
 }
 
 type debounced[T any] struct {
@@ -59,10 +75,10 @@ type debounced[T any] struct {
 	waiting bool
 }
 
-func debounce[T any](dur time.Duration, c <-chan T) <-chan []T {
-	debounced := &debounced[T]{}
+func (*watcher) debounce(dur time.Duration, c <-chan eventInfo) <-chan []eventInfo {
+	debounced := &debounced[eventInfo]{}
 
-	debouncedC := make(chan []T)
+	debouncedC := make(chan []eventInfo)
 
 	go func() {
 		for ev := range c {
@@ -92,4 +108,23 @@ func debounce[T any](dur time.Duration, c <-chan T) <-chan []T {
 	}()
 
 	return debouncedC
+}
+
+// Split breaks a given input path (which may contain a glob) into two parts: a
+// watcher part and a glob part.
+//
+// For example, given the input "src/website/**/*.js",
+//  - we will set up a recursive watch at src/website
+//  - we will match events from that watch against the glob "src/website/**/*.js"
+// so the values returned from split will be ("src/website", Glob["src/website/**/*.js"]).
+func (*watcher) split(input string) (string, glob.Glob) {
+	input = path.Clean(input)
+	segments := strings.Split(input, "/")
+	for i, seg := range segments {
+		if strings.Contains(seg, "*") {
+			w := strings.Join(segments[:i], "/")
+			return path.Clean(w+"/..."), glob.MustCompile(input)
+		}
+	}
+	return input, nil
 }
