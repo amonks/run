@@ -21,7 +21,7 @@ import (
 //
 // Script runs in a new bash process, and can have multiple lines. It is run
 // basically like this:
-//     $ cd dir
+//     $ cd $DIR
 //     $ bash -c "$CMD" 2&>1 /some/ui
 func ScriptTask(script string, dir string, metadata TaskMetadata) Task {
 	return &scriptTask{
