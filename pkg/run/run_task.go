@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"path"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -204,7 +204,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 	var watcher watcher
 	fsevents := make(chan evFSEvent)
 	for _, p := range r.watchedPaths() {
-		watchP := path.Join(r.getDir(), p)
+		watchP := filepath.Join(r.getDir(), p)
 		printf("run", logStyle, "watching %s", watchP)
 		p := p
 		c, stop, err := watcher.watch(watchP)
