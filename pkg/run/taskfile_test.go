@@ -21,6 +21,23 @@ func TestTaskfileNestingWithDir(t *testing.T) {
 		ts["child/grandchild/test"].(*scriptTask).dir)
 }
 
+func TestTaskfileNestingWithParentDir(t *testing.T) {
+	os.Chdir("testdata/very-nested/child")
+	defer os.Chdir("../../..")
+
+	ts, err := Load("..")
+	assert.NoError(t, err)
+
+	testNesting(t, ts)
+
+	assert.Equal(t, "..",
+		ts["test"].(*scriptTask).dir)
+	assert.Equal(t, "../child",
+		ts["child/test"].(*scriptTask).dir)
+	assert.Equal(t, "../child/grandchild",
+		ts["child/grandchild/test"].(*scriptTask).dir)
+}
+
 func TestTaskfileNestingWithDot(t *testing.T) {
 	os.Chdir("testdata/very-nested")
 	defer os.Chdir("../..")
