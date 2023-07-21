@@ -57,8 +57,8 @@
   ]
   cmd = """
     echo cleaning up
-    echo "" > example/src.js
-    echo "" > example/src.css
+    echo "" > example/js/src.js
+    echo "" > example/css/src.css
     echo "" > example/dist.js
     echo "" > example/dist.css
   """

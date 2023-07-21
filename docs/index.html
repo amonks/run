@@ -564,7 +564,7 @@ File watches are only used if a run is RunTypeLong.
 		
 			
 			
-			<h2 id="RunType">type <a href="https://github.com/amonks/run/blob/main/pkg/run/run_task.go#L423">RunType</a>
+			<h2 id="RunType">type <a href="https://github.com/amonks/run/blob/main/pkg/run/run_task.go#L425">RunType</a>
 				<a class="permalink" href="#RunType">&#xb6;</a>
 				
 				
@@ -738,17 +738,22 @@ $ bash -c &quot;$CMD&quot; 2&amp;&gt;1 /some/ui
     <span class="comment">// file &#34;./css/tasks.toml&#34;.</span>
     Triggers []<a href="https://pkg.go.dev/pkg/builtin/#string">string</a>
 
-<span id="TaskMetadata.Watch"></span>    <span class="comment">// Watch specifies file paths where, if a change to the file path is</span>
-    <span class="comment">// detected, we should restart the task. Recursive paths are specified</span>
-    <span class="comment">// with the suffix &#34;/...&#34;.</span>
+<span id="TaskMetadata.Watch"></span>    <span class="comment">// Watch specifies file paths where, if a change to</span>
+    <span class="comment">// the file path is detected, we should restart the</span>
+    <span class="comment">// task. Watch supports globs, and does **not**</span>
+    <span class="comment">// support the &#34;./...&#34; style used typical of Go</span>
+    <span class="comment">// command line tools.</span>
     <span class="comment">//</span>
     <span class="comment">// For example,</span>
-    <span class="comment">// - &#34;.&#34; watches for changes to the working directory only, but not</span>
-    <span class="comment">//   changes within subdirectories.</span>
-    <span class="comment">// - &#34;./...&#34; watches for changes at any level within the working</span>
-    <span class="comment">//   directory.</span>
-    <span class="comment">// - &#34;./some/path/file.txt&#34; watches for changes to the file, which may</span>
-    <span class="comment">//   or may not already exist.</span>
+    <span class="comment">//  - `&#34;.&#34;` watches for changes to the working</span>
+    <span class="comment">//    directory only, but not changes within</span>
+    <span class="comment">//    subdirectories.</span>
+    <span class="comment">//  - `&#34;**&#34; watches for changes at any level within</span>
+    <span class="comment">//    the working directory.</span>
+    <span class="comment">//  - `&#34;./some/path/file.txt&#34;` watches for changes</span>
+    <span class="comment">//    to the file, which must already exist.</span>
+    <span class="comment">//  - `&#34;./src/website/**/*.js&#34;` watches for changes</span>
+    <span class="comment">//    to javascript files within src/website.</span>
     Watch []<a href="https://pkg.go.dev/pkg/builtin/#string">string</a>
 }
 </pre>
@@ -846,7 +851,7 @@ Tasks.
 
 			
 				
-				<h3 id="Tasks.IDs">func (Tasks) <a href="https://github.com/amonks/run/blob/main/pkg/run/task.go#L105">IDs</a>
+				<h3 id="Tasks.IDs">func (Tasks) <a href="https://github.com/amonks/run/blob/main/pkg/run/task.go#L110">IDs</a>
 					<a class="permalink" href="#Tasks.IDs">&#xb6;</a>
 					
 					
@@ -858,7 +863,7 @@ Tasks.
 				
 			
 				
-				<h3 id="Tasks.Validate">func (Tasks) <a href="https://github.com/amonks/run/blob/main/pkg/run/task.go#L118">Validate</a>
+				<h3 id="Tasks.Validate">func (Tasks) <a href="https://github.com/amonks/run/blob/main/pkg/run/task.go#L123">Validate</a>
 					<a class="permalink" href="#Tasks.Validate">&#xb6;</a>
 					
 					
