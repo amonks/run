@@ -568,7 +568,7 @@ File watches are only used if a run is RunTypeLong.
 		
 			
 			
-			<h2 id="RunType">type <a href="https://github.com/amonks/run/blob/main/pkg/run/run_task.go#L425">RunType</a>
+			<h2 id="RunType">type <a href="https://github.com/amonks/run/blob/main/pkg/run/run_task.go#L481">RunType</a>
 				<a class="permalink" href="#RunType">&#xb6;</a>
 				
 				
@@ -696,9 +696,11 @@ $ bash -c &quot;$CMD&quot; 2&amp;&gt;1 /some/ui
 <span id="TaskMetadata.Type"></span>    <span class="comment">// Type specifies how we manage a task.</span>
     <span class="comment">//</span>
     <span class="comment">// If the Type is &#34;long&#34;,</span>
-    <span class="comment">//   - We will restart the task if it returns.</span>
-    <span class="comment">//   - If the long task A is a dependency or trigger of</span>
-    <span class="comment">//     task B, we will begin B as soon as A starts.</span>
+    <span class="comment">//   - We will keep the task alive by restarting it if it exits.</span>
+    <span class="comment">//   - If the long task A is a dependency of task B, we will begin B as</span>
+    <span class="comment">//     soon as A starts.</span>
+    <span class="comment">//   - It is invalid to use a long task as a trigger, since long tasks</span>
+    <span class="comment">//     aren&#39;t expected to end.</span>
     <span class="comment">//</span>
     <span class="comment">// If the Type is &#34;short&#34;,</span>
     <span class="comment">//   - If the Start returns nil, we will consider it done.</span>
@@ -735,6 +737,10 @@ $ bash -c &quot;$CMD&quot; 2&amp;&gt;1 /some/ui
     <span class="comment">// Dependencies can be task IDs from child directories. For example,</span>
     <span class="comment">// the dependency &#34;css/build&#34; specifies the task with ID &#34;build&#34; in the</span>
     <span class="comment">// tasks file &#34;./css/tasks.toml&#34;.</span>
+    <span class="comment">//</span>
+    <span class="comment">// If a task depends on a &#34;long&#34; task, Run doesn&#39;t really know when the</span>
+    <span class="comment">// long task has produced whatever output is depended on, so the</span>
+    <span class="comment">// dependent is run 500ms after the long task starts.</span>
     Dependencies []<a href="https://pkg.go.dev/pkg/builtin/#string">string</a>
 
 <span id="TaskMetadata.Triggers"></span>    <span class="comment">// Triggers are other task IDs which should always be run alongside</span>
@@ -745,6 +751,8 @@ $ bash -c &quot;$CMD&quot; 2&amp;&gt;1 /some/ui
     <span class="comment">// Triggers can be task IDs from child directories. For example, the</span>
     <span class="comment">// trigger &#34;css/build&#34; specifies the task with ID &#34;build&#34; in the tasks</span>
     <span class="comment">// file &#34;./css/tasks.toml&#34;.</span>
+    <span class="comment">//</span>
+    <span class="comment">// It is invalid to use a &#34;long&#34; task as a trigger.</span>
     Triggers []<a href="https://pkg.go.dev/pkg/builtin/#string">string</a>
 
 <span id="TaskMetadata.Watch"></span>    <span class="comment">// Watch specifies file paths where, if a change to</span>
@@ -860,7 +868,7 @@ Tasks.
 
 			
 				
-				<h3 id="Tasks.IDs">func (Tasks) <a href="https://github.com/amonks/run/blob/main/pkg/run/task.go#L111">IDs</a>
+				<h3 id="Tasks.IDs">func (Tasks) <a href="https://github.com/amonks/run/blob/main/pkg/run/task.go#L119">IDs</a>
 					<a class="permalink" href="#Tasks.IDs">&#xb6;</a>
 					
 					
@@ -872,7 +880,7 @@ Tasks.
 				
 			
 				
-				<h3 id="Tasks.Validate">func (Tasks) <a href="https://github.com/amonks/run/blob/main/pkg/run/task.go#L124">Validate</a>
+				<h3 id="Tasks.Validate">func (Tasks) <a href="https://github.com/amonks/run/blob/main/pkg/run/task.go#L132">Validate</a>
 					<a class="permalink" href="#Tasks.Validate">&#xb6;</a>
 					
 					

@@ -34,7 +34,7 @@ func (v validator) validate(ts Tasks) error {
 		ids[t.Metadata().ID] = struct{}{}
 	}
 	for _, t := range ts {
-		for _, err := range v.validateTask(ts, ids, t) {
+		for _, err := range v.validateTask(ts, t) {
 			problems = append(problems, "- "+err.Error())
 		}
 	}
@@ -44,7 +44,7 @@ func (v validator) validate(ts Tasks) error {
 	return nil
 }
 
-func (v validator) validateTask(ts Tasks, ids map[string]struct{}, t Task) []error {
+func (v validator) validateTask(ts Tasks, t Task) []error {
 	var problems []error
 
 	meta := t.Metadata()
@@ -90,14 +90,16 @@ func (v validator) validateTask(ts Tasks, ids map[string]struct{}, t Task) []err
 	}
 
 	for _, id := range meta.Dependencies {
-		if _, ok := ids[id]; !ok {
+		if _, ok := ts[id]; !ok {
 			problems = append(problems, fmt.Errorf("Task '%s' lists dependency '%s', which is not the ID of a task.", meta.ID, id))
 		}
 	}
 
 	for _, id := range meta.Triggers {
-		if _, ok := ids[id]; !ok {
+		if source, ok := ts[id]; !ok {
 			problems = append(problems, fmt.Errorf("Task '%s' lists trigger '%s', which is not the ID of a task.", meta.ID, id))
+		} else if source.Metadata().Type == "long" {
+			problems = append(problems, fmt.Errorf("Task '%s' lists trigger '%s', which is long. Long tasks aren't expected to end, so using them as triggers is invalid.", meta.ID, id))
 		}
 	}
 

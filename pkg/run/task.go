@@ -38,9 +38,11 @@ type TaskMetadata struct {
 	// Type specifies how we manage a task.
 	//
 	// If the Type is "long",
-	//   - We will restart the task if it returns.
-	//   - If the long task A is a dependency or trigger of
-	//     task B, we will begin B as soon as A starts.
+	//   - We will keep the task alive by restarting it if it exits.
+	//   - If the long task A is a dependency of task B, we will begin B as
+	//     soon as A starts.
+	//   - It is invalid to use a long task as a trigger, since long tasks
+	//     aren't expected to end.
 	//
 	// If the Type is "short",
 	//   - If the Start returns nil, we will consider it done.
@@ -77,6 +79,10 @@ type TaskMetadata struct {
 	// Dependencies can be task IDs from child directories. For example,
 	// the dependency "css/build" specifies the task with ID "build" in the
 	// tasks file "./css/tasks.toml".
+	//
+	// If a task depends on a "long" task, Run doesn't really know when the
+	// long task has produced whatever output is depended on, so the
+	// dependent is run 500ms after the long task starts.
 	Dependencies []string
 
 	// Triggers are other task IDs which should always be run alongside
@@ -87,6 +93,8 @@ type TaskMetadata struct {
 	// Triggers can be task IDs from child directories. For example, the
 	// trigger "css/build" specifies the task with ID "build" in the tasks
 	// file "./css/tasks.toml".
+	//
+	// It is invalid to use a "long" task as a trigger.
 	Triggers []string
 
 	// Watch specifies file paths where, if a change to
@@ -124,4 +132,3 @@ func (ts Tasks) IDs() []string {
 func (ts Tasks) Validate() error {
 	return newValidator().validate(ts)
 }
-
