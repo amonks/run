@@ -36,8 +36,9 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 		if !ok {
 			lines := []string{fmt.Sprintf("Task %s not found. Tasks are,", id)}
 			for id := range allTasks {
-				lines = append(lines, "- "+id)
+				lines = append(lines, " - "+id)
 			}
+			lines = append(lines, "Run `run -list` for more information about the available tasks.")
 			return errors.New(strings.Join(lines, "\n"))
 		}
 
