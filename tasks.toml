@@ -35,7 +35,7 @@
 [[task]]
   id = "test"
   type = "short"
-  cmd = "go test ."
+  cmd = "go test ./..."
 
 [[task]]
   id = "vulncheck"
