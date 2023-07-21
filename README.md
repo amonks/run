@@ -240,16 +240,11 @@ and reference documentation, see [the godoc][godoc].
 
 Run is free for noncommercial and small-business use, with a guarantee that
 fair, reasonable, and nondiscriminatory paid-license terms will be available
-for everyone else. See LICENSE.md or invoke the program with `-license` for
-more details.
-
-Commercial licenses are available for 5$ per seat per month (billed yearly) by
-emailing a@monks.co. Discounts may be available for large deals, project
-contributors, markets with low purchasing power, customers I am fond of, or
-any other reason, at my discretion. Never hurts to ask.
+for large businesses. Ask about paid licenses at a@monks.co. See LICENSE.md or
+invoke the program with `-license` for more details.
 
 Run is made by Andrew Monks, with help from outside contributors. See
 CONTRIBUTORS.md for more details.
 
-Additionally, Run makes use of a variety of open source software. See
-CREDITS.txt for more details.
+Run makes use of a variety of open source software. See CREDITS.txt for more
+details.

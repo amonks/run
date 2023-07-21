@@ -256,7 +256,7 @@ func contributorsText() string {
 	return "CONTRIBUTORS\n\n" + indent.String(wordwrap.String(meta.Contributors, 78), 2)
 }
 
-var statement = "Run is free for noncommercial and small-business use, with a guarantee that fair, reasonable, and nondiscriminatory paid-license terms will be available for everyone else."
+var statement = "Run is free for noncommercial and small-business use, with a guarantee that fair, reasonable, and nondiscriminatory paid-license terms will be available for everyone else. Ask about paid licenses at a@monks.co."
 
 func licenseText() string {
 	b := &strings.Builder{}
