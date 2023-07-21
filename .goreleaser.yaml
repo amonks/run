@@ -2,6 +2,7 @@ before:
   hooks:
     - go mod tidy
     - go generate ./...
+
 builds:
   - main: ./cmd/run
     env:
@@ -12,6 +13,11 @@ builds:
 
 archives:
   - format: tar.gz
+    files:
+      - LICENSE.*
+      - CONTRIBUTORS.*
+      - CREDITS.*
+      - docs/*
     name_template: >-
       {{ .ProjectName }}_
       {{- title .Os }}_
@@ -19,9 +25,12 @@ archives:
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
+
 checksum:
   name_template: "checksums.txt"
+
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
+
 changelog:
   sort: asc
