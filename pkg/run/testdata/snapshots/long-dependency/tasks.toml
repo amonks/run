@@ -1,0 +1,11 @@
+[[task]]
+  id = "test"
+  type = "short"
+  cmd = "echo hello"
+  dependencies = ["prereq"]
+
+[[task]]
+  id = "prereq"
+  type = "long"
+  cmd = "while true ; do echo ... ; sleep 1 ; done"
+
