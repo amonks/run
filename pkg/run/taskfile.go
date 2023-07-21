@@ -123,6 +123,7 @@ type taskfile struct {
 
 type taskfileTask struct {
 	ID           string   `toml:"id"`
+	Description  string   `toml:"description"`
 	Type         string   `toml:"type"`
 	Dependencies []string `toml:"dependencies"`
 	Triggers     []string `toml:"triggers"`
@@ -153,6 +154,7 @@ func (t taskfileTask) withDir(cwd, dir string) taskfileTask {
 func (t taskfileTask) toCMDTask() Task {
 	return ScriptTask(t.CMD, t.dir, TaskMetadata{
 		ID:           t.ID,
+		Description:  t.Description,
 		Type:         t.Type,
 		Dependencies: t.Dependencies,
 		Triggers:     t.Triggers,

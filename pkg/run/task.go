@@ -30,6 +30,11 @@ type TaskMetadata struct {
 	//   - in the TUI's task list.
 	ID string
 
+	// Description optionally provides additional information about a task,
+	// which can be displayed, for example, by running `run -list`. It can
+	// be one line or many lines.
+	Description string
+
 	// Type specifies how we manage a task.
 	//
 	// If the Type is "long",
