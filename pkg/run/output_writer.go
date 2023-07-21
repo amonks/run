@@ -10,17 +10,20 @@ import (
 func newOutputWriter(stdout io.Writer) io.Writer {
 	jsonW := &jsonWriter{w: stdout}
 	bufW := &lineBufferedWriter{buf: bufio.NewWriter(jsonW)}
+	bufW.mu = newMutex("linebuffered")
 	return bufW
 }
 
 type lineBufferedWriter struct {
 	buf *bufio.Writer
+	mu  *mutex
 }
 
 func (w *lineBufferedWriter) Write(bs []byte) (n int, err error) {
+	defer w.mu.Lock("Writer").Unlock()
 	for _, b := range bs {
 		if err = w.buf.WriteByte(b); err != nil {
-			break
+			return n, err
 		}
 
 		n++
