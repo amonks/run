@@ -64,20 +64,23 @@ func testNesting(t *testing.T, ts Tasks) {
 	assert.Equal(t, map[string]TaskMetadata{
 		"test": {
 			ID:           "test",
+			Description:  `"touch parent.stamp"`,
 			Type:         "short",
 			Dependencies: []string{"child/test"},
 			Watch:        []string{"file"},
 		},
 		"child/test": {
 			ID:           "child/test",
+			Description:  `"touch child.stamp"`,
 			Type:         "short",
 			Dependencies: []string{"child/grandchild/test"},
 			Watch:        []string{"child/file"},
 		},
 		"child/grandchild/test": {
-			ID:    "child/grandchild/test",
-			Type:  "short",
-			Watch: []string{"child/grandchild/file"},
+			ID:          "child/grandchild/test",
+			Description: `"touch grandchild.stamp"`,
+			Type:        "short",
+			Watch:       []string{"child/grandchild/file"},
 		},
 	}, metas)
 }

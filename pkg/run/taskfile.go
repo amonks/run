@@ -152,9 +152,13 @@ func (t taskfileTask) withDir(cwd, dir string) taskfileTask {
 }
 
 func (t taskfileTask) toCMDTask() Task {
+	description := t.Description
+	if description == "" && t.CMD != "" && !strings.Contains(t.CMD, "\n") {
+		description = fmt.Sprintf(`"%s"`, t.CMD)
+	}
 	return ScriptTask(t.CMD, t.dir, TaskMetadata{
 		ID:           t.ID,
-		Description:  t.Description,
+		Description:  description,
 		Type:         t.Type,
 		Dependencies: t.Dependencies,
 		Triggers:     t.Triggers,
