@@ -465,7 +465,7 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, item list.Ite
 
 	var str string
 	var marker string
-	style := itemStyle.Copy().Foreground(lipgloss.Color(colorHash(id)))
+	style := listItemStyle.Copy().Foreground(lipgloss.Color(colorHash(id)))
 	if index == m.Index() {
 		marker = ">"
 	} else {
@@ -474,35 +474,6 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, item list.Ite
 	str = fmt.Sprintf("%s %s %d. %s", spinner, marker, index, style.Render(id))
 	fmt.Fprint(w, zone.Mark(id, str))
 }
-
-var (
-	logStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#CCC")).
-			Italic(true)
-	errorStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#F00")).
-			Italic(true)
-
-	itemStyle = lipgloss.NewStyle().
-			Padding(0)
-
-	listStyle = lipgloss.NewStyle().
-			Align(lipgloss.Left, lipgloss.Top).
-			BorderStyle(lipgloss.HiddenBorder()).
-			Margin(0).Padding(0)
-	previewStyle = lipgloss.NewStyle().
-			Align(lipgloss.Left, lipgloss.Top).
-			BorderStyle(lipgloss.NormalBorder()).
-			Margin(0).Padding(0, 1, 1, 2)
-	pagerStyle = lipgloss.NewStyle().
-			Align(lipgloss.Left, lipgloss.Top).
-			Margin(0).Padding(0)
-	helpStyle = lipgloss.NewStyle().
-			Align(lipgloss.Left, lipgloss.Top).
-			Foreground(lipgloss.Color("#CCC")).
-			Italic(true).
-			Margin(0).Padding(0)
-)
 
 type pagerKeymaps struct {
 	top    key.Binding
