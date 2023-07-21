@@ -90,7 +90,7 @@ func Load(cwd string) (Tasks, error) {
 		}
 	}
 
-	if err := tf.Validate(); err != nil {
+	if err := (validator{}).validate(tf); err != nil {
 		return nil, err
 	}
 
