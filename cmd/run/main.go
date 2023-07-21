@@ -14,6 +14,7 @@ import (
 	"time"
 
 	meta "github.com/amonks/run"
+	"github.com/amonks/run/internal/color"
 	"github.com/amonks/run/pkg/run"
 	"github.com/carlmjohnson/versioninfo"
 	"github.com/muesli/reflow/dedent"
@@ -38,16 +39,16 @@ func main() {
 	flag.Parse()
 
 	if *fVersion {
-		fmt.Println("\n" + versionText())
+		fmt.Println(versionText())
 		os.Exit(0)
 	} else if *fHelp {
 		fmt.Println("\n" + helpText())
 		os.Exit(0)
 	} else if *fCredits {
-		fmt.Println("\n" + creditsText())
+		fmt.Print(creditsText())
 		os.Exit(0)
 	} else if *fContributors {
-		fmt.Println("\n" + contributorsText())
+		fmt.Print(contributorsText())
 		os.Exit(0)
 	} else if *fLicense {
 		fmt.Println("\n" + licenseText())
@@ -148,8 +149,7 @@ func main() {
 
 func tasklistText(tasks run.Tasks) string {
 	b := &strings.Builder{}
-	fmt.Fprintln(b, "")
-	fmt.Fprintln(b, "TASKS")
+	fmt.Fprintln(b, headerStyle.Render("TASKS"))
 	var ids []string
 	for id := range tasks {
 		ids = append(ids, id)
@@ -162,7 +162,7 @@ func tasklistText(tasks run.Tasks) string {
 		t := tasks[id]
 		meta := t.Metadata()
 
-		fmt.Fprintf(b, "  %s\n", underlineStyle.Render(id))
+		fmt.Fprintf(b, "  %s\n", color.Render(id))
 		fmt.Fprintf(b, "    Type: %s\n", italicStyle.Render(meta.Type))
 		if meta.Description != "" {
 			fmt.Fprintf(b, "    Description:\n")
@@ -221,14 +221,14 @@ func helpText() string {
 
 func usageText() string {
 	b := &strings.Builder{}
-	b.WriteString("USAGE\n")
+	fmt.Fprintln(b, headerStyle.Render("USAGE"))
 	b.WriteString("  run [flags] <task>\n")
 	return b.String()
 }
 
 func flagText() string {
 	var b strings.Builder
-	fmt.Fprintln(&b, "FLAGS")
+	fmt.Fprintln(&b, headerStyle.Render("FLAGS"))
 
 	f := flag.CommandLine
 
@@ -273,7 +273,7 @@ func isZeroValue(f *flag.Flag, value string) (ok bool) {
 }
 func versionText() string {
 	b := &strings.Builder{}
-	fmt.Fprintln(b, "VERSION")
+	fmt.Fprintln(b, headerStyle.Render("VERSION"))
 	fmt.Fprintln(b, "  Version:", versioninfo.Version)
 	fmt.Fprintln(b, "  Revision:", versioninfo.Revision)
 	if versioninfo.Revision != "unknown" {
@@ -286,19 +286,24 @@ func versionText() string {
 }
 
 func creditsText() string {
-	return "CREDITS\n\n" + indent.String(wordwrap.String(meta.Credits, 78), 2)
+	b := &strings.Builder{}
+	fmt.Fprintln(b, headerStyle.Render("CREDITS"))
+	fmt.Fprintln(b, indent.String(wordwrap.String(meta.Credits, 78), 2))
+	return b.String()
 }
 
 func contributorsText() string {
-	return "CONTRIBUTORS\n\n" + indent.String(wordwrap.String(meta.Contributors, 78), 2)
+	b := &strings.Builder{}
+	fmt.Fprintln(b, headerStyle.Render("CONTRIBUTORS"))
+	fmt.Fprintln(b, indent.String(wordwrap.String(meta.Contributors, 78), 2))
+	return b.String()
 }
 
 var statement = "Run is free for noncommercial and small-business use, with a guarantee that fair, reasonable, and nondiscriminatory paid-license terms will be available for everyone else. Ask about paid licenses at a@monks.co."
 
 func licenseText() string {
 	b := &strings.Builder{}
-	b.WriteString("LICENSE\n")
-	b.WriteString("\n")
+	fmt.Fprintln(b, headerStyle.Render("LICENSE"))
 	b.WriteString("  © Andrew Monks <a@monks.co>\n")
 	b.WriteString("\n")
 	b.WriteString(indent.String(wordwrap.String(statement, 70), 2) + "\n")
@@ -310,7 +315,7 @@ func licenseText() string {
 
 func shortLicenseText() string {
 	b := &strings.Builder{}
-	b.WriteString("LICENSE\n")
+	fmt.Fprintln(b, headerStyle.Render("LICENSE"))
 	b.WriteString(indent.String(wordwrap.String(statement, 60), 2) + "\n")
 	b.WriteString("\n")
 	b.WriteString("  Run `run -license` for more info.\n")
