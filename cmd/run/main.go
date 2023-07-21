@@ -120,10 +120,13 @@ func main() {
 
 	<-uiReady
 
+	var taskError error
+
 	go func() {
 		defer wg.Done()
 		err := r.Start(ctx, ui)
 		if err != nil && err != context.Canceled {
+			taskError = err
 			fmt.Println("Error running tasks:", err)
 		}
 		if *fUI != "tui" && err != context.Canceled {
@@ -142,6 +145,12 @@ func main() {
 		cancel()
 		<-allDone
 	case <-allDone:
+	}
+
+	if taskError != nil {
+		os.Exit(1)
+	} else {
+		os.Exit(0)
 	}
 }
 
