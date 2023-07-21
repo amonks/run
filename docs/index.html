@@ -688,6 +688,11 @@ $ bash -c &quot;$CMD&quot; 2&amp;&gt;1 /some/ui
     <span class="comment">//   - in the TUI&#39;s task list.</span>
     ID <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>
 
+<span id="TaskMetadata.Description"></span>    <span class="comment">// Description optionally provides additional information about a task,</span>
+    <span class="comment">// which can be displayed, for example, by running `run -list`. It can</span>
+    <span class="comment">// be one line or many lines.</span>
+    Description <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>
+
 <span id="TaskMetadata.Type"></span>    <span class="comment">// Type specifies how we manage a task.</span>
     <span class="comment">//</span>
     <span class="comment">// If the Type is &#34;long&#34;,</span>
@@ -855,7 +860,7 @@ Tasks.
 
 			
 				
-				<h3 id="Tasks.IDs">func (Tasks) <a href="https://github.com/amonks/run/blob/main/pkg/run/task.go#L106">IDs</a>
+				<h3 id="Tasks.IDs">func (Tasks) <a href="https://github.com/amonks/run/blob/main/pkg/run/task.go#L111">IDs</a>
 					<a class="permalink" href="#Tasks.IDs">&#xb6;</a>
 					
 					
@@ -867,7 +872,7 @@ Tasks.
 				
 			
 				
-				<h3 id="Tasks.Validate">func (Tasks) <a href="https://github.com/amonks/run/blob/main/pkg/run/task.go#L119">Validate</a>
+				<h3 id="Tasks.Validate">func (Tasks) <a href="https://github.com/amonks/run/blob/main/pkg/run/task.go#L124">Validate</a>
 					<a class="permalink" href="#Tasks.Validate">&#xb6;</a>
 					
 					
