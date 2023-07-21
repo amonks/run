@@ -3,6 +3,6 @@ package main
 import "github.com/charmbracelet/lipgloss"
 
 var (
-	underlineStyle = lipgloss.NewStyle().Underline(true)
-	italicStyle    = lipgloss.NewStyle().Italic(true)
+	headerStyle = lipgloss.NewStyle().Underline(true).Bold(true).MarginBottom(1).MarginTop(1)
+	italicStyle = lipgloss.NewStyle().Italic(true)
 )
