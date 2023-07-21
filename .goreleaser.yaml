@@ -5,6 +5,8 @@ before:
 
 builds:
   - main: ./cmd/run
+    ldflags:
+      - -s -w -X 'github.com/amonks/run.Version={{.Version}}'
     env:
       - CGO_ENABLED=0
     goos:

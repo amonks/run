@@ -11,12 +11,10 @@ import (
 	"strings"
 	"sync"
 	"syscall"
-	"time"
 
 	meta "github.com/amonks/run"
 	"github.com/amonks/run/internal/color"
 	"github.com/amonks/run/pkg/run"
-	"github.com/carlmjohnson/versioninfo"
 	"github.com/muesli/reflow/dedent"
 	"github.com/muesli/reflow/indent"
 	"github.com/muesli/reflow/wordwrap"
@@ -274,11 +272,11 @@ func isZeroValue(f *flag.Flag, value string) (ok bool) {
 func versionText() string {
 	b := &strings.Builder{}
 	fmt.Fprintln(b, headerStyle.Render("VERSION"))
-	fmt.Fprintln(b, "  Version:", versioninfo.Version)
-	fmt.Fprintln(b, "  Revision:", versioninfo.Revision)
-	if versioninfo.Revision != "unknown" {
-		fmt.Fprintln(b, "  Committed:", versioninfo.LastCommit.Format(time.RFC1123))
-		if versioninfo.DirtyBuild {
+	fmt.Fprintln(b, "  Version:", meta.Version)
+	fmt.Fprintln(b, "  Revision:", meta.Revision)
+	if meta.Revision != "unknown" {
+		fmt.Fprintln(b, "  Committed:", meta.ReleaseDate)
+		if meta.DirtyBuild {
 			fmt.Fprintln(b, "  Dirty Build")
 		}
 	}
