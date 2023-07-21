@@ -110,9 +110,11 @@ Type specifies how we manage a task.
 
 If the Type is "long",
 
-- We will restart the task if it returns.
-- If the long task A is a dependency or trigger of
-  task B, we will begin B as soon as A starts.
+- We will keep the task alive by restarting it if it exits.
+- If the long task A is a dependency of task B, we will begin B as soon as
+  A starts.
+- It is invalid to use a long task as a trigger, since long tasks
+  aren't expected to end.
 
 If the Type is "short",
 
@@ -139,29 +141,36 @@ default type: every task must specify its type.
 
 ### Dependencies
 
-Dependencies are other tasks IDs which should always run alongside this task.
-If a task A lists B as a dependency, running A will first run B.
+Dependencies are other tasks IDs which should always run alongside
+this task. If a task A lists B as a dependency, running A will first
+run B.
 
-Dependencies do not set up an invalidation relationship: if long task A lists
-short task B as a dependency, and B reruns because a watched file is changed,
-we will not restart A, assuming that A has its own mechanism for detecting file
-changes. If A does not have such a mechanhism, use a trigger rather than a
-dependency.
+Dependencies do not set up an invalidation relationship: if long task
+A lists short task B as a dependency, and B reruns because a watched
+file is changed, we will not restart A, assuming that A has its own
+mechanism for detecting file changes. If A does not have such a
+mechanhism, use a trigger rather than a dependency.
 
 Dependencies can be task IDs from child directories. For example, the
-dependency "css/build" specifies the task with ID "build" in the tasks file
-"./css/tasks.toml".
+dependency "css/build" specifies the task with ID "build" in the tasks
+file "./css/tasks.toml".
+
+If a task depends on a "long" task, Run doesn't really know when the
+long task has produced whatever output is depended on, so the
+dependent is run 500ms after the long task starts.
 
 ### Triggers
 
-Triggers are other task IDs which should always be run alongside this task, and
-whose success should cause this task to re-execute. If a task A lists B as a
-trigger, and both A and B are running, successful execution of B will always
-trigger an execution of A.
+Triggers are other task IDs which should always be run alongside this
+task, and whose success should cause this task to re-execute. If a
+task A lists B as a dependency, and both A and B are running,
+successful execution of B will always trigger an execution of A.
 
-Triggers can be task IDs from child directories. For example, the trigger
-"css/build" specifies the task with ID "build" in the tasks file
-"./css/tasks.toml".
+Triggers can be task IDs from child directories. For example, the
+trigger "css/build" specifies the task with ID "build" in the tasks
+file "./css/tasks.toml".
+
+It is invalid to use a "long" task as a trigger.
 
 ### Watch
 
