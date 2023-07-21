@@ -7,8 +7,34 @@ package meta
 
 import (
 	_ "embed"
+	"runtime/debug"
 	"strings"
 )
+
+var Version string = "devel"
+
+var (
+	Revision    string = "unknown"
+	ReleaseDate string = "unknown"
+	DirtyBuild  bool
+)
+
+func init() {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return
+	}
+	for _, kv := range info.Settings {
+		switch kv.Key {
+		case "vcs.revision":
+			Revision = kv.Value
+		case "vcs.time":
+			ReleaseDate = kv.Value
+		case "vcs.modified":
+			DirtyBuild = true
+		}
+	}
+}
 
 //go:generate go run github.com/amonks/run/cmd/licenses CREDITS.txt
 //go:embed CREDITS.txt
