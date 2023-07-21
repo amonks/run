@@ -233,6 +233,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 	exits := newSafeMap[chan exit]()
 	allExits := make(chan exit)
 	cancels := newSafeMap[func()]()
+	readies := make(chan string)
 
 	hasAllDeps := func(id string) bool {
 		for _, dep := range r.tasks[id].Metadata().Dependencies {
@@ -245,6 +246,10 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 
 	start := func(ctx context.Context, id string) {
 		t := r.tasks[id]
+
+		// Groups don't actually run. If we're asked to start a group,
+		// that means all of the group's dependencies are ready and we
+		// should start any tasks that were waiting on the group.
 		if t.Metadata().Type == "group" {
 			allExits <- exit{id: id, err: nil}
 			return
@@ -252,15 +257,46 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 
 		printf(id, logStyle, "starting")
 
+		// Mark that the task is running.
 		ctx, cancel := context.WithCancel(ctx)
 		cancels.set(id, cancel)
-
 		exits.set(id, make(chan exit))
 		r.taskStatus.set(id, TaskStatusRunning)
+
+		// If the task is long, send a "ready" 500ms after it starts,
+		// in order to trigger tasks that depend on it.
+		//
+		// We don't _really_ know that it's ready -- 500ms is just a
+		// heuristic. It might be nice to add something to the task
+		// interface so that long tasks can tell us when they are truly
+		// ready.
+		stoppedEarly := make(chan struct{})
+		if t.Metadata().Type == "long" {
+			go func() {
+				select {
+				case <-stoppedEarly:
+				case <-time.After(500 * time.Millisecond):
+					readies <- id
+				}
+			}()
+		}
+
+		// Run the task.
 		w := writers.get(id)
 		err := t.Start(ctx, w)
+
+		// Done. Destroy its canceler.
 		cancels.del(id)
 
+		// If we haven't sent a readiness signal yet, cancel it.
+		select {
+		case stoppedEarly <- struct{}{}:
+		default:
+		}
+
+		// Notify that this task is done. Prefer to send to this task's
+		// specific channel, but if that's not available the allTasks
+		// channel is fine. Block until sending to one or the other.
 		select {
 		case exits.get(id) <- exit{id: id, err: err}:
 			return
@@ -305,6 +341,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 						}
 					}()
 				}
+
 			case id := <-r.starts:
 				go func() {
 					if cancels.has(id) {
@@ -314,6 +351,52 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 					}
 					start(ctx, id)
 				}()
+
+			case id := <-readies:
+				t := r.tasks[id]
+				tm := t.Metadata()
+
+				// Mark this task as "ran", so tasks that
+				// depend on it become eligible to run.
+				ran.set(id, struct{}{})
+
+				// Invalidate tasks that depend on this one.
+				invalidations := map[string]struct{}{}
+
+				// If this task is short, invalidate all tasks
+				// that list this as a trigger.
+				if tm.Type == "short" {
+					for _, id := range r.byTrigger[id] {
+						invalidations[id] = struct{}{}
+					}
+				}
+
+				// Invalidate "short" or unstarted tasks that
+				// list this as a dependency and have all of
+				// their dependencies met.
+				for _, id := range r.byDep[id] {
+					isShort := r.tasks[id].Metadata().Type == "short"
+					isRunning := cancels.has(id)
+					isReady := hasAllDeps(id)
+					if isReady && (isShort || !isRunning) {
+						invalidations[id] = struct{}{}
+					}
+				}
+
+				// Send the invalidations.
+				if len(invalidations) > 0 {
+					var ids []string
+					for id := range invalidations {
+						ids = append(ids, id)
+					}
+					printf(id, logStyle, "invalidating {%s}", strings.Join(ids, ", "))
+					go func() {
+						for _, id := range ids {
+							r.starts <- id
+						}
+					}()
+				}
+
 			case ev := <-allExits:
 				if ev.err != nil {
 					printf(ev.id, logStyle, "exit: %s", ev.err)
@@ -355,35 +438,10 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 					go func() { r.starts <- ev.id }()
 				}
 
-				// If the task succeeded,
-				// - invalidate all tasks that list this as a trigger, and,
-				// - invalidate "short" or unstarted tasks that
-				//   list this as a dependency and have all of
-				//   their dependencies met.
-				invalidations := map[string]struct{}{}
-				for _, id := range r.byTrigger[ev.id] {
-					invalidations[id] = struct{}{}
-				}
-				for _, id := range r.byDep[ev.id] {
-					isShort := r.tasks[id].Metadata().Type == "short"
-					isRunning := cancels.has(id)
-					isReady := hasAllDeps(id)
-					if isReady && (isShort || !isRunning) {
-						invalidations[id] = struct{}{}
-					}
-				}
-				if len(invalidations) > 0 {
-					var ids []string
-					for id := range invalidations {
-						ids = append(ids, id)
-					}
-					printf(ev.id, logStyle, "invalidating {%s}", strings.Join(ids, ", "))
-					go func() {
-						for _, id := range ids {
-							r.starts <- id
-						}
-					}()
-				}
+				// If the task succeeded, invalidate tasks that
+				// depend on it
+				go func() { readies <- ev.id }()
+
 			case <-ctx.Done():
 				printf("run", logStyle, "run canceled")
 				return nil
