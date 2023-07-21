@@ -1,4 +1,4 @@
-package run
+package color
 
 import "testing"
 
@@ -9,9 +9,9 @@ func TestColorHash(t *testing.T) {
 	}{
 		{"dev", "#FF65FE"},
 	} {
-		got := colorHash(tc.s)
+		got := Hash(tc.s)
 		if got != tc.expected {
-			t.Errorf(`colorHash("%s") = %s, got %s`, tc.s, tc.expected, got)
+			t.Errorf(`color.Hash("%s") = %s, got %s`, tc.s, tc.expected, got)
 		}
 	}
 }

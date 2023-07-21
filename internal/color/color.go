@@ -1,12 +1,19 @@
-package run
+package color
 
 import (
 	"fmt"
 	"hash/fnv"
 	"math"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
-func colorHash(s string) string {
+func Render(s string) string {
+	style := lipgloss.NewStyle().Foreground(lipgloss.Color(Hash(s)))
+	return style.Render(s)
+}
+
+func Hash(s string) string {
 	hue := float64(hash(s)) / float64(math.MaxUint32)
 	c := hsl{hue, 1.0, 0.7}.rgb()
 	return c.hex()
