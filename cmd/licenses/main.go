@@ -5,7 +5,7 @@ import (
 	"go/build"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -40,7 +40,7 @@ func main() {
 			continue
 		}
 		fmt.Fprintln(os.Stderr, "used:", dep)
-		dir := path.Join(gopath, "pkg/mod", depPathname)
+		dir := filepath.Join(gopath, "pkg", "mod", depPathname)
 
 		fs, err := os.ReadDir(dir)
 		if err != nil {
@@ -55,7 +55,7 @@ func main() {
 			if _, ok := licenseNames[name]; !ok {
 				continue
 			}
-			bs, err := os.ReadFile(path.Join(dir, name))
+			bs, err := os.ReadFile(filepath.Join(dir, name))
 			if err != nil {
 				panic(err)
 			}

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
@@ -41,7 +41,7 @@ func TestIntegrationSnapshots(t *testing.T) {
 func testExample(t *testing.T, name string) error {
 	dmp := diffmatchpatch.New()
 
-	changedFilePath := path.Join("testdata/snapshots", name, "changed-file")
+	changedFilePath := filepath.Join("testdata", "snapshots", name, "changed-file")
 	if f, err := os.Create(changedFilePath); err != nil {
 		return err
 	} else if err := f.Sync(); err != nil {
@@ -51,12 +51,12 @@ func testExample(t *testing.T, name string) error {
 	}
 	defer os.Remove(changedFilePath)
 
-	tasks, err := run.Load(path.Join("testdata/snapshots", name))
+	tasks, err := run.Load(filepath.Join("testdata", "snapshots", name))
 	if err != nil {
 		return fmt.Errorf("Error loading tasks: %s", err)
 	}
 
-	r, err := run.RunTask(path.Join("testdata/snapshots", name), tasks, "test")
+	r, err := run.RunTask(filepath.Join("testdata", "snapshots", name), tasks, "test")
 	if err != nil {
 		return fmt.Errorf("Error running tasks: %s", err)
 	}
@@ -97,7 +97,7 @@ func testExample(t *testing.T, name string) error {
 		log = exitErr.Error() + "\n\n" + b.String()
 	}
 
-	logfilePath := path.Join("testdata/snapshots", name, "out.log")
+	logfilePath := filepath.Join("testdata", "snapshots", name, "out.log")
 	if _, err := os.Stat(logfilePath); os.IsNotExist(err) {
 		// Expected output does not exist! Create it.
 		if err := os.WriteFile(logfilePath, []byte(log), 0644); err != nil {
@@ -115,7 +115,7 @@ func testExample(t *testing.T, name string) error {
 	deinterleavedResult := deinterleave(log)
 
 	if deinterleavedResult != deinterleavedExpectation {
-		errFilePath := path.Join("testdata/snapshots", name, "fail.log")
+		errFilePath := filepath.Join("testdata", "snapshots", name, "fail.log")
 		if err := os.WriteFile(errFilePath, []byte(log), 0644); err != nil {
 			return err
 		}

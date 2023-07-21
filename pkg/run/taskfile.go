@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/BurntSushi/toml"
@@ -51,12 +51,16 @@ func Load(cwd string) (Tasks, error) {
 
 		// Reload referenced taskfiles (if there are any)
 		for id := range depSet {
-			if path.Dir(id) == relativeDir {
+			p := filepath.Dir(id)
+			if p == relativeDir {
 				continue
 			}
 			// ignore the task ID and just load the whole
 			// referenced taskfile
-			if err := ingestTaskMap(path.Join(dir, strings.TrimPrefix(path.Dir(id), relativeDir+"/"))); err != nil {
+
+			p = strings.TrimPrefix(p, relativeDir+string(os.PathSeparator))
+			p = filepath.Join(dir, p)
+			if err := ingestTaskMap(p); err != nil {
 				return err
 			}
 		}
@@ -94,7 +98,7 @@ func Load(cwd string) (Tasks, error) {
 }
 
 func load(cwd, dir string) (map[string]taskfileTask, error) {
-	f, err := os.ReadFile(path.Join(cwd, dir, "tasks.toml"))
+	f, err := os.ReadFile(filepath.Join(cwd, dir, "tasks.toml"))
 	if err != nil {
 		return nil, err
 	}
@@ -128,16 +132,16 @@ type taskfileTask struct {
 }
 
 func (t taskfileTask) withDir(cwd, dir string) taskfileTask {
-	t.ID = path.Join(dir, t.ID)
-	t.dir = path.Join(cwd, dir)
+	t.ID = filepath.Join(dir, filepath.FromSlash(t.ID))
+	t.dir = filepath.Join(cwd, dir)
 	for i, dep := range t.Dependencies {
-		t.Dependencies[i] = path.Join(dir, dep)
+		t.Dependencies[i] = filepath.Join(dir, dep)
 	}
 	for i, dep := range t.Triggers {
-		t.Triggers[i] = path.Join(dir, dep)
+		t.Triggers[i] = filepath.Join(dir, dep)
 	}
 	for i, p := range t.Watch {
-		t.Watch[i] = path.Join(dir, p)
+		t.Watch[i] = filepath.Join(dir, p)
 	}
 	return t
 }

@@ -3,7 +3,7 @@ package run
 import (
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -118,12 +118,12 @@ func (*watcher) debounce(dur time.Duration, c <-chan eventInfo) <-chan []eventIn
 //  - we will match events from that watch against the glob "src/website/**/*.js"
 // so the values returned from split will be ("src/website", Glob["src/website/**/*.js"]).
 func (*watcher) split(input string) (string, glob.Glob) {
-	input = path.Clean(input)
+	input = filepath.Clean(input)
 	segments := strings.Split(input, "/")
 	for i, seg := range segments {
 		if strings.Contains(seg, "*") {
 			w := strings.Join(segments[:i], "/")
-			return path.Clean(w+"/..."), glob.MustCompile(input)
+			return filepath.Join(w, "..."), glob.MustCompile(input)
 		}
 	}
 	return input, nil
