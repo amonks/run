@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
+	"sort"
 	"strings"
 	"sync"
 	"syscall"
@@ -15,6 +16,7 @@ import (
 	meta "github.com/amonks/run"
 	"github.com/amonks/run/pkg/run"
 	"github.com/carlmjohnson/versioninfo"
+	"github.com/muesli/reflow/dedent"
 	"github.com/muesli/reflow/indent"
 	"github.com/muesli/reflow/wordwrap"
 	"golang.org/x/term"
@@ -62,7 +64,7 @@ func main() {
 	taskID := flag.Arg(0)
 	if taskID == "" {
 		if *fList {
-			fmt.Println(tasklistText(allTasks.IDs()))
+			fmt.Println(tasklistText(allTasks))
 			os.Exit(0)
 		}
 		fmt.Println(helpText())
@@ -77,7 +79,7 @@ func main() {
 	}
 
 	if *fList {
-		fmt.Println(tasklistText(r.IDs()[1:]))
+		fmt.Println(tasklistText(r.Tasks()))
 		os.Exit(0)
 	}
 
@@ -144,12 +146,47 @@ func main() {
 	}
 }
 
-func tasklistText(ids []string) string {
+func tasklistText(tasks run.Tasks) string {
 	b := &strings.Builder{}
 	fmt.Fprintln(b, "")
 	fmt.Fprintln(b, "TASKS")
-	for _, id := range ids {
-		b.WriteString("  - " + id + "\n")
+	var ids []string
+	for id := range tasks {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	for i, id := range ids {
+		if i != 0 {
+			b.WriteString("\n")
+		}
+		t := tasks[id]
+		meta := t.Metadata()
+
+		fmt.Fprintf(b, "  %s\n", underlineStyle.Render(id))
+		fmt.Fprintf(b, "    Type: %s\n", italicStyle.Render(meta.Type))
+		if meta.Description != "" {
+			fmt.Fprintf(b, "    Description:\n")
+			desc := strings.TrimRight(dedent.String(meta.Description), "\n")
+			b.WriteString(indent.String(italicStyle.Render(desc), 6) + "\n")
+		}
+		if len(meta.Dependencies) != 0 {
+			fmt.Fprintf(b, "    Dependencies:\n")
+			for _, dep := range meta.Dependencies {
+				fmt.Fprintf(b, "      - %s\n", dep)
+			}
+		}
+		if len(meta.Triggers) != 0 {
+			fmt.Fprintf(b, "    Triggers:\n")
+			for _, dep := range meta.Triggers {
+				fmt.Fprintf(b, "      - %s\n", dep)
+			}
+		}
+		if len(meta.Watch) != 0 {
+			fmt.Fprintf(b, "    Watch:\n")
+			for _, dep := range meta.Watch {
+				fmt.Fprintf(b, "      - %s\n", dep)
+			}
+		}
 	}
 	return b.String()
 }
