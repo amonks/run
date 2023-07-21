@@ -12,8 +12,8 @@ long
      test  canceled; stopping
            starting
 
-      run  watched file changes:
-           Create testdata/snapshots/long-with-trigger/changed-file
+      run  watched file changes:                                     
+             Create testdata/snapshots/long-with-trigger/changed-file
            invalidating {trigger}
 
   trigger  starting
@@ -23,8 +23,8 @@ long
      test  canceled; stopping
            starting
 
-      run  watched file changes:
-           Remove testdata/snapshots/long-with-trigger/changed-file
+      run  watched file changes:                                     
+             Remove testdata/snapshots/long-with-trigger/changed-file
            invalidating {trigger}
 
   trigger  starting
@@ -33,7 +33,8 @@ long
 
      test  canceled; stopping
            starting
-           canceled; stopping
 
       run  run canceled
            done
+
+     test  canceled; stopping
