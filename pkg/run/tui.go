@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/amonks/run/internal/color"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
@@ -465,7 +466,7 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, item list.Ite
 
 	var str string
 	var marker string
-	style := listItemStyle.Copy().Foreground(lipgloss.Color(colorHash(id)))
+	style := listItemStyle.Copy().Foreground(lipgloss.Color(color.Hash(id)))
 	if index == m.Index() {
 		marker = ">"
 	} else {
