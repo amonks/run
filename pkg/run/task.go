@@ -117,6 +117,6 @@ func (ts Tasks) IDs() []string {
 // [error.Error] will return a formatted multiline string
 // describing the problems with the task set.
 func (ts Tasks) Validate() error {
-	return validator{}.validate(ts)
+	return newValidator().validate(ts)
 }
 

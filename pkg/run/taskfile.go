@@ -90,7 +90,11 @@ func Load(cwd string) (Tasks, error) {
 		}
 	}
 
-	if err := (validator{}).validate(tf); err != nil {
+	v, err := newValidatorWithCWD(cwd)
+	if err != nil {
+		return nil, err
+	}
+	if err := v.validate(tf); err != nil {
 		return nil, err
 	}
 

@@ -3,11 +3,25 @@ package run
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"unicode"
 )
 
-type validator struct {}
+type validator struct{ cwd string }
+
+func newValidator() validator {
+	return validator{}
+}
+
+func newValidatorWithCWD(cwd string) (validator, error) {
+	if abs, err := filepath.Abs(cwd); err != nil {
+		return validator{}, err
+	} else {
+		return validator{abs}, nil
+	}
+}
 
 func (v validator) validate(ts Tasks) error {
 	var problems []string
@@ -84,6 +98,19 @@ func (v validator) validateTask(ts Tasks, ids map[string]struct{}, t Task) []err
 	for _, id := range meta.Triggers {
 		if _, ok := ids[id]; !ok {
 			problems = append(problems, fmt.Errorf("Task '%s' lists trigger '%s', which is not the ID of a task.", meta.ID, id))
+		}
+	}
+
+	for _, path := range meta.Watch {
+		if strings.HasPrefix(path, string(os.PathSeparator)) {
+			problems = append(problems, fmt.Errorf("Task '%s' wants to watch path '%s', which is absolute.", meta.ID, path))
+		}
+		if s, isScript := t.(*scriptTask); isScript {
+			if abs, err := filepath.Abs(filepath.Join(s.dir, path)); err != nil {
+				problems = append(problems, fmt.Errorf("Task '%s' had an error resolving path '%s': %s.", meta.ID, path, err))
+			} else if !strings.HasPrefix(abs, v.cwd) {
+				problems = append(problems, fmt.Errorf("Task '%s' wants to watch path '%s', which is outside of the working directory.", meta.ID, path))
+			}
 		}
 	}
 

@@ -1,7 +1,6 @@
 package run
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,12 +19,6 @@ type eventInfo struct {
 type watcher struct{}
 
 func (w *watcher) watch(inputPath string) (<-chan []eventInfo, func(), error) {
-	if strings.HasPrefix(inputPath, "/") {
-		return nil, nil, fmt.Errorf("watch '%s' is invalid because it is not a relative path", inputPath)
-	} else if strings.Contains(inputPath, "..") {
-		return nil, nil, fmt.Errorf("watch '%s' is invalid because it contains the substring '..'", inputPath)
-	}
-
 	var stopped bool
 
 	cwd, err := os.Getwd()
