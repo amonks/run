@@ -1,0 +1,6 @@
+[[task]]
+  id = "test"
+  type = "short"
+  cmd = "echo $VALUE"
+  env = { VALUE = "ENVIRONMENT VARIABLE" }
+
