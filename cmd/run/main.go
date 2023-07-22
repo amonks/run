@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -107,11 +108,25 @@ func main() {
 
 	uiReady := make(chan struct{})
 
+	// Whether the UI or the Run exits first, that first exit is the cause
+	// of program exit, so we want to capture its error and base the exit
+	// code on it. The second exit is just a side effect of the first thing
+	// dying, so we don't need it.
+	exitReason := &first[error]{}
+
 	go func() {
 		defer wg.Done()
 		err := ui.Start(ctx, uiReady, os.Stdin, os.Stdout)
-		if err != nil && err != context.Canceled {
-			fmt.Println("Error running ui:", err)
+		if !exitReason.isSet() {
+			if err != nil {
+				exitReason.set(err)
+				fmt.Println("UI exit unexpectedly:", err)
+			} else {
+				// If the UI exits before the run, that itself is an
+				// error even if the ui returns nil.
+				exitReason.set(errors.New("UI exited unexpectedly"))
+				fmt.Println("UI exit unexpectedly")
+			}
 		}
 		if err != context.Canceled {
 			cancel()
@@ -120,15 +135,16 @@ func main() {
 
 	<-uiReady
 
-	var taskError error
-
 	go func() {
 		defer wg.Done()
 		err := r.Start(ctx, ui)
+		exitReason.set(err)
 		if err != nil && err != context.Canceled {
-			taskError = err
 			fmt.Println("Error running tasks:", err)
 		}
+
+		// Don't close the UI if '-tui' was explicitly set--the user
+		// indicated that they want to look carefully at output.
 		if *fUI != "tui" && err != context.Canceled {
 			cancel()
 		}
@@ -147,7 +163,7 @@ func main() {
 	case <-allDone:
 	}
 
-	if taskError != nil {
+	if exitReason.get() != nil {
 		os.Exit(1)
 	} else {
 		os.Exit(0)
