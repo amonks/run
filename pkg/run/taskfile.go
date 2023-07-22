@@ -74,7 +74,7 @@ func Load(cwd string) (Tasks, error) {
 
 	tf := make(Tasks, len(allTasks))
 	for id, t := range allTasks {
-		tf[id] = t.toCMDTask()
+		tf[id] = t.toScriptTask()
 	}
 
 	// Print taskfile as JSON. This is useful for debugging.
@@ -128,10 +128,15 @@ type taskfileTask struct {
 	Dependencies []string `toml:"dependencies"`
 	Triggers     []string `toml:"triggers"`
 	Watch        []string `toml:"watch"`
+
 	// CMD is the command to run. It runs in a new bash process, as in,
 	//     $ bash -c "$CMD"
 	// CMD can have many lines.
 	CMD string `toml:"cmd"`
+
+	// Env is a map of environment variables that are set for this task's
+	// CMD process.
+	Env map[string]string `toml:"env"`
 
 	dir string
 }
@@ -151,12 +156,16 @@ func (t taskfileTask) withDir(cwd, dir string) taskfileTask {
 	return t
 }
 
-func (t taskfileTask) toCMDTask() Task {
+func (t taskfileTask) toScriptTask() Task {
 	description := t.Description
 	if description == "" && t.CMD != "" && !strings.Contains(t.CMD, "\n") {
 		description = fmt.Sprintf(`"%s"`, t.CMD)
 	}
-	return ScriptTask(t.CMD, t.dir, TaskMetadata{
+	var env []string
+	for k, v := range t.Env {
+		env = append(env, k+"="+v)
+	}
+	return ScriptTask(t.CMD, t.dir, env, TaskMetadata{
 		ID:           t.ID,
 		Description:  description,
 		Type:         t.Type,

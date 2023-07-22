@@ -10,7 +10,7 @@ import (
 )
 
 func TestScriptTaskOK(t *testing.T) {
-	task := run.ScriptTask("sleep 0.1; exit 0", ".", run.TaskMetadata{})
+	task := run.ScriptTask("sleep 0.1; exit 0", ".", nil, run.TaskMetadata{})
 	ctx := context.Background()
 	for i := 0; i < 3; i++ {
 		b := strings.Builder{}
@@ -30,7 +30,7 @@ func TestScriptTaskOK(t *testing.T) {
 }
 
 func TestScriptTaskFail(t *testing.T) {
-	task := run.ScriptTask("sleep 0.1; exit 1", ".", run.TaskMetadata{})
+	task := run.ScriptTask("sleep 0.1; exit 1", ".", nil, run.TaskMetadata{})
 	ctx := context.Background()
 	for i := 0; i < 3; i++ {
 		b := strings.Builder{}

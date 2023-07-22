@@ -84,6 +84,10 @@ Task files are called "tasks.toml". They specify one or more tasks.
   dependencies = ["simulate-coding"]
   triggers = ["build-css", "build-js"]
   watch = ["server-config.json"]
+  env = {
+    KEY="some value"
+    OTHER_KEY="some other value"
+  }
   cmd = """
     echo "dev-server running at http://localhost:3000"
     while true; do sleep 1; done
@@ -188,6 +192,11 @@ For example,
   which must already exist.
 - `"./src/website/**/*.js"` watches for changes to
   javascript files within src/website.
+
+### Env
+
+Env is a map from environment variable keys to values. They are set for the
+bash process that runs CMD.
 
 ### CMD
 

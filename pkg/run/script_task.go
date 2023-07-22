@@ -23,11 +23,12 @@ import (
 // basically like this:
 //     $ cd $DIR
 //     $ bash -c "$CMD" 2&>1 /some/ui
-func ScriptTask(script string, dir string, metadata TaskMetadata) Task {
+func ScriptTask(script string, dir string, env []string, metadata TaskMetadata) Task {
 	return &scriptTask{
 		mu:       newMutex(fmt.Sprintf("script:%s", metadata.ID)),
 		dir:      dir,
 		script:   script,
+		env:      env,
 		metadata: metadata,
 	}
 }
@@ -39,6 +40,7 @@ type scriptTask struct {
 
 	dir      string
 	script   string
+	env      []string
 	metadata TaskMetadata
 
 	cmd *exec.Cmd
@@ -150,6 +152,7 @@ func (t *scriptTask) startCmd(stdout io.Writer) error {
 	t.cmd.Dir = t.dir
 	t.cmd.Stdout = stdout
 	t.cmd.Stderr = stdout
+	t.cmd.Env = t.env
 	if err := t.cmd.Start(); err != nil {
 		return err
 	}
@@ -192,4 +195,3 @@ func (t *scriptTask) isRunning() bool {
 	defer t.mu.Lock("isRunning").Unlock()
 	return t.cmd != nil && t.cmd.ProcessState == nil
 }
-
