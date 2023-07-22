@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"math"
+	"sync"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -14,9 +15,27 @@ func Render(s string) string {
 }
 
 func Hash(s string) string {
+	return globalColorer.hash(s)
+}
+
+var globalColorer = &colorer{cache: map[string]string{}}
+
+type colorer struct {
+	mu    sync.Mutex
+	cache map[string]string
+}
+
+func (c *colorer) hash(s string) string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if color, ok := c.cache[s]; ok {
+		return color
+	}
 	hue := float64(hash(s)) / float64(math.MaxUint32)
-	c := hsl{hue, 1.0, 0.7}.rgb()
-	return c.hex()
+	color := hsl{hue, 1.0, 0.7}.rgb()
+	c.cache[s] = color.hex()
+	return c.cache[s]
 }
 
 type rgb struct {
