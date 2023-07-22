@@ -141,20 +141,23 @@ type tuiModel struct {
 
 	tasks map[string]string
 
-	spinner     spinner.Model
-	help        help.Model
-	list        list.Model
-	shortOutput viewport.Model
-	preview     viewport.Model
-	pager       viewport.Model
+	shortSpinner spinner.Model
+	longSpinner  spinner.Model
+	help         help.Model
+	list         list.Model
+	shortOutput  viewport.Model
+	preview      viewport.Model
+	pager        viewport.Model
 }
 
 func (m *tuiModel) Init() tea.Cmd {
 	fmt.Fprintln(logfile, "init")
 	m.preview = viewport.New(0, 0)
 	m.pager = viewport.New(0, 0)
-	m.spinner = spinner.New()
-	m.spinner.Spinner = spinner.Jump
+	m.shortSpinner = spinner.New()
+	m.shortSpinner.Spinner = spinner.Jump
+	m.longSpinner = spinner.New()
+	m.longSpinner.Spinner = spinner.Hamburger
 
 	longestKey := 0
 	items := make([]list.Item, len(m.ids))
@@ -178,7 +181,7 @@ func (m *tuiModel) Init() tea.Cmd {
 	m.didInit = true
 
 	cmd := func() tea.Msg { return initializedMsg{} }
-	return tea.Batch(cmd, m.spinner.Tick)
+	return tea.Batch(cmd, m.shortSpinner.Tick, m.longSpinner.Tick)
 }
 
 type initializedMsg struct{}
@@ -342,9 +345,11 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.updateShortOutput()
 
 	case spinner.TickMsg:
-		var cmd tea.Cmd
-		m.spinner, cmd = m.spinner.Update(msg)
-		cmds = append(cmds, cmd)
+		var cmd1 tea.Cmd
+		var cmd2 tea.Cmd
+		m.shortSpinner, cmd1 = m.shortSpinner.Update(msg)
+		m.longSpinner, cmd2 = m.longSpinner.Update(msg)
+		cmds = append(cmds, cmd1, cmd2)
 
 	default:
 		cmds = append(cmds, m.passthrough(msg)...)
@@ -455,9 +460,13 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, item list.Ite
 	case TaskStatusNotStarted:
 		spinner = " "
 	case TaskStatusRunning:
-		spinner = d.m.spinner.View()
+		if d.m.run.tasks[string(i)].Metadata().Type == "long" {
+			spinner = d.m.longSpinner.View()
+		} else {
+			spinner = d.m.shortSpinner.View()
+		}
 	case TaskStatusRestarting:
-		spinner = d.m.spinner.View()
+		spinner = d.m.shortSpinner.View()
 	case TaskStatusFailed:
 		spinner = "×"
 	case TaskStatusDone:
