@@ -28,6 +28,9 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 	byTrigger := map[string][]string{}
 	byWatch := map[string][]string{}
 
+	// NOTE: We don't ever switch on this in a meaningful way, it's just
+	// for the UI. It's always safe to set taskStatus to whatever to meet a
+	// UI goal. It will never impact control flow.
 	taskStatus := newSafeMap[TaskStatus]()
 
 	var ingestTask func(string) error
@@ -261,7 +264,11 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 		ctx, cancel := context.WithCancel(ctx)
 		cancels.set(id, cancel)
 		exits.set(id, make(chan exit))
-		r.taskStatus.set(id, TaskStatusRunning)
+		if t.Metadata().Type == "short" {
+			r.taskStatus.set(id, TaskStatusRunning)
+		} else if t.Metadata().Type == "long" {
+			r.taskStatus.set(id, TaskStatusRestarting)
+		}
 
 		// If the task is long, send a "ready" 500ms after it starts,
 		// in order to trigger tasks that depend on it.
@@ -276,6 +283,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 				select {
 				case <-stoppedEarly:
 				case <-time.After(500 * time.Millisecond):
+					r.taskStatus.set(id, TaskStatusRunning)
 					readies <- id
 				}
 			}()
