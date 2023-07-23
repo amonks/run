@@ -463,13 +463,10 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 		printf("run", logStyle, "done")
 	}
 
-	r.mu.printf("stop watches")
 	for _, stop := range watches {
 		stop()
 	}
-	r.mu.printf("stopped watches")
 
-	r.mu.printf("stopping tasks")
 	for _, k := range cancels.keys() {
 		if !cancels.has(k) {
 			continue
@@ -478,7 +475,6 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 		cancel()
 		<-exits.get(k)
 	}
-	r.mu.printf("stopped tasks")
 
 	return err
 }

@@ -97,11 +97,8 @@ func (a *tui) Start(ctx context.Context, ready chan<- struct{}, stdin io.Reader,
 	a.p = program
 
 	interleavedWriter := a.Writer("interleaved")
-	a.mu.printf("will make printer")
 	p := NewPrinter(a.run)
-	a.mu.printf("made printer")
 	go p.Start(ctx, nil, nil, interleavedWriter)
-	a.mu.printf("started")
 	a.interleaved = p
 
 	exit := make(chan error)

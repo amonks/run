@@ -57,37 +57,30 @@ func (t *scriptTask) Metadata() TaskMetadata {
 }
 
 func (t *scriptTask) Start(ctx context.Context, stdout io.Writer) error {
-	t.mu.printf("Start")
 	defer t.cleanup()
 
 	t.stdout = stdout
 
 	if !t.hasScript() {
-		t.mu.printf("Start: no script")
 		<-ctx.Done()
 		return nil
 	}
 
 	// Start the CMD.
 	if err := t.startCmd(t.stdout); err != nil {
-		t.mu.printf("Start: error starting")
 		return err
 	}
 
 	// Handle the CMD's exit.
 	exit := make(chan error)
 	go func() {
-		t.mu.printf("Start: waiting")
 		if process := t.process(); process == nil {
 			exit <- nil
 		} else if state, err := process.Wait(); err != nil {
-			t.mu.printf("Start: wait err")
 			exit <- err
 		} else if code := state.ExitCode(); code != 0 {
-			t.mu.printf("Start: exit !0")
 			exit <- fmt.Errorf("exit %d", code)
 		} else {
-			t.mu.printf("Start: exit =0")
 			exit <- nil
 		}
 	}()
@@ -108,13 +101,11 @@ func (t *scriptTask) Start(ctx context.Context, stdout io.Writer) error {
 	errs := []error{err}
 
 	if !t.hasScript() {
-		t.mu.printf("Stop: no script")
 		return errors.Join(errs...)
 	}
 
 	// Never started or already stopped.
 	if !t.isRunning() {
-		t.mu.printf("Stop: not running")
 		return errors.Join(errs...)
 	}
 
@@ -126,10 +117,8 @@ func (t *scriptTask) Start(ctx context.Context, stdout io.Writer) error {
 	// Give it 2 seconds to die gracefully after the SIGINT.
 	select {
 	case <-exit:
-		t.mu.printf("Stop: sigint worked")
 		return errors.Join(errs...)
 	case <-time.After(2 * time.Second):
-		t.mu.printf("Stop: timeout")
 	}
 
 	// It's still alive. Resort to SIGKILL.
@@ -167,7 +156,6 @@ func (t *scriptTask) sigint() error {
 func (t *scriptTask) sigkill() error {
 	defer t.mu.Lock("sigkill").Unlock()
 	if err := syscall.Kill(-t.cmd.Process.Pid, syscall.SIGKILL); err != nil && !strings.Contains(err.Error(), "no such process") {
-		t.mu.printf("Stop: sigkill error %s", err)
 		return err
 	}
 	return nil
