@@ -416,12 +416,21 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 				}
 
 				if r.runType == RunTypeShort {
-					// In short runs, exit when the root task does.
-					if r.rootID == ev.id {
-						return ev.err
-					}
-					// In short runs, exit when any task fails.
-					if ev.err != nil {
+					// In short runs, exit when the root
+					// task does, or when any task fails.
+					if r.rootID == ev.id || ev.err != nil {
+						// Even though the run is over,
+						// it's important to update the
+						// task statuses. The UI might
+						// remain open, and should
+						// display each task's final
+						// status.
+						for _, k := range r.taskStatus.keys() {
+							switch r.taskStatus.get(k) {
+							case TaskStatusRunning, TaskStatusRestarting:
+								r.taskStatus.set(k, TaskStatusFailed)
+							}
+						}
 						return ev.err
 					}
 				}
