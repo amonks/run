@@ -42,6 +42,7 @@ func (w printerWriter) Write(bs []byte) (int, error) {
 }
 
 func (p *printer) Start(ctx context.Context, ready chan<- struct{}, _ io.Reader, stdout io.Writer) error {
+	p.mu.Lock("Write")
 	p.stdout = stdout
 	p.keyLength = 0
 	for _, id := range p.run.IDs() {
@@ -49,6 +50,7 @@ func (p *printer) Start(ctx context.Context, ready chan<- struct{}, _ io.Reader,
 			p.keyLength = len(id)
 		}
 	}
+	p.mu.Unlock()
 
 	ready <- struct{}{}
 
