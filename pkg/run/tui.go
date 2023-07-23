@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"strings"
 
@@ -86,7 +87,7 @@ var _ UI = &tui{}
 func (a *tui) Start(ctx context.Context, ready chan<- struct{}, stdin io.Reader, stdout io.Writer) error {
 	program := tea.NewProgram(
 		&tuiModel{
-			run:    a.run,
+			tui:    a,
 			ids:    append([]string{"interleaved"}, a.run.IDs()...),
 			onInit: func() { ready <- struct{}{} },
 		},
@@ -122,7 +123,7 @@ func (a *tui) Start(ctx context.Context, ready chan<- struct{}, stdin io.Reader,
 }
 
 type tuiModel struct {
-	run *Run
+	tui *tui
 
 	onInit func()
 
@@ -226,6 +227,8 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.pager.LineUp(1)
 			case key.Matches(msg, pagerKeymap.down):
 				m.pager.LineDown(1)
+			case key.Matches(msg, pagerKeymap.write):
+				m.writeFile()
 			case key.Matches(msg, pagerKeymap.exit):
 				m.isPaging = false
 			}
@@ -255,7 +258,9 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.updatePager()
 				m.pager.GotoTop()
 			case key.Matches(msg, listKeymap.restart):
-				m.run.Invalidate(string(m.list.SelectedItem().(listItem)))
+				m.tui.run.Invalidate(string(m.list.SelectedItem().(listItem)))
+			case key.Matches(msg, listKeymap.write):
+				m.writeFile()
 			case key.Matches(msg, listKeymap.exit):
 				return m, tea.Quit
 			}
@@ -404,6 +409,16 @@ func (m *tuiModel) updateShortOutput() {
 	m.shortOutput.SetContent(wordwrap.String(m.tasks["interleaved"], m.width))
 }
 
+func (m *tuiModel) writeFile() {
+	filename := m.activeTask + ".log"
+	filename = strings.Replace(filename, string(os.PathSeparator), "-", -1)
+	content := stripANSIEscapeCodes(m.tasks[m.activeTask])
+	os.WriteFile(filename, []byte(content), 0644)
+
+	logMsg := fmt.Sprintf("wrote log to '%s'", filename)
+	go m.tui.p.Send(writeMsg{key: m.activeTask, content: fmt.Sprintln(logStyle.Render(logMsg))})
+}
+
 func (m *tuiModel) View() string {
 	if !m.didInit || !m.gotSize {
 		return "......."
@@ -455,12 +470,12 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, item list.Ite
 	id := string(i)
 
 	spinner := " "
-	status := d.m.run.TaskStatus(string(i))
+	status := d.m.tui.run.TaskStatus(string(i))
 	switch status {
 	case TaskStatusNotStarted:
 		spinner = " "
 	case TaskStatusRunning:
-		if d.m.run.tasks[string(i)].Metadata().Type == "long" {
+		if d.m.tui.run.tasks[string(i)].Metadata().Type == "long" {
 			spinner = d.m.longSpinner.View()
 		} else {
 			spinner = d.m.shortSpinner.View()
@@ -490,6 +505,7 @@ type pagerKeymaps struct {
 	bottom key.Binding
 	up     key.Binding
 	down   key.Binding
+	write  key.Binding
 	exit   key.Binding
 }
 
@@ -511,6 +527,7 @@ type listKeymaps struct {
 	jump    key.Binding
 	open    key.Binding
 	restart key.Binding
+	write   key.Binding
 	exit    key.Binding
 }
 
@@ -546,10 +563,6 @@ var (
 			key.WithKeys("1", "2", "3", "4", "5", "6", "7", "8", "9"),
 			key.WithHelp("1-9", "jump"),
 		),
-		exit: key.NewBinding(
-			key.WithKeys("esc", "-", "ctrl-c", "q"),
-			key.WithHelp("q/esc", "exit"),
-		),
 		open: key.NewBinding(
 			key.WithKeys("enter", "o"),
 			key.WithHelp("enter", "open full log"),
@@ -557,6 +570,14 @@ var (
 		restart: key.NewBinding(
 			key.WithKeys("r"),
 			key.WithHelp("r", "restart task"),
+		),
+		write: key.NewBinding(
+			key.WithKeys("w"),
+			key.WithHelp("w", "write log to file"),
+		),
+		exit: key.NewBinding(
+			key.WithKeys("esc", "-", "ctrl-c", "q"),
+			key.WithHelp("q/esc", "exit"),
 		),
 	}
 
@@ -576,6 +597,10 @@ var (
 		down: key.NewBinding(
 			key.WithKeys("down", "j"),
 			key.WithHelp("↓/j", "move down"),
+		),
+		write: key.NewBinding(
+			key.WithKeys("w"),
+			key.WithHelp("w", "write log to file"),
 		),
 		exit: key.NewBinding(
 			key.WithKeys("esc", "-", "ctrl-c", "q"),
