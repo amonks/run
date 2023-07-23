@@ -139,9 +139,6 @@ func main() {
 		defer wg.Done()
 		err := r.Start(ctx, ui)
 		exitReason.set(err)
-		if err != nil && err != context.Canceled {
-			fmt.Println("Error running tasks:", err)
-		}
 
 		// Don't close the UI if '-tui' was explicitly set--the user
 		// indicated that they want to look carefully at output.
@@ -163,7 +160,8 @@ func main() {
 	case <-allDone:
 	}
 
-	if exitReason.get() != nil {
+	if err := exitReason.get(); err != nil {
+		fmt.Printf("Error: %s.\n", err)
 		os.Exit(1)
 	} else {
 		os.Exit(0)
