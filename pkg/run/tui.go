@@ -9,16 +9,14 @@ import (
 	"strings"
 
 	"github.com/amonks/run/internal/color"
+	"github.com/amonks/run/internal/logview"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
-	"github.com/muesli/reflow/truncate"
-	"github.com/muesli/reflow/wordwrap"
 )
 
 func newTUI(run *Run) UI {
@@ -137,21 +135,22 @@ type tuiModel struct {
 	isPaging   bool
 	activeTask string
 
-	tasks map[string]string
+	tasks map[string]*logview.Model
 
 	shortSpinner spinner.Model
 	longSpinner  spinner.Model
 	help         help.Model
 	list         list.Model
-	shortOutput  viewport.Model
-	preview      viewport.Model
-	pager        viewport.Model
 }
 
 func (m *tuiModel) Init() tea.Cmd {
 	fmt.Fprintln(logfile, "init")
-	m.preview = viewport.New(0, 0)
-	m.pager = viewport.New(0, 0)
+
+	m.tasks = map[string]*logview.Model{}
+	for _, id := range m.ids {
+		m.tasks[id] = logview.New()
+	}
+
 	m.shortSpinner = spinner.New()
 	m.shortSpinner.Spinner = spinner.Jump
 	m.longSpinner = spinner.New()
@@ -212,22 +211,19 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if !m.didInit || !m.gotSize {
 			return m, nil
 		}
+		activeViewer := m.tasks[m.activeTask]
 		if m.isPaging {
 			switch true {
-			case msg.String() == "g":
-				if m.lastkey == "g" {
-					m.pager.GotoTop()
-				}
-			case key.Matches(msg, pagerKeymap.bottom):
-				m.pager.GotoBottom()
-			case key.Matches(msg, pagerKeymap.up):
-				m.pager.LineUp(1)
-			case key.Matches(msg, pagerKeymap.down):
-				m.pager.LineDown(1)
 			case key.Matches(msg, pagerKeymap.write):
 				m.writeFile()
 			case key.Matches(msg, pagerKeymap.exit):
 				m.isPaging = false
+			default:
+				newLogView, cmd := activeViewer.Update(msg)
+				m.tasks[m.activeTask] = newLogView.(*logview.Model)
+				if cmd != nil {
+					cmds = append(cmds, cmd)
+				}
 			}
 		} else {
 			switch true {
@@ -252,8 +248,6 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.list.CursorUp()
 			case key.Matches(msg, listKeymap.open):
 				m.isPaging = true
-				m.updatePager()
-				m.pager.GotoTop()
 			case key.Matches(msg, listKeymap.restart):
 				m.tui.run.Invalidate(string(m.list.SelectedItem().(listItem)))
 			case key.Matches(msg, listKeymap.write):
@@ -265,40 +259,12 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.lastkey = msg.String()
 
 	case writeMsg:
-		if m.tasks == nil {
-			m.tasks = map[string]string{}
-		}
-		m.tasks[msg.key] += msg.content
-		if msg.key == "interleaved" {
-			wasAtBottom := m.pager.AtBottom()
-			m.updateShortOutput()
-			if m.didInit && m.gotSize && wasAtBottom {
-				m.shortOutput.GotoBottom()
-			}
-		}
-		if m.activeTask == msg.key {
-			if m.isPaging {
-				wasAtBottom := m.pager.AtBottom()
-				m.updatePager()
-				if m.didInit && m.gotSize && wasAtBottom {
-					m.pager.GotoBottom()
-				}
-			} else {
-				m.updatePreview()
-				if m.didInit && m.gotSize {
-					m.preview.GotoBottom()
-				}
-			}
-		}
+		m.tasks[msg.key].Write(msg.content)
 
 	case tea.WindowSizeMsg:
 		// model
 		m.width = msg.Width
 		m.height = msg.Height
-
-		// short output
-		m.shortOutput.Width = msg.Width
-		m.shortOutput.Height = msg.Height
 
 		// help
 		helpStyle = helpStyle.
@@ -307,16 +273,6 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		helpStyle = helpStyle.
 			UnsetWidth().Width(helpStyle.GetMaxWidth() - helpStyle.GetHorizontalFrameSize()).
 			UnsetHeight().Height(helpStyle.GetMaxHeight() - helpStyle.GetVerticalFrameSize())
-
-		// pager
-		pagerStyle = pagerStyle.
-			UnsetMaxWidth().MaxWidth(m.width).
-			UnsetMaxHeight().MaxHeight(m.height - helpHeight)
-		pagerStyle = pagerStyle.
-			UnsetWidth().Width(pagerStyle.GetMaxWidth() - pagerStyle.GetHorizontalFrameSize()).
-			UnsetHeight().Height(pagerStyle.GetMaxHeight() - pagerStyle.GetVerticalFrameSize())
-		m.pager.Width = pagerStyle.GetMaxWidth() - pagerStyle.GetHorizontalFrameSize()
-		m.pager.Height = pagerStyle.GetMaxHeight() - pagerStyle.GetVerticalFrameSize()
 
 		// list
 		listStyle = listStyle.
@@ -329,22 +285,16 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			listStyle.GetMaxWidth()-listStyle.GetHorizontalFrameSize(),
 			listStyle.GetMaxHeight()-listStyle.GetVerticalFrameSize())
 
-		// preview
-		previewStyle = previewStyle.
-			UnsetMaxWidth().MaxWidth(m.width - m.listWidth + 2).
-			UnsetMaxHeight().MaxHeight(m.height - helpHeight)
-		previewStyle = previewStyle.
-			UnsetWidth().Width(previewStyle.GetMaxWidth() - previewStyle.GetHorizontalFrameSize()).
-			UnsetHeight().Height(previewStyle.GetMaxHeight() - previewStyle.GetVerticalFrameSize())
-		m.preview.Width = previewStyle.GetMaxWidth() - previewStyle.GetHorizontalFrameSize()
-		m.preview.Height = previewStyle.GetMaxHeight() - previewStyle.GetVerticalFrameSize()
+		// logviews
+		for _, l := range m.tasks {
+			l.SetDimensions(
+				m.width-m.listWidth,
+				m.height-helpHeight,
+			)
+		}
 
 		// done
 		m.gotSize = true
-
-		m.updatePager()
-		m.updatePreview()
-		m.updateShortOutput()
 
 	case spinner.TickMsg:
 		var cmd1 tea.Cmd
@@ -361,10 +311,6 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		selectedItem := string(item.(listItem))
 		if selectedItem != m.activeTask {
 			m.activeTask = selectedItem
-			m.updatePreview()
-			if m.didInit && m.gotSize {
-				m.preview.GotoBottom()
-			}
 		}
 	}
 
@@ -374,42 +320,20 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *tuiModel) passthrough(msg tea.Msg) []tea.Cmd {
 	var cmds []tea.Cmd
 
-	shortOutput, cmd := m.shortOutput.Update(msg)
-	cmds = append(cmds, cmd)
-	m.shortOutput = shortOutput
-
-	newPager, cmd := m.pager.Update(msg)
-	cmds = append(cmds, cmd)
-	m.pager = newPager
-
-	newViewport, cmd := m.preview.Update(msg)
-	cmds = append(cmds, cmd)
-	m.preview = newViewport
+	activeLogview := m.tasks[m.activeTask]
+	newLogview, cmd := activeLogview.Update(msg)
+	m.tasks[m.activeTask], cmds = newLogview.(*logview.Model), append(cmds, cmd)
 
 	newList, cmd := m.list.Update(msg)
-	cmds = append(cmds, cmd)
-	m.list = newList
+	m.list, cmds = newList, append(cmds, cmd)
 
 	return cmds
-}
-
-func (m *tuiModel) updatePreview() {
-	width := previewStyle.GetWidth()
-	if width > 0 {
-		m.preview.SetContent(hardwrap(m.tasks[m.activeTask], width-3))
-	}
-}
-func (m *tuiModel) updatePager() {
-	m.pager.SetContent(wordwrap.String(m.tasks[m.activeTask], pagerStyle.GetWidth()-pagerStyle.GetHorizontalFrameSize()))
-}
-func (m *tuiModel) updateShortOutput() {
-	m.shortOutput.SetContent(wordwrap.String(m.tasks["interleaved"], m.width))
 }
 
 func (m *tuiModel) writeFile() {
 	filename := m.activeTask + ".log"
 	filename = strings.Replace(filename, string(os.PathSeparator), "-", -1)
-	content := stripANSIEscapeCodes(m.tasks[m.activeTask])
+	content := stripANSIEscapeCodes(m.tasks[m.activeTask].String())
 	os.WriteFile(filename, []byte(content), 0644)
 
 	logMsg := fmt.Sprintf("wrote log to '%s'", filename)
@@ -421,24 +345,17 @@ func (m *tuiModel) View() string {
 		return "......."
 	}
 
-	if m.height <= 14 {
-		return m.shortOutput.View()
-	}
+	// if m.height <= 14 {
+	// 	return m.shortOutput.View()
+	// }
 
-	if m.isPaging {
-		return zone.Scan(lipgloss.JoinVertical(
-			lipgloss.Left,
-			pagerStyle.Render(m.pager.View()),
-			helpStyle.Render(m.help.View(pagerKeymap)),
-		))
-	}
-
+	activeLogview := m.tasks[m.activeTask]
 	return zone.Scan(lipgloss.JoinVertical(
 		lipgloss.Left,
 		lipgloss.JoinHorizontal(
 			lipgloss.Top,
 			listStyle.Render(m.list.View()),
-			previewStyle.Render(m.preview.View()),
+			activeLogview.View(),
 		),
 		helpStyle.Render(m.help.View(listKeymap)),
 	))
@@ -605,11 +522,3 @@ var (
 		),
 	}
 )
-
-func hardwrap(s string, width int) string {
-	var b strings.Builder
-	for _, l := range strings.Split(s, "\n") {
-		b.WriteString(truncate.String(l, uint(width)) + "\n")
-	}
-	return b.String()
-}
