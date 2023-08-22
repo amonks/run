@@ -26,3 +26,35 @@
     done
   """
 
+[[task]]
+  id = "simple"
+  type = "short"
+  cmd = """
+    echo "hello world"
+    echo "TESTENV: $TESTENV"
+    env | head -n 10
+    echo "done"
+  """
+
+[[task]]
+  id = "simple-env"
+  type = "short"
+  env = { TESTENV="test" }
+  cmd = """
+    echo "hello world"
+    echo "TESTENV: $TESTENV"
+    env | head -n 10
+    echo "done"
+  """
+
+
+[[task]]
+  id = "simple-env-two"
+  type = "short"
+  env = [{ TESTENV="test" }]
+  cmd = """
+    echo "hello world"
+    echo "TESTENV: $TESTENV"
+    env
+    echo "done"
+  """
