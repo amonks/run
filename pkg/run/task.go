@@ -114,6 +114,9 @@ type TaskMetadata struct {
 	//  - `"./src/website/**/*.js"` watches for changes
 	//    to javascript files within src/website.
 	Watch []string
+
+	// TODO
+	CWD string
 }
 
 func (ts Tasks) IDs() []string {

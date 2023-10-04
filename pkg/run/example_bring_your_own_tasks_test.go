@@ -22,7 +22,7 @@ func Example_bringYourOwnTasks() {
 		}, run.TaskMetadata{ID: "custom", Type: "short"}),
 	}
 
-	run, err := run.RunTask(".", tasks, "custom")
+	run, err := run.RunTask(tasks, "custom")
 	if err != nil {
 		log.Fatal(err)
 	}

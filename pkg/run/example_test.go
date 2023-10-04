@@ -12,14 +12,14 @@ import (
 // which isn't too much more complex.
 func Example() {
 	tasks, _ := run.Load(".")
-	r, _ := run.RunTask(".", tasks, "dev")
+	r, _ := run.RunTask(tasks, "dev")
 	ui := run.NewTUI(r)
 
 	ctx := context.Background()
 	uiReady := make(chan struct{})
 
 	go ui.Start(ctx, uiReady, os.Stdin, os.Stdout)
-	<- uiReady
+	<-uiReady
 
 	r.Start(ctx, ui) // blocks until done
 }

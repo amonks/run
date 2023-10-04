@@ -71,7 +71,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	r, err := run.RunTask(*fDir, allTasks, taskID)
+	r, err := run.RunTask(allTasks, taskID)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

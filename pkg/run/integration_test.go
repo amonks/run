@@ -56,7 +56,7 @@ func testExample(t *testing.T, name string) error {
 		return fmt.Errorf("Error loading tasks: %s", err)
 	}
 
-	r, err := run.RunTask(filepath.Join("testdata", "snapshots", name), tasks, "test")
+	r, err := run.RunTask(tasks, "test")
 	if err != nil {
 		return fmt.Errorf("Error running tasks: %s", err)
 	}

@@ -17,7 +17,7 @@ import (
 //
 // The run will handle task dependencies, watches, and triggers as documented
 // in the README.
-func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
+func RunTask(allTasks Tasks, taskID string) (*Run, error) {
 	if err := allTasks.Validate(); err != nil {
 		return nil, err
 	}
@@ -62,8 +62,10 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 				return err
 			}
 		}
+		cwd := t.Metadata().CWD
 		for _, w := range t.Metadata().Watch {
-			byWatch[w] = append(byWatch[w], id)
+			path := filepath.Join(cwd, w)
+			byWatch[path] = append(byWatch[path], id)
 		}
 
 		return nil
@@ -79,7 +81,6 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 
 		starts: make(chan string),
 
-		dir:     dir,
 		runType: runType,
 		rootID:  taskID,
 		tasks:   tasks,
@@ -108,8 +109,6 @@ type Run struct {
 	runType RunType
 	// read-only
 	rootID string
-	// read-only
-	dir string
 	// read-only
 	tasks Tasks
 
@@ -208,10 +207,9 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 	var watcher watcher
 	fsevents := make(chan evFSEvent)
 	for _, p := range r.watchedPaths() {
-		watchP := filepath.Join(r.getDir(), p)
-		printf("run", logStyle, "watching %s", watchP)
 		p := p
-		c, stop, err := watcher.watch(watchP)
+		printf("run", logStyle, "watching %s", p)
+		c, stop, err := watcher.watch(p)
 		if err != nil {
 			return err
 		}
@@ -503,10 +501,6 @@ const (
 	RunTypeShort
 	RunTypeLong
 )
-
-func (r *Run) getDir() string {
-	return r.dir
-}
 
 func (r *Run) watchedPaths() []string {
 	var ps []string

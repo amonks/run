@@ -26,7 +26,7 @@ func Example_bringYourOwnUI() {
 		log.Fatal(err)
 	}
 
-	run, err := run.RunTask(".", tasks, "dev")
+	run, err := run.RunTask(tasks, "dev")
 	if err != nil {
 		log.Fatal(err)
 	}
