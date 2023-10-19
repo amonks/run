@@ -1,7 +1,11 @@
 ok
 
   test  starting
-        ENVIRONMENT VARIABLE
+        env variable set in task: 
+        SOME_ENV_VAR: some env var value
+        ===
+        env variable set in go test: 
+        ENVIRONMENT_TEST: 
         exit ok
 
    run  done

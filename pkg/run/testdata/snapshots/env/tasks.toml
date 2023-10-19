@@ -1,6 +1,11 @@
 [[task]]
   id = "test"
   type = "short"
-  cmd = "echo $VALUE"
-  env = { VALUE = "ENVIRONMENT VARIABLE" }
-
+  env = { SOME_ENV_VAR = "some env var value" }
+  cmd = """
+    echo "env variable set in task: "
+    echo "SOME_ENV_VAR: $SOME_ENV_VAR"
+    echo "==="
+    echo "env variable set in go test: "
+    echo "ENVIRONMENT_TEST: $ENVIRONMENT_TEST"
+  """
