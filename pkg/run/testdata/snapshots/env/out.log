@@ -5,7 +5,7 @@ ok
         SOME_ENV_VAR: some env var value
         ===
         env variable set in go test: 
-        ENVIRONMENT_TEST: 
+        ENVIRONMENT_TEST: true
         exit ok
 
    run  done

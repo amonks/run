@@ -21,8 +21,9 @@ import (
 //
 // Script runs in a new bash process, and can have multiple lines. It is run
 // basically like this:
-//     $ cd $DIR
-//     $ bash -c "$CMD" 2&>1 /some/ui
+//
+//	$ cd $DIR
+//	$ bash -c "$CMD" 2&>1 /some/ui
 func ScriptTask(script string, dir string, env []string, metadata TaskMetadata) Task {
 	return &scriptTask{
 		mu:       newMutex(fmt.Sprintf("script:%s", metadata.ID)),
@@ -141,7 +142,8 @@ func (t *scriptTask) startCmd(stdout io.Writer) error {
 	t.cmd.Dir = t.dir
 	t.cmd.Stdout = stdout
 	t.cmd.Stderr = stdout
-	t.cmd.Env = t.env
+	t.cmd.Env = append(os.Environ(), t.env...)
+
 	if err := t.cmd.Start(); err != nil {
 		return err
 	}
