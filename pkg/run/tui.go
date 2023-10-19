@@ -242,7 +242,7 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if err != nil {
 					panic(err)
 				}
-				i := n - 1
+				i := n
 				if i < len(m.ids) {
 					m.list.Select(i)
 				}
@@ -557,8 +557,8 @@ var (
 			key.WithHelp("↓/j", "move down"),
 		),
 		jump: key.NewBinding(
-			key.WithKeys("1", "2", "3", "4", "5", "6", "7", "8", "9"),
-			key.WithHelp("1-9", "jump"),
+			key.WithKeys("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"),
+			key.WithHelp("0-9", "jump"),
 		),
 		open: key.NewBinding(
 			key.WithKeys("enter", "o"),
