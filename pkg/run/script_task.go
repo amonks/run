@@ -1,6 +1,7 @@
 package run
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -134,9 +136,24 @@ func (t *scriptTask) printf(style lipgloss.Style, f string, args ...interface{})
 	fmt.Fprintln(t.stdout, s)
 }
 
+var findBash sync.Once
+var errFindingBash error
+var bash = ""
+
 func (t *scriptTask) startCmd(stdout io.Writer) error {
 	defer t.mu.Lock("startCmd").Unlock()
-	t.cmd = exec.Command("/bin/bash", "-c", t.script)
+	if findBash.Do(func() {
+		var b bytes.Buffer
+		whichBash := exec.Command("/bin/sh", "-c", "which bash")
+		whichBash.Stdout = &b
+		if errFindingBash = whichBash.Run(); errFindingBash != nil {
+			return
+		}
+		bash = strings.TrimSpace(b.String())
+	}); errFindingBash != nil {
+		return errFindingBash
+	}
+	t.cmd = exec.Command(bash, "-c", t.script)
 	t.cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	t.cmd.Dir = t.dir
 	t.cmd.Stdout = stdout
