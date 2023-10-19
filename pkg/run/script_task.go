@@ -23,8 +23,9 @@ import (
 //
 // Script runs in a new bash process, and can have multiple lines. It is run
 // basically like this:
-//     $ cd $DIR
-//     $ bash -c "$CMD" 2&>1 /some/ui
+//
+//	$ cd $DIR
+//	$ bash -c "$CMD" 2&>1 /some/ui
 func ScriptTask(script string, dir string, env []string, metadata TaskMetadata) Task {
 	return &scriptTask{
 		mu:       newMutex(fmt.Sprintf("script:%s", metadata.ID)),
