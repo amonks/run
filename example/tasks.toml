@@ -26,35 +26,28 @@
     done
   """
 
+# these examples illustrate the behavior of env vars in tasks
+#
+# the output of the two following tasks should be the same except for the TESTENV line
+# the first task should be empty, the second should have the TESTENV line with the
+# value "test". Both should include the env vars from the parent process.
 [[task]]
-  id = "simple"
+  id = "noenv"
+  desc = "with no env var provided, the task inherits (sic) the env from the parent process"
   type = "short"
   cmd = """
-    echo "hello world"
+    env | head -n 25
     echo "TESTENV: $TESTENV"
-    env | head -n 10
     echo "done"
   """
 
 [[task]]
-  id = "simple-env"
+  id = "withenv"
+  desc = "providing an env var overwrites the entire env"
   type = "short"
-  env = { TESTENV="test" }
+  env = { TESTENV = "test" }
   cmd = """
-    echo "hello world"
+    env | head -n 25
     echo "TESTENV: $TESTENV"
-    env | head -n 10
-    echo "done"
-  """
-
-
-[[task]]
-  id = "simple-env-two"
-  type = "short"
-  env = [{ TESTENV="test" }]
-  cmd = """
-    echo "hello world"
-    echo "TESTENV: $TESTENV"
-    env
     echo "done"
   """
