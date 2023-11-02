@@ -19,9 +19,9 @@ func (f *first[T]) set(val T) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
-	f.hasVal = true
 	if !f.hasVal {
 		f.val = val
+		f.hasVal = true
 	}
 }
 
