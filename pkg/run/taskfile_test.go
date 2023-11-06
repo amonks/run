@@ -8,7 +8,7 @@ import (
 )
 
 func TestTaskfileNestingWithDir(t *testing.T) {
-	ts, err := Load("./testdata/very-nested")
+	ts, err := Load("./testdata/very-nested", "tasks.toml")
 	assert.NoError(t, err)
 
 	testNesting(t, ts)
@@ -25,7 +25,7 @@ func TestTaskfileNestingWithParentDir(t *testing.T) {
 	os.Chdir("testdata/very-nested/child")
 	defer os.Chdir("../../..")
 
-	ts, err := Load("..")
+	ts, err := Load("..", "tasks.toml")
 	assert.NoError(t, err)
 
 	testNesting(t, ts)
@@ -42,7 +42,7 @@ func TestTaskfileNestingWithDot(t *testing.T) {
 	os.Chdir("testdata/very-nested")
 	defer os.Chdir("../..")
 
-	ts, err := Load(".")
+	ts, err := Load(".", "tasks.toml")
 	assert.NoError(t, err)
 
 	testNesting(t, ts)

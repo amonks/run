@@ -23,9 +23,10 @@ import (
 )
 
 var (
-	fUI   = flag.String("ui", "", "Force a particular ui. Legal values are 'tui' and 'printer'.")
-	fDir  = flag.String("dir", ".", "Look for a root taskfile in the given directory.")
-	fList = flag.Bool("list", false, "Display the task list and exit. If run is invoked with both -list and a task ID, that task's dependencies are displayed.")
+	fUI       = flag.String("ui", "", "Force a particular ui. Legal values are 'tui' and 'printer'.")
+	fDir      = flag.String("dir", ".", "Look for a root taskfile in the given directory.")
+	fTaskfile = flag.String("taskfile", "tasks.toml", "Look for a taskfile by this name.")
+	fList     = flag.Bool("list", false, "Display the task list and exit. If run is invoked with both -list and a task ID, that task's dependencies are displayed.")
 
 	fVersion      = flag.Bool("version", false, "Display the version and exit.")
 	fHelp         = flag.Bool("help", false, "Display the help text and exit.")
@@ -54,7 +55,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	allTasks, err := run.Load(*fDir)
+	allTasks, err := run.Load(*fDir, *fTaskfile)
 	if err != nil {
 		fmt.Println("Error loading tasks:")
 		fmt.Println(err)

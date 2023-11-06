@@ -12,12 +12,12 @@ import (
 
 // Load loads a task file from the specified directory, producing a set of
 // Tasks.
-func Load(cwd string) (Tasks, error) {
+func Load(cwd string, filename string) (Tasks, error) {
 	allTasks := map[string]taskfileTask{}
 
 	seenDirs := map[string]struct{}{}
-	var ingestTaskMap func(dir string) error
-	ingestTaskMap = func(dir string) error {
+	var ingestTaskMap func(dir, name string) error
+	ingestTaskMap = func(dir, name string) error {
 		if _, ok := seenDirs[dir]; ok {
 			return nil
 		}
@@ -28,7 +28,7 @@ func Load(cwd string) (Tasks, error) {
 			relativeDir = "."
 		}
 
-		theseTasks, err := load(cwd, dir)
+		theseTasks, err := load(cwd, dir, name)
 		if err != nil {
 			return err
 		}
@@ -60,7 +60,7 @@ func Load(cwd string) (Tasks, error) {
 
 			p = strings.TrimPrefix(p, relativeDir+string(os.PathSeparator))
 			p = filepath.Join(dir, p)
-			if err := ingestTaskMap(p); err != nil {
+			if err := ingestTaskMap(p, "tasks.toml"); err != nil {
 				return err
 			}
 		}
@@ -68,7 +68,7 @@ func Load(cwd string) (Tasks, error) {
 		return nil
 	}
 
-	if err := ingestTaskMap("."); err != nil {
+	if err := ingestTaskMap(".", filename); err != nil {
 		return nil, err
 	}
 
@@ -101,8 +101,8 @@ func Load(cwd string) (Tasks, error) {
 	return tf, nil
 }
 
-func load(cwd, dir string) (map[string]taskfileTask, error) {
-	f, err := os.ReadFile(filepath.Join(cwd, dir, "tasks.toml"))
+func load(cwd, dir, name string) (map[string]taskfileTask, error) {
+	f, err := os.ReadFile(filepath.Join(cwd, dir, name))
 	if err != nil {
 		return nil, err
 	}
