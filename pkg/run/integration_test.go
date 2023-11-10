@@ -31,6 +31,13 @@ func TestIntegrationSnapshots(t *testing.T) {
 				t.Skip()
 			}
 
+			// Set up environment variables here so we can validate it's
+			// still accessible to the task's command.
+			if name == "env" {
+				os.Setenv("ENVIRONMENT_TEST", "true")
+				defer os.Unsetenv("ENVIRONMENT_TEST")
+			}
+
 			if err := testExample(t, name); err != nil {
 				t.Error(err)
 			}
