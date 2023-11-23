@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"time"
@@ -9,31 +10,36 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+var (
+	rate = flag.Int("rate", 2, "outputs per second")
+)
+
 func main() {
+	flag.Parse()
+
 	lv := logview.New()
 	program := tea.NewProgram(
 		lv,
 		tea.WithAltScreen(),
 		tea.WithMouseCellMotion())
 
-	n := 0
 	go func() {
-		dur := 500 * time.Millisecond
+		n := 0
+		dur := time.Second / time.Duration(*rate)
 		for {
-			n++
-			log := fmt.Sprintf("%d:", n)
+			log := fmt.Sprintf("%d: %d The quick brown fox jumped over the lazy dog.", n, 1)
 			program.Send(lv.WriteMsg(log))
 			time.Sleep(dur)
 
-			for i := 1; i <= 2; i++ {
-				log := fmt.Sprintf(" %d", i)
-				program.Send(lv.WriteMsg(log))
-				time.Sleep(dur)
-			}
-
-			program.Send(lv.WriteMsg(" 3\n"))
+			log = fmt.Sprintf(" %d The quick brown fox jumped over the lazy dog.", 2)
+			program.Send(lv.WriteMsg(log))
 			time.Sleep(dur)
 
+			log = fmt.Sprintf(" %d The quick brown fox jumped over the lazy dog.\n", 3)
+			program.Send(lv.WriteMsg(log))
+			time.Sleep(dur)
+
+			n++
 		}
 	}()
 
@@ -42,4 +48,3 @@ func main() {
 		os.Exit(1)
 	}
 }
-
