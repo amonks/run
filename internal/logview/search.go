@@ -1,7 +1,5 @@
 package logview
 
-import "regexp"
-
 type searchResult struct {
 	// 0-indexed line number where match appears. Negative for a match in
 	// the buffer.
@@ -14,29 +12,39 @@ type searchResult struct {
 	length int
 }
 
-func (m *Model) search(query string) ([]searchResult, error) {
-	var results []searchResult
-	re, err := regexp.Compile(query)
-	if err != nil {
-		return nil, err
+func (m *Model) search() []searchResult {
+	if m.queryRe == nil {
+		return nil
 	}
-	for i, l := range m.lines {
-		for _, m := range re.FindAllStringIndex(l, -1) {
-			results = append(results, searchResult{
-				line:   i,
-				char:   m[0],
-				length: m[1] - m[0],
-			})
-		}
+
+	var results []searchResult
+	for i := range m.lines {
+		results = append(results, m.searchLine(i)...)
 	}
 	if m.buffer != "" {
-		for _, m := range re.FindAllStringIndex(m.buffer, -1) {
-			results = append(results, searchResult{
-				line:   -1,
-				char:   m[0],
-				length: m[1] - m[0],
-			})
-		}
+		results = append(results, m.searchLine(-1)...)
 	}
-	return results, nil
+	return results
+}
+
+func (m *Model) searchLine(lineno int) []searchResult {
+	if m.queryRe == nil {
+		return nil
+	}
+
+	var line string
+	if lineno < 0 {
+		line = m.buffer
+	} else {
+		line = m.lines[lineno]
+	}
+	var results []searchResult
+	for _, m := range m.queryRe.FindAllStringIndex(line, -1) {
+		results = append(results, searchResult{
+			line:   lineno,
+			char:   m[0],
+			length: m[1] - m[0],
+		})
+	}
+	return results
 }

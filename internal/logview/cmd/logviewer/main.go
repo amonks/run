@@ -1,22 +1,15 @@
 package main
 
 import (
-	"flag"
+	"bufio"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/amonks/run/internal/logview"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-var (
-	rate = flag.Int("rate", 2, "outputs per second")
-)
-
 func main() {
-	flag.Parse()
-
 	lv := logview.New()
 	program := tea.NewProgram(
 		lv,
@@ -24,22 +17,17 @@ func main() {
 		tea.WithMouseCellMotion())
 
 	go func() {
-		n := 0
-		dur := time.Second / time.Duration(*rate)
+		sc := bufio.NewScanner(os.Stdin)
 		for {
-			log := fmt.Sprintf("%d: %d The quick brown fox jumped over the lazy dog.", n, 1)
-			program.Send(lv.WriteMsg(log))
-			time.Sleep(dur)
-
-			log = fmt.Sprintf(" %d The quick brown fox jumped over the lazy dog.", 2)
-			program.Send(lv.WriteMsg(log))
-			time.Sleep(dur)
-
-			log = fmt.Sprintf(" %d The quick brown fox jumped over the lazy dog.\n", 3)
-			program.Send(lv.WriteMsg(log))
-			time.Sleep(dur)
-
-			n++
+			if !sc.Scan() {
+				if err := sc.Err(); err != nil {
+					program.Send(lv.WriteMsg(sc.Err().Error()))
+				} else {
+					program.Send(lv.WriteMsg("EOF\n"))
+				}
+				break
+			}
+			program.Send(lv.WriteMsg(sc.Text() + "\n"))
 		}
 	}()
 
@@ -47,4 +35,10 @@ func main() {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)
 	}
+
+	if err := os.Stdin.Close(); err != nil {
+		fmt.Println("error closing stdin")
+	}
+
+	os.Exit(0)
 }

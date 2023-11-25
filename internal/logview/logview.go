@@ -2,6 +2,7 @@
 package logview
 
 import (
+	"regexp"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -28,8 +29,13 @@ type Model struct {
 	windowWidth  int
 	windowHeight int
 
-	query   string
-	results []searchResult
+	Focus FocusArea
+
+	Query   string
+	queryRe *regexp.Regexp
+
+	results     []searchResult
+	resultIndex int
 
 	shouldHandleKeyboard bool
 	shouldHandleMouse    bool
@@ -44,6 +50,8 @@ type Model struct {
 	// the top of the viewport.
 	scrollPosition int
 
+	firstDisplayedLine int
+
 	// lines contains all complete lines (that is, a "\n" was written to
 	// end the line).
 	lines []string
@@ -54,7 +62,7 @@ type Model struct {
 }
 
 func (m *Model) logHeight() int {
-	return max(m.windowHeight - 1, 0)
+	return max(m.windowHeight-1, 0)
 }
 
 func (m *Model) Init() tea.Cmd {

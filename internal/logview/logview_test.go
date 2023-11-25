@@ -1,25 +1,91 @@
 package logview
 
 import (
+	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
+)
+
+var (
+	oneextra = "aaaaa\nbbbbb\nccccc\nddddd\neeeee"
+	alphabet = "abcdefghijklmnopqrstuvwxyz"
+
+	searchwrapped   = "abca\nbcab\ncabc"
+	searchunwrapped = "abcabcabcabc"
+	searchResults   = string([]byte{
+		27, 91, 51, 56, 59, 50, 59, 48, 59, 48, 59, 48, 59, 52, 56, 59, 50, 59, 50, 53, 53, 59, 50, 53, 53, 59, 48, 109, 97, 27, 91, 48, 109, 98, 99, 27, 91, 51, 56, 59, 50, 59, 48, 59, 48, 59, 48, 59, 52, 56, 59, 50, 59, 50, 53, 53, 59, 50, 53, 53, 59, 48, 109, 97, 27, 91, 48, 109, 10,
+		98, 99, 27, 91, 51, 56, 59, 50, 59, 48, 59, 48, 59, 48, 59, 52, 56, 59, 50, 59, 50, 53, 53, 59, 50, 53, 53, 59, 48, 109, 97, 27, 91, 48, 109, 98, 10,
+		99, 27, 91, 51, 56, 59, 50, 59, 48, 59, 48, 59, 48, 59, 52, 56, 59, 50, 59, 50, 53, 53, 59, 50, 53, 53, 59, 48, 109, 97, 27, 91, 48, 109, 98, 99,
+	})
+)
+
+type mod = func(m *Model) tea.Msg
+
+var (
+	head mod = func(m *Model) tea.Msg { return m.ScrollToMsg(0) }
+	tail     = func(m *Model) tea.Msg { return m.ScrollToMsg(-1) }
+	soft     = func(m *Model) tea.Msg { return m.SetWrapModeMsg(false) }
+	hard     = func(m *Model) tea.Msg { return m.SetWrapModeMsg(true) }
+
+	query = func(q string) mod {
+		return func(m *Model) tea.Msg { return m.SetQueryMsg(q) }
+	}
 )
 
 func TestLogview(t *testing.T) {
+	lipgloss.SetColorProfile(termenv.TrueColor)
+	for _, tc := range []struct {
+		title  string
+		input  string
+		expect string
+		mods   []mod
+	}{
+		{"hardwrap head oneextra", oneextra, "aaaa\nbbbb\ncccc", []mod{hard, head}},
+		{"hardwrap tail oneextra", oneextra, "cccc\ndddd\neeee", []mod{hard, tail}},
+		{"softwrap head oneextra", oneextra, "aaaa\na   \nbbbb", []mod{soft, head}},
+		{"softwrap tail oneextra", oneextra, "d   \neeee\ne   ", []mod{soft, tail}},
+		{"hardwrap head alphabet", alphabet, "abcd\n    \n    ", []mod{hard, head}},
+		{"hardwrap tail alphabet", alphabet, "    \n    \nabcd", []mod{hard, tail}},
+		{"softwrap head alphabet", alphabet, "abcd\nefgh\nijkl", []mod{soft, head}},
+		{"softwrap tail alphabet", alphabet, "qrst\nuvwx\nyz  ", []mod{soft, tail}},
+		{"search tail hardwrap", searchwrapped, searchResults, []mod{hard, query("a"), tail}},
+		{"search tail softwrap", searchunwrapped, searchResults, []mod{soft, query("a"), tail}},
+		{"search head hardwrap", searchwrapped, searchResults, []mod{hard, query("a"), head}},
+		{"search head softwrap", searchunwrapped, searchResults, []mod{soft, query("a"), head}},
+	} {
+		t.Run(tc.title, func(t *testing.T) {
+			testView(t, tc.input, tc.expect, tc.mods)
+		})
+	}
+}
+
+func testView(t *testing.T, input, expect string, mods []mod) {
 	m := New()
+	var teaModel tea.Model
+
 	_ = m.Init()
 
-	teaModel, _ := m.Update(tea.WindowSizeMsg{Width: 4, Height: 4})
-	m = teaModel.(*Model)
+	msgs := []tea.Msg{
+		tea.WindowSizeMsg{Width: 4, Height: 4},
+		m.WriteMsg(input),
+	}
+	for _, mod := range mods {
+		msgs = append(msgs, mod(m))
+	}
+	for _, msg := range msgs {
+		teaModel, _ = m.Update(msg)
+		m = teaModel.(*Model)
+	}
 
-	teaModel, _ = m.Update(writeMsg{m.id, "aaaaa\nbbbbb\nccccc\nddddd\neeeee"})
-	m = teaModel.(*Model)
+	got := m.View()
+	got = strings.Join(strings.Split(got, "\n")[:3], "\n")
 
-	// teaModel, _ = m.Update(tea.KeyMsg(tea.Key{Type: tea.KeyRunes, Runes: []rune{'w'}, Alt: false}))
-	// m = teaModel.(*Model)
-
-	if got := m.View(); got != "bbbb\ncccc\ndddd\neeee" {
-		t.Errorf("bad output:\n%s\n---- (%d bytes)", got, len(got))
+	if got != expect {
+		t.Errorf("bad output:\n%s\n---- (%d bytes)\n%v\nexpected:\n%s\n---- (%d bytes)\n%v",
+			got, len(got), []byte(got),
+			expect, len(expect), []byte(expect))
 	}
 }
