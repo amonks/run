@@ -19,13 +19,6 @@ var (
 			Margin(0).Padding(0)
 	listItemStyle = lipgloss.NewStyle().
 			Padding(0)
-	previewStyle = lipgloss.NewStyle().
-			Align(lipgloss.Left, lipgloss.Top).
-			BorderStyle(lipgloss.NormalBorder()).
-			Margin(0).Padding(0, 1, 1, 2)
-	pagerStyle = lipgloss.NewStyle().
-			Align(lipgloss.Left, lipgloss.Top).
-			Margin(0).Padding(0)
 	helpStyle = lipgloss.NewStyle().
 			Align(lipgloss.Left, lipgloss.Top).
 			Foreground(lipgloss.Color("#CCC")).
