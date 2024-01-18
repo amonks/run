@@ -31,7 +31,13 @@ func init() {
 		case "vcs.time":
 			ReleaseDate = kv.Value
 		case "vcs.modified":
-			DirtyBuild = true
+			if kv.Value == "true" {
+				DirtyBuild = true
+			} else if kv.Value == "false" {
+				DirtyBuild = false
+			} else {
+				panic("unexpected vcs.modified value")
+			}
 		}
 	}
 }
