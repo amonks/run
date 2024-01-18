@@ -22,7 +22,6 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 		return nil, err
 	}
 
-	runType := RunTypeShort
 	tasks := map[string]Task{}
 	byDep := map[string][]string{}
 	byTrigger := map[string][]string{}
@@ -43,10 +42,6 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 			}
 			lines = append(lines, "Run `run -list` for more information about the available tasks.")
 			return errors.New(strings.Join(lines, "\n"))
-		}
-
-		if t.Metadata().Type == "long" {
-			runType = RunTypeLong
 		}
 
 		tasks[id] = t
@@ -70,6 +65,11 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 	}
 	if err := ingestTask(taskID); err != nil {
 		return nil, err
+	}
+
+	runType := RunTypeShort
+	if tasks[taskID].Metadata().Type == "long" {
+		runType = RunTypeLong
 	}
 
 	run := Run{
