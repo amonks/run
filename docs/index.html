@@ -568,7 +568,7 @@ File watches are only used if a run is RunTypeLong.
 		
 			
 			
-			<h2 id="RunType">type <a href="https://github.com/amonks/run/blob/main/pkg/run/run_task.go#L497">RunType</a>
+			<h2 id="RunType">type <a href="https://github.com/amonks/run/blob/main/pkg/run/run_task.go#L489">RunType</a>
 				<a class="permalink" href="#RunType">&#xb6;</a>
 				
 				
@@ -650,7 +650,7 @@ passing it into <a href="#RunTask">RunTask</a>.
 				
 			
 				
-				<h3 id="ScriptTask">func <a href="https://github.com/amonks/run/blob/main/pkg/run/script_task.go#L26">ScriptTask</a>
+				<h3 id="ScriptTask">func <a href="https://github.com/amonks/run/blob/main/pkg/run/script_task.go#L29">ScriptTask</a>
 					<a class="permalink" href="#ScriptTask">&#xb6;</a>
 					
 					
@@ -708,20 +708,8 @@ $ bash -c &quot;$CMD&quot; 2&amp;&gt;1 /some/ui
     <span class="comment">//   - If the short task A is a dependency or trigger of task B, we will</span>
     <span class="comment">//     wait for A to complete before starting B.</span>
     <span class="comment">//</span>
-    <span class="comment">// If the Type is &#34;group&#34;,</span>
-    <span class="comment">//   - We won&#39;t ever call task.Start.</span>
-    <span class="comment">//   - For the purposes of invalidation, we will treat a group task as</span>
-    <span class="comment">//     complete as soon as all of its dependencies are complete.</span>
-    <span class="comment">//   - Groups define a collection of dependencies which can be used by</span>
-    <span class="comment">//     other tasks. For example, imagine the group task Build, which</span>
-    <span class="comment">//     depends on Build-Frontend and Build-Backend. Tasks like Install</span>
-    <span class="comment">//     and Publish can depend on Build, and Build&#39;s definition can be</span>
-    <span class="comment">//     updated in one place.</span>
-    <span class="comment">//   - Groups can only have &#34;dependencies&#34;, not &#34;triggers&#34; or &#34;watch&#34;.</span>
-    <span class="comment">//     It is invalid to have a group with no dependencies.</span>
-    <span class="comment">//</span>
-    <span class="comment">// Any Type besides &#34;long&#34;, &#34;short&#34;, or &#34;group&#34; is invalid. There is no</span>
-    <span class="comment">// default type: every task must specify its type.</span>
+    <span class="comment">// Any Type besides &#34;long&#34; or &#34;short&#34; is invalid. There is no default</span>
+    <span class="comment">// type: every task must specify its type.</span>
     Type <a href="https://pkg.go.dev/pkg/builtin/#string">string</a>
 
 <span id="TaskMetadata.Dependencies"></span>    <span class="comment">// Dependencies are other tasks IDs which should always run alongside</span>
@@ -868,7 +856,7 @@ Tasks.
 
 			
 				
-				<h3 id="Tasks.IDs">func (Tasks) <a href="https://github.com/amonks/run/blob/main/pkg/run/task.go#L119">IDs</a>
+				<h3 id="Tasks.IDs">func (Tasks) <a href="https://github.com/amonks/run/blob/main/pkg/run/task.go#L107">IDs</a>
 					<a class="permalink" href="#Tasks.IDs">&#xb6;</a>
 					
 					
@@ -880,7 +868,7 @@ Tasks.
 				
 			
 				
-				<h3 id="Tasks.Validate">func (Tasks) <a href="https://github.com/amonks/run/blob/main/pkg/run/task.go#L132">Validate</a>
+				<h3 id="Tasks.Validate">func (Tasks) <a href="https://github.com/amonks/run/blob/main/pkg/run/task.go#L120">Validate</a>
 					<a class="permalink" href="#Tasks.Validate">&#xb6;</a>
 					
 					

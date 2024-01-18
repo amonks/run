@@ -248,17 +248,9 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 	}
 
 	start := func(ctx context.Context, id string) {
-		t := r.tasks[id]
-
-		// Groups don't actually run. If we're asked to start a group,
-		// that means all of the group's dependencies are ready and we
-		// should start any tasks that were waiting on the group.
-		if t.Metadata().Type == "group" {
-			allExits <- exit{id: id, err: nil}
-			return
-		}
-
 		printf(id, logStyle, "starting")
+
+		t := r.tasks[id]
 
 		// Mark that the task is running.
 		ctx, cancel := context.WithCancel(ctx)

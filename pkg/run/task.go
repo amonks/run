@@ -50,20 +50,8 @@ type TaskMetadata struct {
 	//   - If the short task A is a dependency or trigger of task B, we will
 	//     wait for A to complete before starting B.
 	//
-	// If the Type is "group",
-	//   - We won't ever call task.Start.
-	//   - For the purposes of invalidation, we will treat a group task as
-	//     complete as soon as all of its dependencies are complete.
-	//   - Groups define a collection of dependencies which can be used by
-	//     other tasks. For example, imagine the group task Build, which
-	//     depends on Build-Frontend and Build-Backend. Tasks like Install
-	//     and Publish can depend on Build, and Build's definition can be
-	//     updated in one place.
-	//   - Groups can only have "dependencies", not "triggers" or "watch".
-	//     It is invalid to have a group with no dependencies.
-	//
-	// Any Type besides "long", "short", or "group" is invalid. There is no
-	// default type: every task must specify its type.
+	// Any Type besides "long" or "short" is invalid. There is no default
+	// type: every task must specify its type.
 	Type string
 
 	// Dependencies are other tasks IDs which should always run alongside
