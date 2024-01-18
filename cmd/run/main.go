@@ -296,11 +296,13 @@ func versionText() string {
 	b := &strings.Builder{}
 	fmt.Fprintln(b, headerStyle.Render("VERSION"))
 	fmt.Fprintln(b, "  Version:", meta.Version)
-	fmt.Fprintln(b, "  Revision:", meta.Revision)
 	if meta.Revision != "unknown" {
-		fmt.Fprintln(b, "  Committed:", meta.ReleaseDate)
 		if meta.DirtyBuild {
 			fmt.Fprintln(b, "  Dirty Build")
+			fmt.Fprintln(b, "  Last commit:", meta.ReleaseDate)
+		} else {
+			fmt.Fprintln(b, "  Revision:", meta.Revision)
+			fmt.Fprintln(b, "  Committed:", meta.ReleaseDate)
 		}
 	}
 	return b.String()
