@@ -1,0 +1,17 @@
+ok
+
+  watcher  starting
+           .
+           invalidating {subtask}
+
+  subtask  starting
+           hello
+           exit ok
+           invalidating {test}
+
+     test  starting
+           exit ok
+
+      run  done
+
+  watcher  canceled; stopping

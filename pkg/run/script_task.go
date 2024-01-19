@@ -65,7 +65,12 @@ func (t *scriptTask) Start(ctx context.Context, stdout io.Writer) error {
 	t.stdout = stdout
 
 	if !t.hasScript() {
-		<-ctx.Done()
+		// If this is a "long" task, we want to keep running until the
+		// run is killed. If this is a "short" task with no script, we
+		// should consider it done as soon as its dependencies are.
+		if t.Metadata().Type == "long" {
+			<-ctx.Done()
+		}
 		return nil
 	}
 
