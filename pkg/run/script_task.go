@@ -164,7 +164,8 @@ func (t *scriptTask) startCmd(stdout io.Writer) error {
 	t.cmd.Dir = t.dir
 	t.cmd.Stdout = stdout
 	t.cmd.Stderr = stdout
-	t.cmd.Env = t.env
+	t.cmd.Env = append(os.Environ(), t.env...)
+
 	if err := t.cmd.Start(); err != nil {
 		return err
 	}
