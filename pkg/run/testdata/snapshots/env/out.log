@@ -1,7 +1,8 @@
 ok
 
   test  starting
-        ENVIRONMENT VARIABLE
+        ENV_FROM_TASK: 'some env var value'
+        INHERITED_ENV: 'true'
         exit ok
 
    run  done

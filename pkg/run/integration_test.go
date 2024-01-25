@@ -39,6 +39,13 @@ func TestIntegrationSnapshots(t *testing.T) {
 }
 
 func testExample(t *testing.T, name string) error {
+	// Set up environment variables here so we can validate it's
+	// still accessible to the task's command.
+	if name == "env" {
+		os.Setenv("INHERITED_ENV", "true")
+		defer os.Unsetenv("INHERITED_ENV")
+	}
+
 	dmp := diffmatchpatch.New()
 
 	changedFilePath := filepath.Join("testdata", "snapshots", name, "changed-file")

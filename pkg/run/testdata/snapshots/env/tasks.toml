@@ -1,6 +1,8 @@
 [[task]]
   id = "test"
   type = "short"
-  cmd = "echo $VALUE"
-  env = { VALUE = "ENVIRONMENT VARIABLE" }
-
+  env = { ENV_FROM_TASK = "some env var value" }
+  cmd = """
+    echo "ENV_FROM_TASK: '$ENV_FROM_TASK'"
+    echo "INHERITED_ENV: '$INHERITED_ENV'"
+  """
