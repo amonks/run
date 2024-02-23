@@ -200,7 +200,36 @@ CMD can have many lines.
 Run takes one argument: the task ID to run. Run looks for a task file in the current directory.
 
 <!-- usage-start -->
+```
+USAGE
+     
+  run [flags] <task>
 
+     
+FLAGS
+     
+  -contributors
+        Display the contributors list and exit.
+  -credits
+        Display the open source credits and exit.
+  -dir=string (default ".")
+        Look for a root taskfile in the given directory.
+  -help
+        Display the help text and exit.
+  -license
+        Display the license info and exit.
+  -list
+        Display the task list and exit. If run is invoked
+        with both -list and a task ID, that task's
+        dependencies are displayed.
+  -ui=string
+        Force a particular ui. Legal values are 'tui' and
+        'printer'.
+  -version
+        Display the version and exit.
+
+       
+```
 <!-- usage-end -->
 
 ### User Interfaces
