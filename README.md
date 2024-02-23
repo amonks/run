@@ -197,8 +197,11 @@ CMD can have many lines.
 
     $ run dev
 
-Run takes one argument: the task ID to run. Run looks for a task file in
-the current directory.
+Run takes one argument: the task ID to run. Run looks for a task file in the current directory.
+
+<!-- usage-start -->
+
+<!-- usage-end -->
 
 ### User Interfaces
 
