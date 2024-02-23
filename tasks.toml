@@ -194,3 +194,31 @@
     fi
     mv localhost:3335 docs
   """
+
+[[task]]
+  id = "generate-readme-usage"
+  type = "short"
+  cmd = """
+  README_USAGE_SECTION=$(sed -n '/<!-- usage-start -->/,/<!-- usage-end -->/p' README.md | sed '/<!-- usage-start -->\\|<!-- usage-end -->\\|```/d')
+  RUN_COMMAND_USAGE=$(go run ./cmd/run/... | sed -n '/USAGE/,/VERSION/p' | sed '/VERSION/d')
+
+  # Compare and update if necessary
+  if ! diff <(echo "$README_USAGE_SECTION") <(echo "$RUN_COMMAND_USAGE") > /dev/null; then
+    echo "The README section does not match the usage output. Updating the README section..."
+    
+    # Remove the old usage section, keep markers
+    sed -i '/<!-- usage-start -->/,/<!-- usage-end -->/{//!d}' README.md
+    
+    # Insert the new help output into README.md
+    TMP_FILE=$(mktemp)
+    echo '```' > "$TMP_FILE"
+    echo "$RUN_COMMAND_USAGE" >> "$TMP_FILE"
+    echo '```' >> "$TMP_FILE"
+    sed -i '/<!-- usage-start -->/r '"$TMP_FILE" README.md
+    rm "$TMP_FILE"
+    
+    echo "README usage section has been updated."
+  else
+    echo "The README section matches the usage output."
+  fi
+"""
