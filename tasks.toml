@@ -194,3 +194,15 @@
     fi
     mv localhost:3335 docs
   """
+
+[[task]]
+  id = "log-forever"
+  type = "long"
+  cmd = """
+    n=0
+    while true; do
+      n=$(echo "$n+1" | bc)
+      echo $n
+      sleep 0.1
+    done
+  """
