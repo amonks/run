@@ -54,6 +54,16 @@
   cmd = "go run honnef.co/go/tools/cmd/staticcheck ./..."
 
 [[task]]
+  id = "screenshot-hello"
+  type = "short"
+  dependencies = ["install"]
+  cmd = """
+    cd examples/hello
+    vhs ../../screenshots/hello.tape
+    mv hello.gif ../../screenshots/
+  """
+
+[[task]]
   id = "screenshots"
   type = "short"
   dependencies = [

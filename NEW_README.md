@@ -19,15 +19,34 @@ RUN is a task runner that simplifies executing and managing tasks defined in `ta
 
 RUN can be installed as a single binary or via the Go command line tool:
 
-### **Pre-compiled binary:**
+### Pre-compiled binary
 
 Download the latest release from the [releases page](https://github.com/amonks/run/releases), and extract the binary to a directory in your `PATH`. This can be done in a single command like:
 
     $ curl -sL https://github.com/amonks/run/releases/download/<RELEASE_VERSION>/run_<RELEASE_ARCH>.tar.gz | tar -x && chmod +x run && mv run ~/go/bin
 
-### **Using Go:**
+### Using Go
 
 If you already use go and have it installed, you can install RUN with the go command line tool.
 
     $ go install github.com/amonks/run/cmd/run@latest
 
+## Quick Start
+
+Follow these steps to get started with RUN:
+
+1. **Create a `tasks.toml` file**
+    
+        $ touch tasks.toml
+
+2. **Define a task in that `tasks.toml`**
+    ```toml
+    [[task]]
+      id = "hello"
+      type = "short"
+      cmd = "echo Hello, World!"
+    ```
+
+3. **Run the task and see task output**
+      
+    <img alt="hello-gif" src="screenshots/hello.gif">

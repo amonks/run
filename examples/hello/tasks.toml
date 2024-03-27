@@ -1,0 +1,6 @@
+[[task]]
+  id = "hello"
+  type = "short"
+  cmd = """
+    echo "Hello, World!"
+  """
