@@ -50,3 +50,114 @@ Follow these steps to get started with RUN:
 3. **Run the task and see task output**
       
     <img alt="hello-gif" src="screenshots/hello.gif">
+
+## Configuration
+
+Run is configured through tasks.toml files. Here's a brief overview of the key fields in a task definition:
+
+_Required Fields_:
+
+- `id`: Unique identifier for the task.
+- `type`: Specifies the task type (long or short).
+
+_Optional Fields_:
+
+- `dependencies`: Other tasks to run alongside this task.
+- `triggers`: Tasks that, when completed successfully, will cause this task to re-execute.
+- `watch`: File paths to monitor for changes, triggering task restarts.
+- `env`: Environment variables for the task's execution context.
+- `cmd`: The command to run, may contain multiple lines.
+
+For explanations about task fields and behavior head to the [Task Management]() section, or for realistic configurations head over to the [Examples](https://amonks.github.io/run/examples) directory.
+
+## CLI Usage
+
+Run a task simply by specifying its ID:
+
+    $ run <task-id>
+
+Available flags are:
+<!-- usage-start -->
+```
+USAGE
+     
+  run [flags] <task>
+
+     
+FLAGS
+     
+  -contributors
+        Display the contributors list and exit.
+  -credits
+        Display the open source credits and exit.
+  -dir=string (default ".")
+        Look for a root taskfile in the given directory.
+  -help
+        Display the help text and exit.
+  -license
+        Display the license info and exit.
+  -list
+        Display the task list and exit. If run is invoked
+        with both -list and a task ID, that task's
+        dependencies are displayed.
+  -ui=string
+        Force a particular ui. Legal values are 'tui' and
+        'printer'.
+  -version
+        Display the version and exit.
+```
+<!-- usage-end -->
+
+## User Interfaces
+
+Run has two UIs that it deploys in different circumstances, a TUI and a
+Printer. You can force Run to use a particular UI by passing the 'ui' flag,
+as in,
+
+    $ run -ui=printer dev
+
+### Interactive TUI
+
+<img alt="interactive TUI" src="https://github.com/amonks/run/blob/main/screenshots/tui.gif?raw=true" />
+
+The Interactive TUI is used whenever both,
+
+1. stdout is a tty (eg Run is _not_ being piped to a file), and,
+2. any running task is "long" (eg an ongoing "dev server" process rather than a
+   one-shot "build" procedure).
+
+For example, when running a dev server or test executor that stays running
+while you make changes.
+
+### Non-Interactive Printer UI
+
+| in your terminal...                                                                                                 | or as part of a pipeline...                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| <img alt="non-interactive output" src="https://github.com/amonks/run/blob/main/screenshots/printer.gif?raw=true" /> | <img alt="redirected output" src="https://github.com/amonks/run/blob/main/screenshots/nontty.gif?raw=true" /> |
+
+Run prints its output if either,
+
+1. run is not a tty (eg Run is being piped to a file), or,
+2. no tasks are "long" (eg a one-shot "build" procedure, rather than an ongoing
+   "dev server").
+
+## Programmatic Use
+
+Run can be used and extended programmatically through its Go API. For more
+information, including a conceptual overview of the architecture, example code,
+and reference documentation, see [the godoc][godoc].
+
+[godoc]: https://amonks.github.io/run
+
+# Attribution and License
+
+Run is free for noncommercial and small-business use, with a guarantee that
+fair, reasonable, and nondiscriminatory paid-license terms will be available
+for large businesses. Ask about paid licenses at a@monks.co. See LICENSE.md or
+invoke the program with `-license` for more details.
+
+Run is made by Andrew Monks, with help from outside contributors. See
+CONTRIBUTORS.md for more details.
+
+Run makes use of a variety of open source software. See CREDITS.txt for more
+details.
