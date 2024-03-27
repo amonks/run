@@ -1,202 +1,81 @@
-# 🏃🏽‍♀️🏃🏾‍♂️🏃🏻‍♀️💨 _⸻RUN_
+# 🏃🏽‍♀️🏃🏾‍♂️🏃🏻‍♀️💨 **_⸻ RUN_**
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/amonks/run?logo=go&logoColor=white&label=%20&labelColor=gray&color=00ADD8)
+[![Godoc](https://img.shields.io/badge/go-docs-blue?logo=go&logoColor=white&label=%20&labelColor=gray&color=blue)](https://amonks.github.io/run)
+[![Go Report Card](https://goreportcard.com/badge/github.com/amonks/run)](https://goreportcard.com/report/github.com/amonks/run)
 
-<img alt="interactive TUI" src="https://github.com/amonks/run/blob/main/screenshots/tui.gif?raw=true" />
+Run is a task runner that simplifies executing and managing tasks defined in `tasks.toml` files. It provides a versatile set of features making it well suited for a range of use cases, from simple build scripts to complex development workflows.
 
-<img alt="noninteractive printed output" src="https://github.com/amonks/run/blob/main/screenshots/printer.gif?raw=true" />
+<img alt="interactive TUI" src="screenshots/tui.gif?raw=true" />
 
-```toml
-# ./tasks.toml
+## Features
 
-[[task]]
-  id = "build"
-  type = "short"
-  dependencies = ["css/build", "js/build"]
-```
-
-```toml
-# ./css/tasks.toml
-
-[[task]]
-  id = "build"
-  type = "short"
-  watch = ["src.css"]
-  cmd = """
-    echo "Building CSS"
-    build-css src.css > dist.css
-    echo "done"
-  """
-```
-
-_Find a full demo configuration in the [examples folder](examples/demo/)._
-
-Run runs a collection of programs specified in tasks.toml files, and
-provides a UI for inspecting their execution. Run's interactive UI for
-long-lived programs has full mouse support.
-
-Run also works well for short-lived processes, and its interleaved output
-can be sent to a file.
-
-```go
-package main
-
-import "github.com/amonks/run/pkg/run"
-
-func main() {
-	tasks, _ := run.Load(".")
-	r, _ := run.RunTask(".", tasks, "dev")
-	ui := run.NewTUI(r)
-
-	ctx := context.Background()
-	uiReady := make(chan struct{})
-
-	go ui.Start(ctx, uiReady, os.Stdin, os.Stdout)
-	<- uiReady
-
-	r.Start(ctx, ui) // blocks until done
-}
-```
-
-Run can be used and extended programmatically through its Go API. See [the
-godoc][godoc].
-
-[godoc]: https://amonks.github.io/run
+- **Flexible Task Configuration**: Support for complex task dependencies, environment variable injection, and file watching for automatic task re-execution.
+- **Interactive TUI**: Full mouse support for managing long-lived tasks.
+- **Non-Interactive Output**: Interleaved output suitable for short-lived processes.
+- **Go API**: Extensibility through a Go programming interface.
 
 ## Installation
 
-Run is a single binary, which you can download from from the [releases
-page][releases].
+Run can be installed as a single binary or via the Go command line tool:
 
-Alternately, if you already use go, you can install Run with the go command
-line tool:
+### Pre-compiled binary
+
+Download the latest release from the [releases page](https://github.com/amonks/run/releases), and extract the binary to a directory in your `PATH`. This can be done in a single command like:
+
+    $ curl -sL https://github.com/amonks/run/releases/download/<RELEASE_VERSION>/run_<RELEASE_ARCH>.tar.gz | tar -x && chmod +x run && mv run ~/go/bin
+
+### Using Go
+
+If you already use go and have it installed, you can install Run with the go command line tool.
 
     $ go install github.com/amonks/run/cmd/run@latest
 
-[releases]: https://github.com/amonks/run/releases
+## Quick Start
 
-## Task Files
+Follow these steps to get started with Run:
 
-Task files are called "tasks.toml". They specify one or more tasks.
+1. **Create a `tasks.toml` file**
+    
+        $ touch tasks.toml
 
-```toml
-[[task]]
-  id = "dev"
-  type = "long"
-  dependencies = ["simulate-coding"]
-  triggers = ["build-css", "build-js"]
-  watch = ["server-config.json"]
-  env = {
-    KEY="some value"
-    OTHER_KEY="some other value"
-  }
-  cmd = """
-    echo "dev-server running at http://localhost:3000"
-    while true; do sleep 1; done
-  """
-```
+2. **Define a task in that `tasks.toml`**
+    ```toml
+    [[task]]
+      id = "hello"
+      type = "short"
+      cmd = "echo Hello, World!"
+    ```
 
-There's a demo project in the [examples folder](examples/demo/), where you can see
-a realistic configuration.
+3. **Run the task and see task output**
+      
+    <img alt="hello-gif" src="screenshots/hello.gif">
 
-Let's go through the fields that can be specified on tasks.
+## Configuration
 
-### ID
+Run is configured through tasks.toml files. Here's a brief overview of the key fields in a task definition:
 
-ID identifies a task, for example,
+_Required Fields_:
 
-- for command line invocation, as in `$ run <id>`
-- in the TUI's task list.
+- `id`: Unique identifier for the task.
+- `type`: Specifies the task type (long or short).
 
-### Type
+_Optional Fields_:
 
-Type specifies how we manage a task.
+- `dependencies`: Other tasks to run alongside this task.
+- `triggers`: Tasks that, when completed successfully, will cause this task to re-execute.
+- `watch`: File paths to monitor for changes, triggering task restarts.
+- `env`: Environment variables for the task's execution context.
+- `cmd`: The command to run, may contain multiple lines.
 
-If the Type is "long",
-
-- We will keep the task alive by restarting it if it exits.
-- If the long task A is a dependency of task B, we will begin B as soon
-  as A starts.
-- It is invalid to use a long task as a trigger, since long tasks
-  aren't expected to end.
-
-If the Type is "short",
-
-- If the Start returns nil, we will consider it done.
-- If the Start returns an error, we will wait 1 second and rerun it.
-- If the short task A is a dependency or trigger of task B, we will
-  wait for A to complete before starting B.
-
-Any Type besides "long", or "short" is invalid. There is no default
-type: every task must specify its type.
-
-### Dependencies
-
-Dependencies are other tasks IDs which should always run alongside
-this task. If a task A lists B as a dependency, running A will first
-run B.
-
-Dependencies do not set up an invalidation relationship: if long task
-A lists short task B as a dependency, and B reruns because a watched
-file is changed, we will not restart A, assuming that A has its own
-mechanism for detecting file changes. If A does not have such a
-mechanhism, use a trigger rather than a dependency.
-
-Dependencies can be task IDs from child directories. For example, the
-dependency "css/build" specifies the task with ID "build" in the tasks
-file "./css/tasks.toml".
-
-If a task depends on a "long" task, Run doesn't really know when the
-long task has produced whatever output is depended on, so the
-dependent is run 500ms after the long task starts.
-
-### Triggers
-
-Triggers are other task IDs which should always be run alongside this
-task, and whose success should cause this task to re-execute. If a
-task A lists B as a dependency, and both A and B are running,
-successful execution of B will always trigger an execution of A.
-
-Triggers can be task IDs from child directories. For example, the
-trigger "css/build" specifies the task with ID "build" in the tasks
-file "./css/tasks.toml".
-
-It is invalid to use a "long" task as a trigger.
-
-### Watch
-
-Watch specifies file paths where, if a change to the file path is detected, we
-should restart the task. Watch supports globs, and does **not** support the
-"./..." style used typical of Go command line tools.
-
-For example,
-
-- `"."` watches for changes to the working directory only,
-  but not changes within subdirectories.
-- `"**"` watches for changes at any level within the
-  working directory.
-- `"./some/path/file.txt"` watches for changes to the file,
-  which must already exist.
-- `"./src/website/**/*.js"` watches for changes to
-  javascript files within src/website.
-
-### Env
-
-Env is a map from environment variable keys to values. They are set for the
-bash process that runs CMD.
-
-### CMD
-
-CMD is the command to run. It runs in a new bash process, as in,
-
-    $ bash -c "$CMD"
-
-CMD can have many lines.
+For explanations about task fields and behavior head to the [Task Configuration](#task-configuration-details) section, or check out the [examples](#examples) for practical use cases.
 
 ## CLI Usage
 
-    $ run dev
+Run a task simply by specifying its ID:
 
-Run takes one argument: the task ID to run. Run looks for a task file in the current directory.
+    $ run <task-id>
 
+Available flags are:
 <!-- usage-start -->
 ```
 USAGE
@@ -225,12 +104,10 @@ FLAGS
         'printer'.
   -version
         Display the version and exit.
-
-       
 ```
 <!-- usage-end -->
 
-### User Interfaces
+## User Interfaces
 
 Run has two UIs that it deploys in different circumstances, a TUI and a
 Printer. You can force Run to use a particular UI by passing the 'ui' flag,
@@ -238,7 +115,7 @@ as in,
 
     $ run -ui=printer dev
 
-#### Interactive TUI
+### Interactive TUI
 
 <img alt="interactive TUI" src="https://github.com/amonks/run/blob/main/screenshots/tui.gif?raw=true" />
 
@@ -251,7 +128,7 @@ The Interactive TUI is used whenever both,
 For example, when running a dev server or test executor that stays running
 while you make changes.
 
-#### Non-Interactive Printer UI
+### Non-Interactive Printer UI
 
 | in your terminal...                                                                                                 | or as part of a pipeline...                                                                                   |
 | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
@@ -263,15 +140,155 @@ Run prints its output if either,
 2. no tasks are "long" (eg a one-shot "build" procedure, rather than an ongoing
    "dev server").
 
+## Task Configuration Details
+
+The core of Run's configuration is the `tasks.toml` file, which defines the tasks you want Run to manage. Each task is specified with a range of properties, as shown in the example below:
+
+```toml
+[[task]]
+  id = "dev"
+  type = "long"
+  dependencies = ["simulate-coding"]
+  triggers = ["build-css", "build-js"]
+  watch = ["server-config.json"]
+  env = {
+    KEY = "some value"
+    OTHER_KEY = "some other value"
+  }
+  cmd = """
+    echo "dev-server running at http://localhost:3000"
+    while true; do sleep 1; done
+  """
+```
+
+Explore a [realistic project configuration](https://github.com/amonks/run/tree/main/examples/demo) to see `tasks.toml` in action.
+
+### Understanding Task Fields
+
+#### Required Fields
+
+Task definitions have two required fields: `id` and `type`. _Note_: if only the required fields are set and none of `dependencies`, `triggers`, or `cmd` are specified, then the task is a no-op.
+
+##### `id`
+
+The unique identifier for a task. It is used for:
+- Command line invocation (`$ run <id>`)
+- Identifying the task in the interactive UI (TUI).
+
+##### `type`
+
+Specifies the task's lifecycle management strategy:
+- A task can be of only one type: `long` or `short`, any other value is invalid
+- **`long`**: The task is kept alive indefinitely. It's restarted if it exits unexpectedly. **Not suitable as a trigger**.
+  - For example, a development server or a test runner.
+  - If a task depends on a "long" task, Run doesn't really know when the long task has produced whatever output is depended on, so the dependent is run 500ms after the long task starts.
+- **`short`**: The task is considered complete upon successful execution. If it fails, Run will retry it after a short delay.
+  - For example, a build script or a code generation task.
+
+#### Optional Fields
+
+##### `description`
+
+A human-readable description of the task. It's displayed in the TUI task list, the output of `run -list`, and can be used to document the task's purpose. It can be one line or multiline.
+
+##### `dependencies`
+Lists other task IDs that should run alongside this task. 
+
+- If task A depends on task B, B starts before A.
+- If B is a "long" task, A will start 500ms after B starts, and if B is a "short" task, A will start as soon as B completes.[^](#type)
+  
+##### `triggers`
+Lists other task IDs that should run alongside this task, and when completed successfully, cause this task to restart. 
+
+- Triggers are similar to dependencies but specifically for re-execution upon successful completion of the trigger task.
+- If task A is triggered by task B, and both A and B are running, a successful completion of B will trigger A to restart.
+- **Triggers are not considered when a task is initially run.** They only affect task restarts.
+- **Long tasks cannot be triggers.** It is invalid to use a long task as a trigger, since long tasks aren't expected to end.
+
+>[!NOTE]
+> Task IDs listed as `dependencies` and `triggers` can cross directory boundaries (e.g., `"css/build"` refers to a task in `./css/tasks.toml`).
+
+##### `watch`
+Defines file paths or globs to monitor for changes. Any detected change triggers a task restart. Examples include:
+- `"."` for the current directory (excluding subdirectories)
+- `"**"` for any change within the working directory
+- Specific paths like `"./src/website/**/*.js"` for targeted file types.
+
+##### `env`
+A map of environment variables provided to the task's execution environment. 
+
+- These variables are available to the command running the task.
+- They are appended to the current environment, overriding any existing variables with the same name.
+- They persist for the duration of the task's execution.
+
+#### `cmd`
+The shell command to execute as the task. It's run in a new bash process:
+
+    $ bash -c "$CMD"
+
+In simple cases, the command can be a single line:
+
+```toml
+[[task]]
+  id = "clean"
+  type = "short"
+  cmd = "go clean -testcache && go clean -modcache"
+```
+
+For more complex commands, or to aid readability, use a multiline string:
+
+```toml
+[[task]]
+  id = "clean"
+  type = "short"
+  cmd = """
+    echo "Cleaning up..."
+    set -x
+
+    rm -rf ./bin
+    go clean -testcache
+    go clean -modcache
+  """
+```
+
 ## Programmatic Use
 
-Run can be used and extended programmatically through its Go API. For more
-information, including a conceptual overview of the architecture, example code,
-and reference documentation, see [the godoc][godoc].
+Run can be used and extended programmatically through its Go API. 
+
+In this small example, we use components from Run to build our own version of the run CLI tool. See cmd/run for the source of the -real- run CLI, which isn't too much more complex. 
+
+```go
+package main
+
+import "github.com/amonks/run/pkg/run"
+
+func main() {
+	tasks, _ := run.Load(".")
+	r, _ := run.RunTask(".", tasks, "dev")
+	ui := run.NewTUI(r)
+
+	ctx := context.Background()
+	uiReady := make(chan struct{})
+
+	go ui.Start(ctx, uiReady, os.Stdin, os.Stdout)
+	<- uiReady
+
+	r.Start(ctx, ui) // blocks until done
+}
+```
+
+For more information, a conceptual overview of the architecture, example code, and reference documentation, see [the godoc][godoc].
 
 [godoc]: https://amonks.github.io/run
 
-# Attribution and License
+## Examples
+
+- [demo](https://github.com/amonks/run/tree/main/examples/demo): A realistic project configuration with multiple tasks. Used to demonstrate Run's capabilities.
+- [hello](https://github.com/amonks/run/tree/main/examples/hello): A simple "Hello, World!" task file to get started with Run.
+- [golang-app](https://github.com/amonks/run/tree/main/examples/golang-app): A template Golang project with tasks for bootstrapping a new project, building, testing, and running the application.
+
+
+## Attribution and License
 
 Run is free for noncommercial and small-business use, with a guarantee that
 fair, reasonable, and nondiscriminatory paid-license terms will be available
