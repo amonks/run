@@ -27,7 +27,7 @@
   """
 ```
 
-_Find a full example configuration in the [example folder](https://github.com/amonks/run/tree/amonks/table/example)._
+_Find a full demo configuration in the [examples folder](examples/demo/)._
 
 Run runs a collection of programs specified in tasks.toml files, and
 provides a UI for inspecting their execution. Run's interactive UI for
@@ -94,10 +94,8 @@ Task files are called "tasks.toml". They specify one or more tasks.
   """
 ```
 
-There's an example project in the [example folder][example], where you can see
+There's a demo project in the [examples folder](examples/demo/), where you can see
 a realistic configuration.
-
-[example]: https://github.com/amonks/run/tree/main/example
 
 Let's go through the fields that can be specified on tasks.
 

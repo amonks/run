@@ -63,10 +63,10 @@
   ]
   cmd = """
     echo cleaning up
-    echo "" > example/js/src.js
-    echo "" > example/css/src.css
-    echo "" > example/dist.js
-    echo "" > example/dist.css
+    echo "" > examples/demo/js/src.js
+    echo "" > examples/demo/css/src.css
+    echo "" > examples/demo/js/dist.js
+    echo "" > examples/demo/css/dist.css
   """
 
 [[task]]
@@ -74,9 +74,9 @@
   type = "short"
   dependencies = ["install"]
   cmd = """
-    cd example
-    vhs ../screenshots/tui.tape
-    mv tui.gif ../screenshots/
+    cd examples/demo
+    vhs ../../screenshots/tui.tape
+    mv tui.gif ../../screenshots/
   """
 
 [[task]]
@@ -84,9 +84,9 @@
   type = "short"
   dependencies = ["install"]
   cmd = """
-    cd example
-    vhs ../screenshots/printer.tape
-    mv printer.gif ../screenshots/
+    cd examples/demo
+    vhs ../../screenshots/printer.tape
+    mv printer.gif ../../screenshots/
   """
 
 [[task]]
@@ -94,9 +94,9 @@
   type = "short"
   dependencies = ["install"]
   cmd = """
-    cd example
-    vhs ../screenshots/nontty.tape
-    mv nontty.gif ../screenshots/
+    cd examples/demo
+    vhs ../../screenshots/nontty.tape
+    mv nontty.gif ../../screenshots/
   """
 
 [[task]]
