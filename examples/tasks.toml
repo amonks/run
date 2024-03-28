@@ -1,0 +1,30 @@
+[[task]]
+  id = "screenshot-golang"
+  type = "short"
+  description = "Use vhs to make sceenshots for the example golang app"
+  cmd = """
+    set -x 
+
+    mkdir project
+    cp golang-app/tasks.toml project/
+    cd project
+    export GO_PROJECT_MODULE_PATH=github.com/username/project
+
+    SCREENSHOT_DIR=../golang-app/screenshots
+
+    TAPES=(
+        bootstrap
+        build
+        test
+        clean
+        dev
+    )
+
+    for TAPE in "${TAPES[@]}"; do
+        vhs $SCREENSHOT_DIR/$TAPE.tape
+        mv $TAPE.gif $SCREENSHOT_DIR/
+    done
+
+    cd ..
+    rm -rf project
+  """

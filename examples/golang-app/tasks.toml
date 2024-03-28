@@ -1,0 +1,155 @@
+[[task]]
+  id = "dev"
+  type = "long"
+  description = """
+  Run the Go application in development mode.
+  
+  - Starts the application by listing the 'start' task as a dependency.
+  - Runs an infinite loop to keep the task running.
+  - The 'start' task runs binary, and is configured to watch the binary file.
+    - When the binary changes, the 'start' task will re-execute.
+    - The binary is built by the 'build' task, which is listed as a dependency of 
+      the 'start' task, and is configured to watch all Go files in the project.
+    - This allows for hot-reloading the application during development:
+      - When a Go file changes, the 'build' task will re-execute, 
+        which will rebuild the binary causing the 'start' task to re-execute, which 
+        will restart the application
+  """
+  dependencies = ["start"]
+  cmd = """
+    echo "Running development mode..."
+    while true; do sleep 1; done
+  """
+
+[[task]]
+  id = "start"
+  type = "short"
+  description = """
+  Run the binary.
+
+  - The 'build' task is listed as a dependency, ensuring the binary is built 
+    before this task is executed.
+  - The task is configured to watch the binary file.
+    - When this task is running as part of an ongoing process like the 'dev' 
+      task, it will re-execute when the binary changes.
+    - This is useful for hot-reloading the application during development.
+  """
+  dependencies = ["build"]
+  watch = ["bin/app"]
+  cmd = """
+    ./bin/app
+  """
+
+[[task]]
+  id = "build"
+  type = "short"
+  description = """
+    Build the binary for the Go application.
+
+    - The binary will be placed in the bin/ directory.
+    - The task is configured to watch all Go files in the project. 
+      - When this task is running as part of an ongoing process like the 'dev' 
+        task, it will re-execute when any Go file changes.
+      - This is useful for hot-reloading the application during development.
+  """
+  watch = ["**/*.go"]
+  cmd = """
+    go build -o ./bin/app ./cmd/...
+  """
+
+[[task]]
+  id = "test"
+  type = "short"
+  description = "Run all Go tests."
+  cmd = """
+    go test ./...
+    echo "Testing complete."
+  """
+
+[[task]]
+  id = "clean"
+  type = "short"
+  description = "Remove the binary and clean the Go test and module cache."
+  cmd = """
+    set -x
+
+    rm -rf ./bin
+    go clean -testcache
+    go clean -modcache
+  """
+
+#-------------------------------------------------------------------------------
+#  Project bootstrap task
+#-------------------------------------------------------------------------------
+[[task]]
+  id = "bootstrap"
+  type = "short"
+  description = "Bootstrap a simple Go project in the current directory."
+  cmd = """
+    echo "👢 Bootstrapping new project..."
+
+    # Check for required environment variable
+    if [ -z "$GO_PROJECT_MODULE_PATH" ]; then
+      echo "Required environment variables are not set."
+      echo "Please set GO_PROJECT_MODULE_PATH in your environment."
+      exit 1
+    fi
+    echo "✅ Required environment variable set."
+
+    # Check for existing Go module
+    if [ -f go.mod ]; then
+      echo "A Go module already exists in this directory."
+      echo "Please remove the existing go.mod file before running this task."
+      exit 1
+    fi
+    echo "✅ No existing Go module."
+
+    # Check for existing Go project
+    if [ -d cmd/ ]; then
+      echo "A Go project already exists in this directory."
+      echo "Please remove the existing directory before running this task."
+      exit 1
+    fi
+    echo "✅ No existing Go project."
+
+    # Extract the Go project name from the module path
+    GO_PROJECT_NAME=$(echo $GO_PROJECT_MODULE_PATH | awk -F'/' '{print $NF}')
+    echo "✅ Extracted Go project name: $GO_PROJECT_NAME"
+   
+    # Create a new Go module and main.go file
+    go mod init $GO_PROJECT_MODULE_PATH
+    mkdir -p cmd/$GO_PROJECT_NAME
+    touch cmd/$GO_PROJECT_NAME/main.go
+    echo 'package main\n\nimport "fmt"\n\nfunc main() {\n\tfmt.Println("Hello, Run!")\n}' > cmd/$GO_PROJECT_NAME/main.go
+    go mod tidy
+    echo "✅ Go module and main.go created."
+
+    # Create a simple .gitignore if it doesn't exist.
+    # Add bin/ and .env to .gitignore if they don't already exist.
+    if [ -f .gitignore ]; then
+      echo "A .gitignore file already exists in this directory."
+      echo "Checking for existing entries..."
+      if grep -q "bin/" .gitignore; then
+        echo "bin/ already exists in .gitignore."
+      else
+        echo "Adding bin/ to .gitignore..."
+        echo "bin/" >> .gitignore
+      fi
+
+    else
+      echo "Creating .gitignore..."
+      echo "bin/" > .gitignore
+    fi
+    echo "✅ .gitignore check complete."
+
+    # Create a simple README.md if it doesn't exist.
+    if [ -f README.md ]; then
+      echo "A README.md file already exists in this directory."
+    else
+      echo "Creating README.md..."
+      echo "# $GO_PROJECT_NAME" > README.md
+    fi
+    echo "✅ README.md check complete."
+
+    echo "✅ Bootstrap complete."
+  """
