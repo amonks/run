@@ -1,10 +1,9 @@
 # 🏃🏽‍♀️🏃🏾‍♂️🏃🏻‍♀️💨 **_⸻ RUN_**
-
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/amonks/run?logo=go&logoColor=white&label=%20&labelColor=gray&color=00ADD8)
 [![Godoc](https://img.shields.io/badge/go-docs-blue?logo=go&logoColor=white&label=%20&labelColor=gray&color=blue)](https://amonks.github.io/run)
 [![Go Report Card](https://goreportcard.com/badge/github.com/amonks/run)](https://goreportcard.com/report/github.com/amonks/run)
 
-RUN is a task runner that simplifies executing and managing tasks defined in `tasks.toml` files. It provides a versatile set of features making it well suited for a range of use cases, from simple build scripts to complex development workflows.
+Run is a task runner that simplifies executing and managing tasks defined in `tasks.toml` files. It provides a versatile set of features making it well suited for a range of use cases, from simple build scripts to complex development workflows.
 
 <img alt="interactive TUI" src="screenshots/tui.gif?raw=true" />
 
@@ -17,7 +16,7 @@ RUN is a task runner that simplifies executing and managing tasks defined in `ta
 
 ## Installation
 
-RUN can be installed as a single binary or via the Go command line tool:
+Run can be installed as a single binary or via the Go command line tool:
 
 ### Pre-compiled binary
 
@@ -27,13 +26,13 @@ Download the latest release from the [releases page](https://github.com/amonks/r
 
 ### Using Go
 
-If you already use go and have it installed, you can install RUN with the go command line tool.
+If you already use go and have it installed, you can install Run with the go command line tool.
 
     $ go install github.com/amonks/run/cmd/run@latest
 
 ## Quick Start
 
-Follow these steps to get started with RUN:
+Follow these steps to get started with Run:
 
 1. **Create a `tasks.toml` file**
     
@@ -68,7 +67,7 @@ _Optional Fields_:
 - `env`: Environment variables for the task's execution context.
 - `cmd`: The command to run, may contain multiple lines.
 
-For explanations about task fields and behavior head to the [Task Management]() section, or for realistic configurations head over to the [Examples](https://amonks.github.io/run/examples) directory.
+For explanations about task fields and behavior head to the [Task Configuration](#task-configuration-details) section, or check out the [examples](#examples) for practical use cases.
 
 ## CLI Usage
 
@@ -141,15 +140,155 @@ Run prints its output if either,
 2. no tasks are "long" (eg a one-shot "build" procedure, rather than an ongoing
    "dev server").
 
+## Task Configuration Details
+
+The core of Run's configuration is the `tasks.toml` file, which defines the tasks you want Run to manage. Each task is specified with a range of properties, as shown in the example below:
+
+```toml
+[[task]]
+  id = "dev"
+  type = "long"
+  dependencies = ["simulate-coding"]
+  triggers = ["build-css", "build-js"]
+  watch = ["server-config.json"]
+  env = {
+    KEY = "some value"
+    OTHER_KEY = "some other value"
+  }
+  cmd = """
+    echo "dev-server running at http://localhost:3000"
+    while true; do sleep 1; done
+  """
+```
+
+Explore a [realistic project configuration](https://github.com/amonks/run/tree/main/examples/demo) to see `tasks.toml` in action.
+
+### Understanding Task Fields
+
+#### Required Fields
+
+Task definitions have two required fields: `id` and `type`. _Note_: if only the required fields are set and none of `dependencies`, `triggers`, or `cmd` are specified, then the task is a no-op.
+
+##### `id`
+
+The unique identifier for a task. It is used for:
+- Command line invocation (`$ run <id>`)
+- Identifying the task in the interactive UI (TUI).
+
+##### `type`
+
+Specifies the task's lifecycle management strategy:
+- A task can be of only one type: `long` or `short`, any other value is invalid
+- **`long`**: The task is kept alive indefinitely. It's restarted if it exits unexpectedly. **Not suitable as a trigger**.
+  - For example, a development server or a test runner.
+  - If a task depends on a "long" task, Run doesn't really know when the long task has produced whatever output is depended on, so the dependent is run 500ms after the long task starts.
+- **`short`**: The task is considered complete upon successful execution. If it fails, Run will retry it after a short delay.
+  - For example, a build script or a code generation task.
+
+#### Optional Fields
+
+##### `description`
+
+A human-readable description of the task. It's displayed in the TUI task list, the output of `run -list`, and can be used to document the task's purpose. It can be one line or multiline.
+
+##### `dependencies`
+Lists other task IDs that should run alongside this task. 
+
+- If task A depends on task B, B starts before A.
+- If B is a "long" task, A will start 500ms after B starts, and if B is a "short" task, A will start as soon as B completes.[^](#type)
+  
+##### `triggers`
+Lists other task IDs that should run alongside this task, and when completed successfully, cause this task to restart. 
+
+- Triggers are similar to dependencies but specifically for re-execution upon successful completion of the trigger task.
+- If task A is triggered by task B, and both A and B are running, a successful completion of B will trigger A to restart.
+- **Triggers are not considered when a task is initially run.** They only affect task restarts.
+- **Long tasks cannot be triggers.** It is invalid to use a long task as a trigger, since long tasks aren't expected to end.
+
+>[!NOTE]
+> Task IDs listed as `dependencies` and `triggers` can cross directory boundaries (e.g., `"css/build"` refers to a task in `./css/tasks.toml`).
+
+##### `watch`
+Defines file paths or globs to monitor for changes. Any detected change triggers a task restart. Examples include:
+- `"."` for the current directory (excluding subdirectories)
+- `"**"` for any change within the working directory
+- Specific paths like `"./src/website/**/*.js"` for targeted file types.
+
+##### `env`
+A map of environment variables provided to the task's execution environment. 
+
+- These variables are available to the command running the task.
+- They are appended to the current environment, overriding any existing variables with the same name.
+- They persist for the duration of the task's execution.
+
+#### `cmd`
+The shell command to execute as the task. It's run in a new bash process:
+
+    $ bash -c "$CMD"
+
+In simple cases, the command can be a single line:
+
+```toml
+[[task]]
+  id = "clean"
+  type = "short"
+  cmd = "go clean -testcache && go clean -modcache"
+```
+
+For more complex commands, or to aid readability, use a multiline string:
+
+```toml
+[[task]]
+  id = "clean"
+  type = "short"
+  cmd = """
+    echo "Cleaning up..."
+    set -x
+
+    rm -rf ./bin
+    go clean -testcache
+    go clean -modcache
+  """
+```
+
 ## Programmatic Use
 
-Run can be used and extended programmatically through its Go API. For more
-information, including a conceptual overview of the architecture, example code,
-and reference documentation, see [the godoc][godoc].
+Run can be used and extended programmatically through its Go API. 
+
+In this small example, we use components from Run to build our own version of the run CLI tool. See cmd/run for the source of the -real- run CLI, which isn't too much more complex. 
+
+```go
+package main
+
+import "github.com/amonks/run/pkg/run"
+
+func main() {
+	tasks, _ := run.Load(".")
+	r, _ := run.RunTask(".", tasks, "dev")
+	ui := run.NewTUI(r)
+
+	ctx := context.Background()
+	uiReady := make(chan struct{})
+
+	go ui.Start(ctx, uiReady, os.Stdin, os.Stdout)
+	<- uiReady
+
+	r.Start(ctx, ui) // blocks until done
+}
+```
+
+For more information, a conceptual overview of the architecture, example code, and reference documentation, see [the godoc][godoc].
 
 [godoc]: https://amonks.github.io/run
 
-# Attribution and License
+## Examples
+
+- [demo](https://github.com/amonks/run/tree/main/examples/demo): A realistic project configuration with multiple tasks. Used to demonstrate Run's capabilities.
+- [hello](https://github.com/amonks/run/tree/main/examples/hello): A simple "Hello, World!" task file to get started with Run.
+- [golang-app](https://github.com/amonks/run/tree/main/examples/golang-app): A template Golang project with tasks for bootstrapping a new project, building, testing, and running the application.
+
+
+## Attribution and License
 
 Run is free for noncommercial and small-business use, with a guarantee that
 fair, reasonable, and nondiscriminatory paid-license terms will be available
