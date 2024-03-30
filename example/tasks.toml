@@ -1,51 +1,15 @@
 [[task]]
   id = "dev"
+  description = "Builds and runs the package, restarting when any go file is changed."
   type = "long"
-  dependencies = ["simulate-coding"]
-  triggers = ["css/build", "js/build"]
-  watch = ["server-config.json"]
-  cmd = """
-    echo "dev-server running at http://localhost:3000"
-    while true; do sleep 1; done
-  """
+  triggers = ["build"]
+  env = { PORT = "8000" }
+  cmd = "./example"
 
 [[task]]
   id = "build"
+  description = "Builds the package."
   type = "short"
-  dependencies = ["css/build", "js/build"]
+  watch = ["**/*.go"]
+  cmd = "go build ."
 
-[[task]]
-  id = "simulate-coding"
-  type = "long"
-  cmd = """
-    while true; do
-      sleep 5
-      echo "touching js file" && date > js/src.js
-      sleep 5
-      echo "touching css file" && date > css/src.css
-    done
-  """
-
-# these examples illustrate the behavior of env vars in tasks
-#
-# the output of the two following tasks should be the same except for the TESTENV line
-# the first task should be empty, the second should have the TESTENV line with the
-# value "test". Both should include the env vars from the parent process.
-[[task]]
-  id = "noenv"
-  desc = "with no env var provided, the task inherits (sic) the env from the parent process"
-  type = "short"
-  cmd = """
-    echo "TESTENV: $TESTENV"
-    echo "done"
-  """
-
-[[task]]
-  id = "withenv"
-  desc = "providing an env var overwrites the entire env"
-  type = "short"
-  env = { TESTENV = "test" }
-  cmd = """
-    echo "TESTENV: $TESTENV"
-    echo "done"
-  """
