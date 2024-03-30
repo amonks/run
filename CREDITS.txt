@@ -85,7 +85,7 @@ SOFTWARE.
 
 
 
-github.com/charmbracelet/bubbles@v0.16.1
+github.com/charmbracelet/bubbles@v0.18.0
 ========================================
 
 MIT License
@@ -112,7 +112,7 @@ SOFTWARE.
 
 
 
-github.com/charmbracelet/bubbletea@v0.24.2
+github.com/charmbracelet/bubbletea@v0.25.0
 ==========================================
 
 MIT License
@@ -139,12 +139,12 @@ SOFTWARE.
 
 
 
-github.com/charmbracelet/lipgloss@v0.7.1
-========================================
+github.com/charmbracelet/lipgloss@v0.10.0
+=========================================
 
 MIT License
 
-Copyright (c) 2021 Charmbracelet, Inc
+Copyright (c) 2021-2023 Charmbracelet, Inc
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -166,8 +166,8 @@ SOFTWARE.
 
 
 
-github.com/containerd/console@v1.0.4-0.20230313162750-1ae8d489ac81
-==================================================================
+github.com/containerd/console@v1.0.4
+====================================
 
 
                                  Apache License
@@ -389,12 +389,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 
-github.com/lrstanley/bubblezone@v0.0.0-20230706131039-3438d6c6754e
+github.com/lrstanley/bubblezone@v0.0.0-20240125042004-b7bafc493195
 ==================================================================
 
 MIT License
 
-Copyright (c) 2022 Liam Stanley <me@liamstanley.io>
+Copyright (c) 2022 Liam Stanley <liam@liam.sh>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -429,7 +429,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 
 
-github.com/mattn/go-isatty@v0.0.18
+github.com/mattn/go-isatty@v0.0.20
 ==================================
 
 Copyright (c) Yasuhiro MATSUMOTO <mattn.jp@gmail.com>
@@ -444,7 +444,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 
 
-github.com/mattn/go-runewidth@v0.0.14
+github.com/mattn/go-runewidth@v0.0.15
 =====================================
 
 The MIT License (MIT)
@@ -471,7 +471,7 @@ SOFTWARE.
 
 
 
-github.com/muesli/ansi@v0.0.0-20211031195517-c9f0611b6c70
+github.com/muesli/ansi@v0.0.0-20230316100256-276c6243b2f6
 =========================================================
 
 MIT License
@@ -579,7 +579,7 @@ SOFTWARE.
 
 
 
-github.com/rivo/uniseg@v0.4.2
+github.com/rivo/uniseg@v0.4.7
 =============================
 
 MIT License
@@ -633,7 +633,7 @@ SOFTWARE.
 
 
 
-github.com/sahilm/fuzzy@v0.1.0
+github.com/sahilm/fuzzy@v0.1.1
 ==============================
 
 The MIT License (MIT)
@@ -660,7 +660,7 @@ SOFTWARE.
 
 
 
-golang.org/x/sync@v0.3.0
+golang.org/x/sync@v0.6.0
 ========================
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
@@ -693,7 +693,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-golang.org/x/sys@v0.10.0
+golang.org/x/sys@v0.18.0
 ========================
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
@@ -726,7 +726,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-golang.org/x/term@v0.10.0
+golang.org/x/term@v0.18.0
 =========================
 
 Copyright (c) 2009 The Go Authors. All rights reserved.

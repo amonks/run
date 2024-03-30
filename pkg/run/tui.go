@@ -198,7 +198,7 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.onInit()
 
 	case tea.MouseMsg:
-		if msg.Type == tea.MouseLeft {
+		if msg.Button == tea.MouseButtonLeft {
 			for i, id := range m.list.Items() {
 				if zone.Get(string(id.(listItem))).InBounds(msg) {
 					m.list.Select(i)
