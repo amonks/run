@@ -120,12 +120,14 @@ func main() {
 		if !exitReason.isSet() {
 			if err != nil {
 				exitReason.set(err)
-				fmt.Println("UI exit unexpectedly:", err)
+			} else if r.Type() == run.RunTypeShort {
+				// If the UI exits before the run, and the run
+				// is short, that itself is an error even if the
+				// ui returns nil.
+				exitReason.set(errors.New("UI exited before run was complete"))
 			} else {
-				// If the UI exits before the run, that itself is an
-				// error even if the ui returns nil.
-				exitReason.set(errors.New("UI exited unexpectedly"))
-				fmt.Println("UI exit unexpectedly")
+				// exit ok
+				exitReason.set(context.Canceled)
 			}
 		}
 		if err != context.Canceled {
@@ -160,8 +162,11 @@ func main() {
 	case <-allDone:
 	}
 
-	if err := exitReason.get(); err != nil {
-		fmt.Printf("Error: %s.\n", err)
+	if err := exitReason.get(); err != nil && errors.Is(err, context.Canceled) {
+		fmt.Printf("Canceled\n")
+		os.Exit(0)
+	} else if err != nil {
+		fmt.Printf("Error: %s\n", err)
 		os.Exit(1)
 	} else {
 		os.Exit(0)
