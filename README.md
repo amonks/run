@@ -30,7 +30,17 @@ individual tasks.
 Run is a single binary, which you can download from from the [releases
 page][releases].
 
-Alternately, if you already use go, you can install Run with the go command
+This repository provides a script to download and install the latest version of Run:
+
+    $ curl -sSfL https://raw.githubusercontent.com/amonks/run/main/install.sh | bash
+
+
+>[!IMPORTANT] 
+>**Security Notice**: Executing scripts from the internet can pose a significant security risk to your system. Before running the installation command, please take a moment to review the script to ensure its safety. By inspecting the script first, you can make an informed decision about whether to proceed with the installation.
+
+
+
+Alternately, if you use go, you can install Run with the go command
 line tool:
 
     $ go install github.com/amonks/run/cmd/run@latest
