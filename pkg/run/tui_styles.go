@@ -52,7 +52,7 @@ func (m *tuiModel) styles(width, height int, focus focusArea) *styles {
 				return ""
 			}
 		} else if width < 128 {
-			out.menuWidth = min(width, 6)
+			out.menuWidth = min(width, 8)
 			out.logWidth = max(0, width-out.menuWidth)
 			out.renderMenuItem = func(id string, spinner string, marker string, index int, isSelected bool) string {
 				dotStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(color.Hash(id))).Underline(isSelected).Inline(true)
