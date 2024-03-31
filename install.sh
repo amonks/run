@@ -3,7 +3,11 @@
 # By default, this script will install the latest version of run to $HOME/.local/bin.
 install_dir="$HOME/.local/bin"
 version="latest"
-version_str="v1.0.0-beta.24"
+
+# Get the actual version from the latest release
+if [ "$version" = "latest" ]; then
+    version=$(curl -s https://api.github.com/repos/amonks/run/releases/latest | grep tag_name | cut -d '"' -f 4)
+fi
 
 # Detect OS and Architecture
 os=""
@@ -31,7 +35,7 @@ case "$arch" in
 esac
 
 # Construct the download URL
-base_url="https://github.com/amonks/run/releases/download/${version_str}"
+base_url="https://github.com/amonks/run/releases/download/${version}"
 filename="run_${os}_${arch}.tar.gz"
 url="${base_url}/${filename}"
 
@@ -41,6 +45,7 @@ curl -LsS $url -o $temp_dir/run.tar.gz || {
     echo "Failed to download $url"
     exit 1
 }
+echo "Downloaded $url"
 
 # Extract the tarball to the installation directory
 mkdir -p $install_dir
