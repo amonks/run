@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/amonks/run/internal/mutex"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -73,7 +74,7 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 	}
 
 	run := Run{
-		mu: newMutex("run"),
+		mu: mutex.New("run"),
 
 		taskStatus: taskStatus,
 
@@ -98,7 +99,7 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 //
 // A Run is safe to access concurrently from multiple goroutines.
 type Run struct {
-	mu *mutex
+	mu *mutex.Mutex
 
 	taskStatus *safeMap[TaskStatus]
 
