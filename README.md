@@ -27,11 +27,19 @@ individual tasks.
 
 # Installation
 
-Run is a single binary, which you can download from from the [releases
-page][releases].
+Run is a single binary, which you can download from from the [releases page][releases].
 
-Alternately, if you already use go, you can install Run with the go command
-line tool:
+## Install Script (MacOS, Linux)
+
+Download and install the latest version of `run` to the current working directory.
+ 
+```sh
+curl -L https://raw.githubusercontent.com/amonks/run/main/install.sh | sh
+```
+
+## Install with Go
+
+If you already use go, you can install Run with the go command line tool:
 
     $ go install github.com/amonks/run/cmd/run@latest
 
