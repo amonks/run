@@ -1,12 +1,15 @@
 package run
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"github.com/amonks/run/internal/color"
+	"github.com/charmbracelet/lipgloss"
+)
 
 var (
 	logStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#CCC")).
+			Foreground(color.XXXLight).
 			Italic(true)
 	errorStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#F00")).
+			Foreground(color.Red).
 			Italic(true)
 )

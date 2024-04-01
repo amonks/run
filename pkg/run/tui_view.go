@@ -45,7 +45,7 @@ func (m *tuiModel) View() string {
 
 func (m *tuiModel) renderHeader(styles *styles) string {
 	var out strings.Builder
-	rightStyle := styles.headerRight.Copy().Foreground(lipgloss.Color(color.Hash(m.activeTaskID())))
+	rightStyle := styles.headerRight.Copy().Foreground(color.Hash(m.activeTaskID()))
 	out.WriteString(styles.headerLeft.Render("") + rightStyle.Render(m.activeTaskID()))
 	if styles.headerLine != "" {
 		out.WriteString("\n" + styles.headerLine)
@@ -103,7 +103,7 @@ func (m *tuiModel) renderSpinner(id string) string {
 
 func (m *tuiModel) renderLog(styles *styles) string {
 	activeLogview := m.tasks[m.activeTaskID()]
-	return activeLogview.Render(styles.logWidth, styles.logHeight)
+	return activeLogview.Render(styles.log, styles.logWidth, styles.logHeight)
 }
 
 func (m *tuiModel) renderFooter(styles *styles) string {

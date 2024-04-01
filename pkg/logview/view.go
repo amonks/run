@@ -4,17 +4,28 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/amonks/run/internal/color"
 	help "github.com/amonks/run/internal/help"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/truncate"
 	"github.com/muesli/reflow/wrap"
 )
 
-func (m *Model) View() string {
-	return m.Render(m.windowWidth, m.windowHeight)
+type Styles struct {
+	Log       lipgloss.Style
+	Statusbar lipgloss.Style
 }
 
-func (m *Model) Render(width, height int) string {
+var defaultStyles = &Styles{
+	Log:       lipgloss.NewStyle(),
+	Statusbar: lipgloss.NewStyle(),
+}
+
+func (m *Model) View() string {
+	return m.Render(defaultStyles, m.windowWidth, m.windowHeight)
+}
+
+func (m *Model) Render(styles *Styles, width, height int) string {
 	// don't crash if window has zero area
 	if width <= 0 || height <= 0 {
 		return ""
@@ -28,19 +39,19 @@ func (m *Model) Render(width, height int) string {
 	// skip statusbar if window is too short
 	if height < 2 || !m.shouldShowStatusbar {
 		content := m.RenderLog(width, height)
-		return lipgloss.NewStyle().
+		logStyle := styles.Log.Copy().
 			Width(width).Height(height).
-			MaxWidth(width).MaxHeight(height).
-			Render(content)
+			MaxWidth(width).MaxHeight(height)
+		return color.RenderWithCorrection(logStyle, content)
 	}
 
 	// render logview and statusbar
 	content := m.RenderLog(width, height-1)
-	logview := lipgloss.NewStyle().
+	logStyle := styles.Log.Copy().
 		Width(width).Height(height - 1).
-		MaxWidth(width).MaxHeight(height - 1).
-		Render(content)
-	statusbar := lipgloss.NewStyle().
+		MaxWidth(width).MaxHeight(height - 1)
+	logview := color.RenderWithCorrection(logStyle, content)
+	statusbar := styles.Statusbar.Copy().
 		Width(width).Height(1).
 		MaxWidth(width).MaxHeight(1).
 		Render(m.viewStatusbar())
@@ -174,9 +185,7 @@ func (m *Model) RenderLog(width, height int) string {
 		outputHeight += wrappedHeight
 	}
 
-	output = strings.TrimSuffix(output, "\n")
-
-	return output
+	return strings.TrimSuffix(output, "\n")
 }
 
 func (m *Model) wrapLine(line string, maxLines, width int) (string, int) {

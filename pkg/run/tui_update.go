@@ -10,6 +10,7 @@ import (
 	"github.com/amonks/run/pkg/logview"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
 )
 
@@ -77,6 +78,10 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "/":
 			m.focus = focusSearch
 			lv.SetFocus(logview.FocusSearchBar)
+			return m, nil
+
+		case "c":
+			lipgloss.SetHasDarkBackground(!lipgloss.HasDarkBackground())
 			return m, nil
 
 		case "h", "?":
@@ -233,6 +238,7 @@ var helpMenu = help.Menu{
 			{Keys: "l", Desc: "toggle line wrap"},
 			{Keys: "w", Desc: "save log to file"},
 			{Keys: "r", Desc: "restart task"},
+			{Keys: "c", Desc: "toggle dark mode"},
 		},
 	},
 	{

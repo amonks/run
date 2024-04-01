@@ -84,6 +84,7 @@ func (a *tui) Start(ctx context.Context, ready chan<- struct{}, stdin io.Reader,
 		},
 		tea.WithAltScreen(),
 		tea.WithContext(ctx),
+		tea.WithFPS(120),
 		tea.WithMouseCellMotion())
 	a.p = program
 

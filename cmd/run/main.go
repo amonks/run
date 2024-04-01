@@ -188,7 +188,7 @@ func tasklistText(tasks run.Tasks) string {
 		t := tasks[id]
 		meta := t.Metadata()
 
-		fmt.Fprintf(b, "  %s\n", color.Render(id))
+		fmt.Fprintf(b, "  %s\n", color.RenderHash(id))
 		fmt.Fprintf(b, "    Type: %s\n", italicStyle.Render(meta.Type))
 		if meta.Description != "" {
 			fmt.Fprintf(b, "    Description:\n")

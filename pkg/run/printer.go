@@ -82,27 +82,21 @@ func (p *printer) Write(key, message string) {
 		}
 		keyStyle := keyStyle
 		keyStyle = keyStyle.Copy().
-			Foreground(lipgloss.Color(color.Hash(key)))
+			Foreground(color.Hash(key))
 		if p.stdout == nil {
 			panic("nil stdout")
 		}
 		fmt.Fprintln(p.stdout, space+lipgloss.JoinHorizontal(
 			lipgloss.Top,
 			keyStyle.Width(p.keyLength).Render(k),
-			valStyle.Render(l),
+			l,
 		))
 	}
 }
 
 var (
 	keyStyle = lipgloss.NewStyle().
-			Height(1).
-			Align(lipgloss.Right).
-			Margin(0, 2).
-			Padding(0).
-			BorderRight(true)
-
-	valStyle = lipgloss.NewStyle().
-			Margin(0).
-			Padding(0)
+		Height(1).
+		Align(lipgloss.Right).
+		Margin(0, 2)
 )

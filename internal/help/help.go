@@ -84,12 +84,12 @@ func (s Section) Render(styles *Styles, width, height int) string {
 		lineLength := 0
 		for ; i < len(s.Keys); i++ {
 			k := s.Keys[i]
-			rendered := fmt.Sprintf("%s: %s", styles.Keys.Render(k.Keys), styles.Desc.Render(k.Desc))
-			if lineLength+lipgloss.Width(rendered)+4 > width {
+			rendered := styles.Keys.Render(k.Keys) + styles.Desc.Render(": "+k.Desc+"    ")
+			if lineLength+lipgloss.Width(rendered) > width {
 				break
 			}
-			lineLength += lipgloss.Width(rendered) + 4
-			out.WriteString(rendered + "    ")
+			lineLength += lipgloss.Width(rendered)
+			out.WriteString(rendered)
 		}
 		out.WriteString("\n")
 	}
