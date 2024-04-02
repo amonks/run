@@ -72,11 +72,8 @@ func (m *tuiModel) renderSpinner(id string) string {
 	if id == "interleaved" || id == "run" {
 		return " "
 	}
-	if _, has := m.tui.run.Tasks()[id]; !has {
-		panic(id)
-	}
 	var (
-		meta   = m.tui.run.Tasks()[id].Metadata()
+		meta   = m.tui.run.Tasks().Get(id).Metadata()
 		status = m.tui.run.TaskStatus(id)
 	)
 	switch status {

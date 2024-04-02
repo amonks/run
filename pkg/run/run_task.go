@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 
@@ -23,10 +22,13 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 		return nil, err
 	}
 
-	tasks := map[string]Task{}
-	byDep := map[string][]string{}
-	byTrigger := map[string][]string{}
-	byWatch := map[string][]string{}
+	var (
+		ids       = []string{}
+		tasks     = map[string]Task{}
+		byDep     = map[string][]string{}
+		byTrigger = map[string][]string{}
+		byWatch   = map[string][]string{}
+	)
 
 	// NOTE: We don't ever switch on this in a meaningful way, it's just
 	// for the UI. It's always safe to set taskStatus to whatever to meet a
@@ -35,16 +37,17 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 
 	var ingestTask func(string) error
 	ingestTask = func(id string) error {
-		t, ok := allTasks[id]
-		if !ok {
+		if !allTasks.Has(id) {
 			lines := []string{fmt.Sprintf("Task %s not found. Tasks are,", id)}
-			for id := range allTasks {
+			for _, id := range allTasks.IDs() {
 				lines = append(lines, " - "+id)
 			}
 			lines = append(lines, "Run `run -list` for more information about the available tasks.")
 			return errors.New(strings.Join(lines, "\n"))
 		}
 
+		ids = append(ids, id)
+		t := allTasks.Get(id)
 		tasks[id] = t
 		taskStatus.set(id, TaskStatusNotStarted)
 
@@ -83,7 +86,11 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 		dir:     dir,
 		runType: runType,
 		rootID:  taskID,
-		tasks:   tasks,
+
+		tasks: Tasks{
+			ids:   ids,
+			tasks: tasks,
+		},
 
 		byDep:     byDep,
 		byTrigger: byTrigger,
@@ -147,13 +154,7 @@ type MultiWriter interface {
 // includes the IDs of each Task that will be used in the run, plus the id
 // "run", which the Run uses for messaging about the run itself.
 func (r *Run) IDs() []string {
-	var ids []string
-	for id := range r.tasks {
-		ids = append(ids, id)
-	}
-	sort.Strings(ids)
-	ids = append([]string{"run"}, ids...)
-	return ids
+	return append([]string{"run"}, r.tasks.IDs()...)
 }
 
 // Tasks returns the Tasks that a Run would execute.
@@ -169,7 +170,7 @@ func (r *Run) TaskStatus(id string) TaskStatus {
 // Invalidate asks a task to rerun. It will block until the Run gets the
 // message (which is BEFORE the task is restarted).
 func (r *Run) Invalidate(id string) {
-	if _, ok := r.tasks[id]; !ok {
+	if !r.tasks.Has(id) {
 		return
 	}
 	switch r.TaskStatus(id) {
@@ -240,7 +241,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 	readies := make(chan string)
 
 	hasAllDeps := func(id string) bool {
-		for _, dep := range r.tasks[id].Metadata().Dependencies {
+		for _, dep := range r.tasks.Get(id).Metadata().Dependencies {
 			if !ran.has(dep) {
 				return false
 			}
@@ -251,7 +252,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 	start := func(ctx context.Context, id string) {
 		printf(id, logStyle, "starting")
 
-		t := r.tasks[id]
+		t := r.tasks.Get(id)
 
 		// Mark that the task is running.
 		ctx, cancel := context.WithCancel(ctx)
@@ -311,8 +312,8 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 
 	// Start all the zero-dep tasks. When they finish, they'll trigger
 	// their dependents.
-	for id, t := range r.tasks {
-		id, t := id, t
+	for _, id := range r.tasks.IDs() {
+		id, t := id, r.tasks.Get(id)
 		if len(t.Metadata().Dependencies) > 0 {
 			continue
 		}
@@ -354,7 +355,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 				}()
 
 			case id := <-readies:
-				t := r.tasks[id]
+				t := r.tasks.Get(id)
 				tm := t.Metadata()
 
 				// Mark this task as "ran", so tasks that
@@ -376,7 +377,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 				// list this as a dependency and have all of
 				// their dependencies met.
 				for _, id := range r.byDep[id] {
-					isShort := r.tasks[id].Metadata().Type == "short"
+					isShort := r.tasks.Get(id).Metadata().Type == "short"
 					isRunning := cancels.has(id)
 					isReady := hasAllDeps(id)
 					if isReady && (isShort || !isRunning) {
@@ -428,7 +429,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 					}
 				}
 
-				t := r.tasks[ev.id]
+				t := r.tasks.Get(ev.id)
 				tm := t.Metadata()
 				// If the run is "long" and the task exit was
 				// unexpected, retry in 1s.

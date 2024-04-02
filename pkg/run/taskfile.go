@@ -1,7 +1,6 @@
 package run
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,7 +12,7 @@ import (
 // Load loads a task file from the specified directory, producing a set of
 // Tasks.
 func Load(cwd string) (Tasks, error) {
-	allTasks := map[string]taskfileTask{}
+	var allTasks []Task
 
 	seenDirs := map[string]struct{}{}
 	var ingestTaskMap func(dir string) error
@@ -36,7 +35,7 @@ func Load(cwd string) (Tasks, error) {
 		for _, t := range theseTasks {
 			t := t.withDir(cwd, relativeDir)
 
-			allTasks[t.ID] = t
+			allTasks = append(allTasks, t.toScriptTask())
 			for _, dep := range t.Dependencies {
 				if strings.Contains(dep, "/") {
 					depSet[dep] = struct{}{}
@@ -69,33 +68,17 @@ func Load(cwd string) (Tasks, error) {
 	}
 
 	if err := ingestTaskMap("."); err != nil {
-		return nil, err
+		return Tasks{}, err
 	}
 
-	tf := make(Tasks, len(allTasks))
-	for id, t := range allTasks {
-		tf[id] = t.toScriptTask()
-	}
-
-	// Print taskfile as JSON. This is useful for debugging.
-	if false {
-		jsonStructure := map[string]taskfileTask{}
-		for id, t := range allTasks {
-			jsonStructure[id] = t
-		}
-		if bs, err := json.MarshalIndent(jsonStructure, "", "  "); err != nil {
-			panic(err)
-		} else {
-			fmt.Println(string(bs))
-		}
-	}
+	tf := NewTasks(allTasks)
 
 	v, err := newValidatorWithCWD(cwd)
 	if err != nil {
-		return nil, err
+		return Tasks{}, err
 	}
 	if err := v.validate(tf); err != nil {
-		return nil, err
+		return Tasks{}, err
 	}
 
 	return tf, nil
