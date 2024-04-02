@@ -10,7 +10,7 @@ func TestColorHash(t *testing.T) {
 		{"dev", "#FF65FE"},
 	} {
 		got := Hash(tc.s)
-		if got != tc.expected {
+		if got.Dark != tc.expected {
 			t.Errorf(`color.Hash("%s") = %s, got %s`, tc.s, tc.expected, got)
 		}
 	}

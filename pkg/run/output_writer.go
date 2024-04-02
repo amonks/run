@@ -5,18 +5,20 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+
+	"github.com/amonks/run/internal/mutex"
 )
 
 func newOutputWriter(stdout io.Writer) io.Writer {
 	jsonW := &jsonWriter{w: stdout}
 	bufW := &lineBufferedWriter{buf: bufio.NewWriter(jsonW)}
-	bufW.mu = newMutex("linebuffered")
+	bufW.mu = mutex.New("linebuffered")
 	return bufW
 }
 
 type lineBufferedWriter struct {
 	buf *bufio.Writer
-	mu  *mutex
+	mu  *mutex.Mutex
 }
 
 func (w *lineBufferedWriter) Write(bs []byte) (n int, err error) {

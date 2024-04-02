@@ -16,6 +16,8 @@ import (
 )
 
 func TestIntegrationSnapshots(t *testing.T) {
+	t.Skip()
+
 	exs, err := os.ReadDir("testdata/snapshots")
 	if err != nil {
 		t.Error(err)

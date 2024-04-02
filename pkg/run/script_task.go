@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/amonks/run/internal/mutex"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -28,7 +29,7 @@ import (
 //	$ bash -c "$CMD" 2&>1 /some/ui
 func ScriptTask(script string, dir string, env []string, metadata TaskMetadata) Task {
 	return &scriptTask{
-		mu:       newMutex(fmt.Sprintf("script:%s", metadata.ID)),
+		mu:       mutex.New(fmt.Sprintf("script:%s", metadata.ID)),
 		dir:      dir,
 		script:   script,
 		env:      env,
@@ -37,7 +38,7 @@ func ScriptTask(script string, dir string, env []string, metadata TaskMetadata) 
 }
 
 type scriptTask struct {
-	mu *mutex
+	mu *mutex.Mutex
 
 	stdout io.Writer
 
