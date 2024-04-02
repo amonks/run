@@ -1,10 +1,10 @@
 #!/bin/sh
 
-# This script downloads the latest release of run from GitHub and installs it 
+# This script downloads the latest release of run from GitHub and installs it
 # to the current directory.
 
 # Print an error message before exiting.
-trap 'echo "Error: $0:$LINENO -- installation failed"' ERR 
+trap 'echo "Error: $0:$LINENO -- installation failed"' ERR
 
 set -e          # Exit immediately if a command fails
 set -o pipefail # Fail a pipeline if any command fails
@@ -17,8 +17,8 @@ main() {
         exit 1
     fi
 
-    OS=$(uname)
-    ARCH=$(arch)
+    OS=$(uname -s)
+    ARCH=$(uname -m)
 
     # Determine the download URL for the current operating system and architecture.
     TARGET_ASSET="run_${OS}_${ARCH}.tar.gz"
