@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
-	"sort"
 	"strings"
 	"sync"
 	"syscall"
@@ -176,16 +175,11 @@ func main() {
 func tasklistText(tasks run.Tasks) string {
 	b := &strings.Builder{}
 	fmt.Fprintln(b, headerStyle.Render("TASKS"))
-	var ids []string
-	for id := range tasks {
-		ids = append(ids, id)
-	}
-	sort.Strings(ids)
-	for i, id := range ids {
+	for i, id := range tasks.IDs() {
 		if i != 0 {
 			b.WriteString("\n")
 		}
-		t := tasks[id]
+		t := tasks.Get(id)
 		meta := t.Metadata()
 
 		fmt.Fprintf(b, "  %s\n", color.RenderHash(id))
