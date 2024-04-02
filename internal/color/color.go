@@ -1,42 +1,6 @@
 package color
 
-import (
-	"fmt"
-	"hash/fnv"
-	"math"
-	"sync"
-
-	"github.com/charmbracelet/lipgloss"
-)
-
-func Render(s string) string {
-	style := lipgloss.NewStyle().Foreground(lipgloss.Color(Hash(s)))
-	return style.Render(s)
-}
-
-func Hash(s string) string {
-	return globalColorer.hash(s)
-}
-
-var globalColorer = &colorer{cache: map[string]string{}}
-
-type colorer struct {
-	mu    sync.Mutex
-	cache map[string]string
-}
-
-func (c *colorer) hash(s string) string {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	if color, ok := c.cache[s]; ok {
-		return color
-	}
-	hue := float64(hash(s)) / float64(math.MaxUint32)
-	color := hsl{hue, 1.0, 0.7}.rgb()
-	c.cache[s] = color.hex()
-	return c.cache[s]
-}
+import "fmt"
 
 type rgb struct {
 	// [0-255]
@@ -91,10 +55,4 @@ func hueToRGB(p, q, t float64) float64 {
 	default:
 		return p
 	}
-}
-
-func hash(s string) uint32 {
-	h := fnv.New32a()
-	h.Write([]byte(s))
-	return h.Sum32()
 }
