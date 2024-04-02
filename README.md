@@ -31,7 +31,7 @@ Run is a single binary, which you can download from from the [releases page][rel
 
 ## Install Script (MacOS, Linux)
 
-Download and install the latest version of `run` to the current working directory.
+This install command will download the latest version of run to your current directory.
  
 ```sh
 curl -L https://raw.githubusercontent.com/amonks/run/main/install.sh | sh

@@ -10,10 +10,10 @@ set -e          # Exit immediately if a command fails
 set -o pipefail # Fail a pipeline if any command fails
 
 main() {
-    # Check for the existence of a file named "run" in the current directory.
-    if [ -f run ]; then
-        echo "Error: run is already installed in the current directory."
-        echo "To reinstall, remove the existing run binary and execute this script again."
+    # Check for the existence of anything named "run" in the current directory.
+    if [ -e run ]; then
+        echo "An item named 'run' exists in the current directory."
+        echo "Refusing to overwrite it. Please move or delete it and try again."
         exit 1
     fi
 
