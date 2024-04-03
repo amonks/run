@@ -1,3 +1,4 @@
+.envrc
 dist/
 mutex.log
 fail.log
