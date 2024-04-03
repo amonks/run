@@ -16,4 +16,4 @@ jobs:
       - name: Test
         env:
           SKIP_FLAKY_TESTS: true
-        run: go test -v ./...
+        run: go run ./cmd/run validate
