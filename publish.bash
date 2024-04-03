@@ -257,7 +257,7 @@ function create_release_notes() {
 function create_release() {
 	echo "-- Uploading release to Github."
 	create_release_notes | gh release create \
-		--repo=amonks/run-test \
+		--repo=amonks/run \
 		--notes-file=- \
 		$version_name \
 		dist/*
