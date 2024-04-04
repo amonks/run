@@ -62,7 +62,7 @@ func (w tuiWriter) Write(bs []byte) (int, error) {
 	if w.send == nil {
 		panic("nil send")
 	}
-	if w.id != "interleaved" {
+	if w.id != "@interleaved" {
 		if w.interleavedWriter == nil {
 			panic("nil interleaved writer")
 		}
@@ -79,7 +79,7 @@ func (a *tui) Start(ctx context.Context, ready chan<- struct{}, stdin io.Reader,
 	program := tea.NewProgram(
 		&tuiModel{
 			tui:    a,
-			ids:    append([]string{"interleaved"}, a.run.IDs()...),
+			ids:    append([]string{"@interleaved"}, a.run.IDs()...),
 			onInit: func() { ready <- struct{}{} },
 		},
 		tea.WithAltScreen(),
@@ -88,7 +88,7 @@ func (a *tui) Start(ctx context.Context, ready chan<- struct{}, stdin io.Reader,
 		tea.WithMouseCellMotion())
 	a.p = program
 
-	interleavedWriter := a.Writer("interleaved")
+	interleavedWriter := a.Writer("@interleaved")
 	p := NewPrinter(a.run)
 	go p.Start(ctx, nil, nil, interleavedWriter)
 	a.interleaved = p

@@ -54,13 +54,12 @@ func (v validator) validateTask(ts Tasks, t Task) []error {
 		problems = append(problems, errors.New("Task has no ID."))
 	}
 
-	if meta.ID == "interleaved" || meta.ID == "run" {
-		problems = append(problems, fmt.Errorf("'%s' is reserved and cannot be used as a task ID.", meta.ID))
-	}
-
 	for _, c := range meta.ID {
 		if unicode.IsSpace(c) {
 			problems = append(problems, fmt.Errorf("Task IDs cannot contain whitespace characters."))
+		}
+		if c == '@' {
+			problems = append(problems, fmt.Errorf("Task IDs cannot contain the reserved character '@'"))
 		}
 	}
 

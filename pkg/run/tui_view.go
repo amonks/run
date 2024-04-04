@@ -69,7 +69,7 @@ func (m *tuiModel) renderMenuItem(styles *styles, index int, id string) string {
 }
 
 func (m *tuiModel) renderSpinner(id string) string {
-	if id == "interleaved" || id == "run" {
+	if strings.HasPrefix(id, "@") {
 		return " "
 	}
 	var (
