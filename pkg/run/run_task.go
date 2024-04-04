@@ -141,6 +141,11 @@ const (
 	TaskStatusDone
 )
 
+const (
+	internalTaskInterleaved = "@interleaved"
+	internalTaskRun         = "@run"
+)
+
 // MultiWriter is the interface Runs use to display UI. To start a Run, you
 // must pass a MultiWriter into [Run.Start].
 //
@@ -154,7 +159,7 @@ type MultiWriter interface {
 // includes the IDs of each Task that will be used in the run, plus the id
 // "@run", which the Run uses for messaging about the run itself.
 func (r *Run) IDs() []string {
-	return append([]string{"@run"}, r.tasks.IDs()...)
+	return append([]string{internalTaskRun}, r.tasks.IDs()...)
 }
 
 // Tasks returns the Tasks that a Run would execute.
@@ -211,7 +216,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 	fsevents := make(chan evFSEvent)
 	for _, p := range r.watchedPaths() {
 		watchP := filepath.Join(r.getDir(), p)
-		printf("@run", logStyle, "watching %s", watchP)
+		printf(internalTaskRun, logStyle, "watching %s", watchP)
 		p := p
 		c, stop, err := watcher.watch(watchP)
 		if err != nil {
@@ -326,7 +331,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 		for {
 			select {
 			case ev := <-fsevents:
-				printf("@run", logStyle, ev.print())
+				printf(internalTaskRun, logStyle, ev.print())
 				invalidations := map[string]struct{}{}
 				for _, id := range r.byWatch[ev.path] {
 					invalidations[id] = struct{}{}
@@ -336,7 +341,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 					for id := range invalidations {
 						ids = append(ids, id)
 					}
-					printf("@run", logStyle, "invalidating {%s}", strings.Join(ids, ", "))
+					printf(internalTaskRun, logStyle, "invalidating {%s}", strings.Join(ids, ", "))
 					go func() {
 						for _, id := range ids {
 							r.starts <- id
@@ -454,16 +459,16 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 				go func() { readies <- ev.id }()
 
 			case <-ctx.Done():
-				printf("@run", logStyle, "run canceled")
+				printf(internalTaskRun, logStyle, "run canceled")
 				return nil
 			}
 		}
 	}()
 
 	if err != nil {
-		printf("@run", errorStyle, "failed")
+		printf(internalTaskRun, errorStyle, "failed")
 	} else {
-		printf("@run", logStyle, "done")
+		printf(internalTaskRun, logStyle, "done")
 	}
 
 	for _, stop := range watches {
