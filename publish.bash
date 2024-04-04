@@ -12,6 +12,8 @@ if test -z "$APPLE_DEVELOPER_ID" ||
 	exit 1
 fi
 
+function log() { echo "$@" 1>&2 ; }
+
 function main() {
 	git fetch --tags --force
 
@@ -21,7 +23,7 @@ function main() {
 	trap 'code=$? ; echo "FAILURE: $code" ; rm -rf $bdir $pdir ; exit $code' EXIT
 
 	version_name="$(git describe --tags --abbrev=0 HEAD)"
-	echo "-- Building '$version_name'"
+	log "-- Building '$version_name'"
 
 	setup_macos_keychain
 
@@ -39,9 +41,12 @@ function main() {
 	sign_macos run_darwin_arm64
 	sign_macos run_darwin_universal
 
-	notarize_macos run_darwin_universal
-	notarize_macos run_darwin_amd64
-	notarize_macos run_darwin_arm64
+	lipod_submission_id="$(notarize_macos run_darwin_universal)"
+	amd64_submission_id="$(notarize_macos run_darwin_amd64)"
+	arm64_submission_id="$(notarize_macos run_darwin_arm64)"
+	wait_for_notarization "$lipod_submission_id"
+	wait_for_notarization "$amd64_submission_id"
+	wait_for_notarization "$arm64_submission_id"
 
 	create_package freebsd arm64
 	create_package freebsd amd64
@@ -56,7 +61,7 @@ function main() {
 
 # setup_macos_keychain adds $CERTIFICATE_BASE64 to the macOS keychain.
 function setup_macos_keychain() {
-	echo "-- Setting up macos keychain"
+	log "-- Setting up macos keychain"
 
 	cert_path="$(mktemp -d)/cert.p12"
 	keychain_path="$(mktemp -d)/keys.keychain-db"
@@ -91,11 +96,11 @@ function setup_macos_keychain() {
 function build() {
 	goos="$1"; goarch="$2"
 	if test -z "$goos" || test -z "$goarch" ; then
-		echo "build requires 2 arguments"
+		log "build requires 2 arguments"
 		return 1
 	fi
 
-	echo "-- Building $goos ($goarch)."
+	log "-- Building $goos ($goarch)"
 
 	CGO_ENABLED=0 GOOS=$goos GOARCH=$goarch \
 		go build \
@@ -108,7 +113,7 @@ function build() {
 #$bdir/run_darwin_arm64 into a "fat" universal binary called
 #$bdir/run_darwin_universal.
 function make_macos_universal_binary() {
-	echo "-- Making universal macos binary."
+	log "-- Making universal macos binary"
 	lipo \
 		-output "${bdir}/run_darwin_universal" \
 		-create "${bdir}/run_darwin_amd64" "${bdir}/run_darwin_arm64"
@@ -118,11 +123,11 @@ function make_macos_universal_binary() {
 function sign_macos() {
 	binary=$1
 	if test -z "$binary" ; then
-		echo "sign_macos requires 1 argument"
+		log "sign_macos requires 1 argument"
 		return 1
 	fi
 
-	echo "-- Signing $binary."
+	log "-- Signing $binary"
 
 	codesign \
 		--keychain buildagent \
@@ -134,25 +139,22 @@ function sign_macos() {
 	return 0
 }
 
-# notarize_macos, given a binary file, sends it to Apple for notarization,
-# and waits for that notarization to complete.
+# notarize_macos, given a binary file, sends it to Apple for notarization. It
+# returns immediately after the submission is submitted, it **does not** wait
+# for the submission to complete. It returns the Submission ID, which can be
+# used to wait for the submission or check its status.
 #
 # When a binary is run for the first time on macOS, the operating system
 # sends its hash to Apple's server to check whether it appears in their
 # notarization database. If it is not, the binary won't run.
-#
-# TODO:
-# We currently notarize->wait->notarize->wait in serial. We could shave a
-# few seconds of action runtime by submitting all of the binaries at once,
-# _then_ waiting for all of them.
 function notarize_macos() {
-	binary=$1
+	binary="$1"
 	if test -z "$binary" ; then
-		echo "notarize_macos requires 1 argument"
+		log "notarize_macos requires 1 argument"
 		return 1
 	fi
 
-	echo "-- Asking Apple to notarize $binary; this could take some time."
+	log "-- Asking Apple to notarize $binary; this could take some time"
 
 	/usr/bin/ditto -c -k \
 		--keepParent \
@@ -160,12 +162,27 @@ function notarize_macos() {
 		"${bdir}/${binary}.zip"
 
 	xcrun notarytool submit \
-		-f json \
+		--output-format json \
 		--apple-id "$APPLE_DEVELOPER_ID" \
 		--team-id "$APPLE_DEVELOPER_TEAM" \
 		--password "$APPLE_DEVELOPER_PASSWORD" \
-		--wait "${bdir}/${binary}.zip" \
-		2>&1 | tee /tmp/notarization_info.json
+		"${bdir}/${binary}.zip" | \
+		sed 's/.*"id":"\([-A-z0-9]\{36\}\)".*/\1/'
+}
+
+function wait_for_notarization() {
+	submission_id="$1"
+	if test -z "$submission_id" ; then
+		log "wait_for_notarization requires 1 argument"
+		return 1
+	fi
+
+	log "-- Waiting for notarization submission '$submission_id'"
+
+	xcrun notarytool wait "$submission_id" \
+		--apple-id "$APPLE_DEVELOPER_ID" \
+		--team-id "$APPLE_DEVELOPER_TEAM" \
+		--password "$APPLE_DEVELOPER_PASSWORD"
 }
 
 # create_pacakge, given GOOS and GOARCH values, produces a tar.gz archive
@@ -178,12 +195,12 @@ function notarize_macos() {
 function create_package() {
 	os="$1"; arch="$2"
 	if test -z "$os" || test -z "$arch" ; then
-		echo "create_package requires 2 arguments"
+		log "create_package requires 2 arguments"
 		return 1
 	fi
 
 	package_name="$(package_name "$os" "$arch")"
-	echo "-- Creating package $package_name"
+	log "-- Creating package $package_name"
 
 	binary="${bdir}/run_${os}_${arch}"
 	mkdir -p "${pdir}/${package_name}"
@@ -214,7 +231,7 @@ function create_package() {
 function package_name() {
 	os="$1"; arch="$2"
 	if test -z "$os" || test -z "$arch" ; then
-		echo "package_name requires 2 arguments"
+		log "package_name requires 2 arguments"
 		return 1
 	fi
 
@@ -223,14 +240,14 @@ function package_name() {
 		darwin)  os_name="Darwin"  ;;
 		freebsd) os_name="FreeBSD" ;;
 		linux)   os_name="Linux"   ;;
-		*)       echo "unsupported os $os" ; exit 1 ;;
+		*)       log "unsupported os $os" ; exit 1 ;;
 	esac
 
 	case $arch in
 		arm64)     arch_name="arm64"     ;;
 		amd64)     arch_name="amd64"     ;;
 		universal) arch_name="universal" ;;
-		*)         echo "unsupported arch $arch" ; exit 1 ;;
+		*)         log "unsupported arch $arch" ; exit 1 ;;
 	esac
 
 	if test "$os" = "darwin" && test "$arch" = "amd64" ; then
@@ -258,7 +275,7 @@ function create_release_notes() {
 # create_release uses the Github API to create the release and upload the
 # release artifacts.
 function create_release() {
-	echo "-- Uploading release to Github."
+	log "-- Uploading release to Github"
 	create_release_notes | gh release create \
 		--repo="${GITHUB_REPOSITORY:-amonks/run}" \
 		--notes-file=- \
