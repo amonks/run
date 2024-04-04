@@ -264,9 +264,16 @@ function create_release_notes() {
 	last_release="$(git describe --tags --abbrev=0 HEAD~)"
 	commits="$(git log $last_release..HEAD --oneline --decorate=no | sort)"
 	echo "## Changelog"
-	echo ""
 	git log $last_release..HEAD --oneline --decorate=no | sort | awk '{ print "- " $0 }'
 	echo ""
+	if git log $last_release..HEAD | grep -q BREAKING ; then
+		echo "## Breaking Changes"
+		git log $last_release..HEAD | \
+			grep BREAKING | \
+			sed 's/^[[:space:]]*BREAKING CHANGE: //g' | \
+			awk '{ print "- " $0 }'
+		echo ""
+	fi
 	echo "> [!TIP]"
 	echo "> You can find the correct asset for your system with the following command:"
 	echo '> `echo "run_$(uname -s)_$(uname -m).tar.gz"`'
