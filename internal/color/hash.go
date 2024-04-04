@@ -16,7 +16,10 @@ func Hash(s string) lipgloss.AdaptiveColor {
 	return globalColorer.hash(s)
 }
 
-var globalColorer = &colorer{colorCache: map[string]lipgloss.AdaptiveColor{}}
+var globalColorer = &colorer{
+	colorCache:  map[string]lipgloss.AdaptiveColor{},
+	renderCache: map[string]string{},
+}
 
 type colorer struct {
 	mu          sync.Mutex
