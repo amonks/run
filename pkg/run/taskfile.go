@@ -84,7 +84,7 @@ func Load(cwd string) (Tasks, error) {
 	return tf, nil
 }
 
-func load(cwd, dir string) (map[string]taskfileTask, error) {
+func load(cwd, dir string) ([]taskfileTask, error) {
 	f, err := os.ReadFile(filepath.Join(cwd, dir, "tasks.toml"))
 	if err != nil {
 		return nil, err
@@ -93,11 +93,7 @@ func load(cwd, dir string) (map[string]taskfileTask, error) {
 	if err := toml.Unmarshal(f, &parsed); err != nil {
 		return nil, err
 	}
-	taskMap := map[string]taskfileTask{}
-	for _, t := range parsed.Tasks {
-		taskMap[t.ID] = t
-	}
-	return taskMap, nil
+	return parsed.Tasks, nil
 }
 
 type taskfile struct {
