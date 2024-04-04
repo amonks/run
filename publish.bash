@@ -195,12 +195,15 @@ function create_package() {
 	cp    README.md       "${pdir}/${package_name}/"
 	cp    "$binary"       "${pdir}/${package_name}/run"
 
+	distdir="$(pwd)/dist"
+	pushd "${pdir}/${package_name}"
 	tar \
 		--create \
 		--gzip \
-		--file "dist/${package_name}.tar.gz" \
-		"${pdir}/${package_name}" \
+		--file "${distdir}/${package_name}.tar.gz" \
+		. \
 		&> /dev/null
+	popd
 
 	pushd dist ; shasum "${package_name}.tar.gz" >> checksums.txt ; popd
 }
