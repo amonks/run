@@ -28,5 +28,5 @@ func Example_bringYourOwnTasks() {
 	}
 
 	fmt.Println(strings.Join(run.IDs(), ", "))
-	// Output: run, custom
+	// Output: custom
 }

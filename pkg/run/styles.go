@@ -9,7 +9,4 @@ var (
 	logStyle = lipgloss.NewStyle().
 			Foreground(color.XXXLight).
 			Italic(true)
-	errorStyle = lipgloss.NewStyle().
-			Foreground(color.Red).
-			Italic(true)
 )
