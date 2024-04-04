@@ -2,8 +2,6 @@ module github.com/amonks/run
 
 go 1.22.2
 
-replace github.com/imdario/mergo => github.com/imdario/mergo v0.3.16
-
 require (
 	github.com/BurntSushi/toml v1.3.2
 	github.com/charmbracelet/bubbles v0.18.0
