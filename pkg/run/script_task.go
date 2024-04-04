@@ -85,8 +85,10 @@ func (t *scriptTask) Start(ctx context.Context, stdout io.Writer) error {
 	go func() {
 		if process := t.process(); process == nil {
 			exit <- nil
-		} else if state, err := process.Wait(); err != nil {
-			exit <- err
+		} else if state, err := process.Wait(); err != nil && strings.Contains(err.Error(), "no child processes") {
+			exit <- nil
+		} else if err != nil {
+			exit <- fmt.Errorf("wait err: %w", err)
 		} else if code := state.ExitCode(); code != 0 {
 			exit <- fmt.Errorf("exit %d", code)
 		} else {
@@ -175,13 +177,22 @@ func (t *scriptTask) startCmd(stdout io.Writer) error {
 
 func (t *scriptTask) sigint() error {
 	defer t.mu.Lock("sigint").Unlock()
-	return syscall.Kill(-t.cmd.Process.Pid, syscall.SIGINT)
+	if t.cmd == nil {
+		return nil
+	}
+	if err := syscall.Kill(-t.cmd.Process.Pid, syscall.SIGINT); err != nil {
+		return fmt.Errorf("sigint error: %w", err)
+	}
+	return nil
 }
 
 func (t *scriptTask) sigkill() error {
 	defer t.mu.Lock("sigkill").Unlock()
+	if t.cmd == nil {
+		return nil
+	}
 	if err := syscall.Kill(-t.cmd.Process.Pid, syscall.SIGKILL); err != nil && !strings.Contains(err.Error(), "no such process") {
-		return err
+		return fmt.Errorf("sigkill error: %w", err)
 	}
 	return nil
 }
