@@ -1,8 +1,6 @@
 module github.com/amonks/run
 
-go 1.22
-
-toolchain go1.22.1
+go 1.22.2
 
 replace github.com/imdario/mergo => github.com/imdario/mergo v0.3.16
 
