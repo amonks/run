@@ -1,0 +1,12 @@
+panic: assignment to entry in nil map
+
+goroutine 1 [running]:
+github.com/amonks/run/internal/color.(*colorer).render(0x1031e62f0, {0x140001a4b99, 0x7})
+	/Users/ajm/run/internal/color/hash.go:36 +0x288
+github.com/amonks/run/internal/color.RenderHash(...)
+	/Users/ajm/run/internal/color/hash.go:12
+main.tasklistText({{0x140002c7440?, 0x1?, 0x22?}, 0x140001a3800?})
+	/Users/ajm/run/cmd/run/main.go:185 +0x2a0
+main.main()
+	/Users/ajm/run/cmd/run/main.go:66 +0x390
+exit status 2

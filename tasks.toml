@@ -22,7 +22,7 @@
 [[task]]
   id = "validate"
   type = "short"
-  dependencies = ["generate", "test", "vulncheck", "staticcheck"]
+  dependencies = ["generate", "test", "vulncheck", "staticcheck", "snapshot-cli"]
 
 [[task]]
   id = "test"
@@ -220,3 +220,20 @@
   fi
 """
 
+[[task]]
+  id = "snapshot-cli"
+  type = "short"
+  cmd = """
+    mkdir -p testdata/cli_snapshots
+
+    go run ./cmd/run -version &> testdata/cli_snapshots/version
+    go run ./cmd/run -help &> testdata/cli_snapshots/help
+    go run ./cmd/run -credits &> testdata/cli_snapshots/credits
+    go run ./cmd/run -contributors &> testdata/cli_snapshots/contributors
+    go run ./cmd/run -license &> testdata/cli_snapshots/license
+    go run ./cmd/run -list &> testdata/cli_snapshots/list
+
+    if ! git diff --exit-code -- testdata/cli_snapshots ; then
+            exit 1
+    fi
+  """

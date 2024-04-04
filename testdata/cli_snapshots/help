@@ -1,0 +1,51 @@
+
+Run executes collections of tasks defined in tasks.toml files.
+For documentation and the latest version, please visit GitHub:
+
+  https://github.com/amonks/run
+
+     
+[1;4;4mU[0m[1;4;4mS[0m[1;4;4mA[0m[1;4;4mG[0m[1;4;4mE[0m
+     
+  run [flags] <task>
+
+     
+[1;4;4mF[0m[1;4;4mL[0m[1;4;4mA[0m[1;4;4mG[0m[1;4;4mS[0m
+     
+  -contributors
+        Display the contributors list and exit.
+  -credits
+        Display the open source credits and exit.
+  -dir=string (default ".")
+        Look for a root taskfile in the given directory.
+  -help
+        Display the help text and exit.
+  -license
+        Display the license info and exit.
+  -list
+        Display the task list and exit. If run is invoked
+        with both -list and a task ID, that task's
+        dependencies are displayed.
+  -ui=string
+        Force a particular ui. Legal values are 'tui' and
+        'printer'.
+  -version
+        Display the version and exit.
+
+       
+[1;4;4mV[0m[1;4;4mE[0m[1;4;4mR[0m[1;4;4mS[0m[1;4;4mI[0m[1;4;4mO[0m[1;4;4mN[0m
+       
+  Version: devel
+
+       
+[1;4;4mL[0m[1;4;4mI[0m[1;4;4mC[0m[1;4;4mE[0m[1;4;4mN[0m[1;4;4mS[0m[1;4;4mE[0m
+       
+  Run is free for noncommercial and small-business use, with a
+  guarantee that fair, reasonable, and nondiscriminatory paid-
+  license terms will be available for everyone else. Ask about
+  paid licenses at a@monks.co.
+
+  Run `run -license` for more info.
+
+  © Andrew Monks <a@monks.co>
+
