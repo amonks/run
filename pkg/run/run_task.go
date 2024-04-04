@@ -143,7 +143,7 @@ const (
 
 const (
 	internalTaskInterleaved = "@interleaved"
-	internalTaskRun         = "@run"
+	internalTaskWatch       = "@watch"
 )
 
 // MultiWriter is the interface Runs use to display UI. To start a Run, you
@@ -156,10 +156,15 @@ type MultiWriter interface {
 }
 
 // IDs returns the list of output stream names that a Run would write to. This
-// includes the IDs of each Task that will be used in the run, plus the id
-// "@run", which the Run uses for messaging about the run itself.
+// includes the IDs of each Task that will be used in the run, plus (if
+// applicable) the id "@watch", which the Run uses for messaging about file
+// watchers.
 func (r *Run) IDs() []string {
-	return append([]string{internalTaskRun}, r.tasks.IDs()...)
+	var ids []string
+	if len(r.byWatch) > 0 {
+		ids = append(ids, internalTaskWatch)
+	}
+	return append(ids, r.tasks.IDs()...)
 }
 
 // Tasks returns the Tasks that a Run would execute.
@@ -216,7 +221,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 	fsevents := make(chan evFSEvent)
 	for _, p := range r.watchedPaths() {
 		watchP := filepath.Join(r.getDir(), p)
-		printf(internalTaskRun, logStyle, "watching %s", watchP)
+		printf(internalTaskWatch, logStyle, "watching %s", watchP)
 		p := p
 		c, stop, err := watcher.watch(watchP)
 		if err != nil {
@@ -331,7 +336,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 		for {
 			select {
 			case ev := <-fsevents:
-				printf(internalTaskRun, logStyle, ev.print())
+				printf(internalTaskWatch, logStyle, ev.print())
 				invalidations := map[string]struct{}{}
 				for _, id := range r.byWatch[ev.path] {
 					invalidations[id] = struct{}{}
@@ -341,7 +346,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 					for id := range invalidations {
 						ids = append(ids, id)
 					}
-					printf(internalTaskRun, logStyle, "invalidating {%s}", strings.Join(ids, ", "))
+					printf(internalTaskWatch, logStyle, "invalidating {%s}", strings.Join(ids, ", "))
 					go func() {
 						for _, id := range ids {
 							r.starts <- id
@@ -459,17 +464,10 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 				go func() { readies <- ev.id }()
 
 			case <-ctx.Done():
-				printf(internalTaskRun, logStyle, "run canceled")
 				return nil
 			}
 		}
 	}()
-
-	if err != nil {
-		printf(internalTaskRun, errorStyle, "failed")
-	} else {
-		printf(internalTaskRun, logStyle, "done")
-	}
 
 	for _, stop := range watches {
 		stop()
