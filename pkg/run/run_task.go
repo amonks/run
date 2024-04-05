@@ -35,8 +35,14 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 	// UI goal. It will never impact control flow.
 	taskStatus := newSafeMap[TaskStatus]()
 
+	// NOTE:
+	// ingestTask can be called multiple times for each task.
 	var ingestTask func(string) error
 	ingestTask = func(id string) error {
+		if _, alreadyIngested := tasks[id]; alreadyIngested {
+			return nil
+		}
+
 		if !allTasks.Has(id) {
 			lines := []string{fmt.Sprintf("Task %s not found. Tasks are,", id)}
 			for _, id := range allTasks.IDs() {
