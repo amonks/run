@@ -32,6 +32,7 @@
       - vulncheck
       - staticcheck
       - snapshot-cli
+      - shellcheck
 
   [38;2;120;101;255mtest[0m
     Type: [3mshort[0m
@@ -47,6 +48,11 @@
     Type: [3mshort[0m
     Description:
 [3m[0m      [3m"go run honnef.co/go/tools/cmd/staticcheck ./..."[0m
+
+  [38;2;255;194;101mshellcheck[0m
+    Type: [3mshort[0m
+    Description:
+[3m[0m      [3m"shellcheck $(git ls-files | grep 'sh$')"[0m
 
   [38;2;123;101;255mscreenshots[0m
     Type: [3mshort[0m
@@ -90,4 +96,6 @@
 
   [38;2;202;255;101msnapshot-cli[0m
     Type: [3mshort[0m
+    Dependencies:
+      - generate
 
