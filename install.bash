@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # This script downloads the latest release of run from GitHub and installs it
 # to the current directory.
@@ -25,7 +25,7 @@ main() {
     DOWNLOAD_URL="https://github.com/amonks/run/releases/latest/download/${TARGET_ASSET}"
 
     # Attempt the download and extraction. Suppress error output from curl and tar.
-    curl -fsSL $DOWNLOAD_URL 2>/dev/null | tar -xz run 2>/dev/null
+    curl -fsSL "$DOWNLOAD_URL" 2>/dev/null | tar -xz run 2>/dev/null
 
     echo "Downloaded Run (latest $OS $ARCH) to ./run"
     ./run -version

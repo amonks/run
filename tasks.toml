@@ -22,7 +22,7 @@
 [[task]]
   id = "validate"
   type = "short"
-  dependencies = ["generate", "test", "vulncheck", "staticcheck", "snapshot-cli"]
+  dependencies = ["generate", "test", "vulncheck", "staticcheck", "snapshot-cli", "shellcheck"]
 
 [[task]]
   id = "test"
@@ -38,6 +38,11 @@
   id = "staticcheck"
   type = "short"
   cmd = "go run honnef.co/go/tools/cmd/staticcheck ./..."
+
+[[task]]
+  id = "shellcheck"
+  type = "short"
+  cmd = "shellcheck $(git ls-files | grep 'sh$')"
 
 [[task]]
   id = "screenshots"
@@ -223,6 +228,7 @@
 [[task]]
   id = "snapshot-cli"
   type = "short"
+  dependencies = ["generate"]
   cmd = """
     mkdir -p testdata/cli_snapshots
 

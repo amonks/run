@@ -20,6 +20,8 @@ function main() {
 	rm -rf dist ; mkdir dist
 	bdir="$(mktemp -d)"
 	pdir="$(mktemp -d)"
+
+	# shellcheck disable=2154
 	trap 'code=$? ; echo "FAILURE: $code" ; rm -rf $bdir $pdir ; exit $code' EXIT
 
 	version_name="$(git describe --tags --abbrev=0 HEAD)"
@@ -262,13 +264,12 @@ function package_name() {
 # binary for a given platform.
 function create_release_notes() {
 	last_release="$(git describe --tags --abbrev=0 HEAD~)"
-	commits="$(git log $last_release..HEAD --oneline --decorate=no | sort)"
 	echo "## Changelog"
-	git log $last_release..HEAD --oneline --decorate=no | sort | awk '{ print "- " $0 }'
+	git log "$last_release..HEAD" --oneline --decorate=no | sort | awk '{ print "- " $0 }'
 	echo ""
-	if git log $last_release..HEAD | grep -q BREAKING ; then
+	if git log "$last_release..HEAD" | grep -q BREAKING ; then
 		echo "## Breaking Changes"
-		git log $last_release..HEAD | \
+		git log "$last_release..HEAD" | \
 			grep BREAKING | \
 			sed 's/^[[:space:]]*BREAKING CHANGE: //g' | \
 			awk '{ print "- " $0 }'
@@ -276,6 +277,7 @@ function create_release_notes() {
 	fi
 	echo "> [!TIP]"
 	echo "> You can find the correct asset for your system with the following command:"
+	# shellcheck disable=2016
 	echo '> `echo "run_$(uname -s)_$(uname -m).tar.gz"`'
 }
 
@@ -286,7 +288,7 @@ function create_release() {
 	create_release_notes | gh release create \
 		--repo="${GITHUB_REPOSITORY:-amonks/run}" \
 		--notes-file=- \
-		$version_name \
+		"$version_name" \
 		dist/*
 }
 
