@@ -6,24 +6,32 @@
 | <img alt="non-interactive output" src="https://github.com/amonks/run/blob/main/screenshots/printer.gif?raw=true" /> | <img alt="interactive TUI" src="https://github.com/amonks/run/blob/main/screenshots/tui.gif?raw=true" /> |
 | ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 
-Run is a dependency-aware task runner, akin to [GNU
-Make][gnu make], [Task][go-task], or [Gulp][gulpjs]. Run prioritizes
-executing tasks in parallel when possible, and includes an interactive UI where
-you can use the mouse or keyboard to inspect, scroll, search, and restart
-individual tasks.
+Run is a dependency-aware task runner with an interactive process management
+UI.
 
-- **Flexible Task Configuration**: Support for complex task dependencies,
-  environment variable injection, and file watching for automatic task
-  re-execution.
-- **Interactive TUI**: Full mouse support for managing many long-lived and
-  parallel tasks.
-- **Non-Interactive Mode**: Interleaved output suitable for short-lived
-  processes or CI runs.
-- **Go API**: Extensibility through a Go programming interface.
+Task runners (like [GNU Make][gnu make], [Task][go-task], or [Gulp][gulpjs])
+are great for task sequencing, but they aren't suitable for managing the
+long-running programs that make up a dev environment or a production service.
+Process managers (like [Overmind][overmind], [Foreman][foreman], or [Exo][exo])
+are great for managing long-running programs, but they aren't suitable for
+sequencing the dependent tasks that make up a build or test process. Run
+combines the best features from both worlds.
+
+- **Flexible Task Configuration**: Configure tasks with complex dependency
+  chains, filesystem triggers, and environment variable injection.
+- **Interactive TUI**: Search and inspect task logs and even restart tasks
+  interactively with full mouse support.
+- **Non-Interactive CI Mode**: Share task configuration and dependency logic
+  between your dev environment and your CI/CD system.
+- **Go API**: Use Run's task engine and UI components to build your own custom
+  tools.
 
 [gnu make]: https://www.gnu.org/software/make/
 [go-task]: https://github.com/go-task/task
 [gulpjs]: https://gulpjs.com
+[overmind]: https://github.com/DarthSim/overmind
+[foreman]: https://github.com/ddollar/foreman
+[exo]: https://exo.deref.io
 
 # Installation
 
