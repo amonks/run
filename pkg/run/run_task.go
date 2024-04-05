@@ -23,7 +23,6 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 	}
 
 	var (
-		ids       = []string{}
 		tasks     = map[string]Task{}
 		byDep     = map[string][]string{}
 		byTrigger = map[string][]string{}
@@ -52,7 +51,6 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 			return errors.New(strings.Join(lines, "\n"))
 		}
 
-		ids = append(ids, id)
 		t := allTasks.Get(id)
 		tasks[id] = t
 		taskStatus.set(id, TaskStatusNotStarted)
@@ -75,6 +73,15 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 	}
 	if err := ingestTask(taskID); err != nil {
 		return nil, err
+	}
+
+	// Now that we know which tasks we need, put their IDs in the same
+	// order they appear in allTasks.
+	ids := []string{}
+	for _, id := range allTasks.IDs() {
+		if _, isIncluded := tasks[id]; isIncluded {
+			ids = append(ids, id)
+		}
 	}
 
 	runType := RunTypeShort
