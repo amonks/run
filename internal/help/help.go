@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/amonks/run/internal/color"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
 )
@@ -45,12 +44,9 @@ var (
 		Header: lipgloss.NewStyle().
 			Underline(true).
 			Bold(true).
-			MarginBottom(1).
-			Foreground(color.Yellow),
-		Keys: lipgloss.NewStyle().Bold(true).
-			Foreground(color.XXXLight),
-		Desc: lipgloss.NewStyle().Italic(true).
-			Foreground(color.XXLight),
+			MarginBottom(1),
+		Keys: lipgloss.NewStyle().Bold(true),
+		Desc: lipgloss.NewStyle().Italic(true),
 	}
 )
 

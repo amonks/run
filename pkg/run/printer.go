@@ -6,7 +6,6 @@ import (
 	"io"
 	"strings"
 
-	"github.com/amonks/run/internal/color"
 	"github.com/amonks/run/internal/mutex"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -81,8 +80,7 @@ func (p *printer) Write(key, message string) {
 			k, p.lastKey = key, key
 		}
 		keyStyle := keyStyle
-		keyStyle = keyStyle.Copy().
-			Foreground(color.Hash(key))
+		keyStyle = keyStyle.Copy()
 		if p.stdout == nil {
 			panic("nil stdout")
 		}

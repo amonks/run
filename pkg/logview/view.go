@@ -216,6 +216,4 @@ func lastNLines(s string, n int) string {
 	return strings.Join(lines[max(0, len(lines)-n):], "\n")
 }
 
-var highlight = lipgloss.NewStyle().
-	Background(lipgloss.Color("#FFFF00")).
-	Foreground(lipgloss.Color("#000000"))
+var highlight = lipgloss.NewStyle()

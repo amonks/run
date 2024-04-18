@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/amonks/run/internal/color"
 	"github.com/amonks/run/internal/help"
 	"github.com/amonks/run/pkg/logview"
 	"github.com/charmbracelet/lipgloss"
@@ -57,21 +56,21 @@ func (m *tuiModel) styles(width, height int, focus focusArea) *styles {
 			out.menuWidth = min(width, 8)
 			out.logWidth = max(0, width-out.menuWidth)
 			out.renderMenuItem = func(id string, spinner string, marker string, index int, isSelected bool) string {
-				dotStyle := lipgloss.NewStyle().Foreground(color.Hash(id)).Underline(isSelected).Inline(true)
+				dotStyle := lipgloss.NewStyle().Underline(isSelected).Inline(true)
 				return fmt.Sprintf("%s %2.1d %s", spinner, index, dotStyle.Render("•"))
 			}
 		} else if width < 256 {
 			out.menuWidth = min(width, m.longestIDLength+11)
 			out.logWidth = max(0, width-out.menuWidth)
 			out.renderMenuItem = func(id string, spinner string, marker string, index int, isSelected bool) string {
-				taskStyle := lipgloss.NewStyle().Foreground(color.Hash(id)).Inline(true)
+				taskStyle := lipgloss.NewStyle().Inline(true)
 				return fmt.Sprintf("%s %s %2.1d %s", marker, spinner, index, taskStyle.Render("• "+id))
 			}
 		} else {
 			out.menuWidth = min(width, m.longestIDLength+19)
 			out.logWidth = max(0, width-out.menuWidth)
 			out.renderMenuItem = func(id string, spinner string, marker string, index int, isSelected bool) string {
-				taskStyle := lipgloss.NewStyle().Foreground(color.Hash(id)).Inline(true)
+				taskStyle := lipgloss.NewStyle().Inline(true)
 				return fmt.Sprintf("  %s %s %2.1d %s", marker, spinner, index, taskStyle.Render("• "+id))
 			}
 		}
@@ -80,24 +79,24 @@ func (m *tuiModel) styles(width, height int, focus focusArea) *styles {
 			out.menuWidth = width
 			out.logWidth = 0
 			out.renderMenuItem = func(id string, spinner string, marker string, index int, isSelected bool) string {
-				taskStyle := lipgloss.NewStyle().Foreground(color.Hash(id)).Inline(true)
-				itemStyle := lipgloss.NewStyle().Foreground(color.XXXLight).Inline(true).MaxWidth(out.menuWidth).Width(out.menuWidth)
+				taskStyle := lipgloss.NewStyle().Inline(true)
+				itemStyle := lipgloss.NewStyle().Inline(true).MaxWidth(out.menuWidth).Width(out.menuWidth)
 				return itemStyle.Render(fmt.Sprintf("%s %s %2.1d %s", marker, spinner, index, taskStyle.Render("• "+id)))
 			}
 		} else if width < 256 {
 			out.menuWidth = min(width, m.longestIDLength+11)
 			out.logWidth = max(0, width-out.menuWidth)
 			out.renderMenuItem = func(id string, spinner string, marker string, index int, isSelected bool) string {
-				taskStyle := lipgloss.NewStyle().Foreground(color.Hash(id)).Inline(true)
-				itemStyle := lipgloss.NewStyle().Foreground(color.XXXLight).Inline(true).MaxWidth(out.menuWidth).Width(out.menuWidth)
+				taskStyle := lipgloss.NewStyle().Inline(true)
+				itemStyle := lipgloss.NewStyle().Inline(true).MaxWidth(out.menuWidth).Width(out.menuWidth)
 				return itemStyle.Render(fmt.Sprintf("%s %s %2.1d %s", marker, spinner, index, taskStyle.Render("• "+id)))
 			}
 		} else {
 			out.menuWidth = min(width, m.longestIDLength+19)
 			out.logWidth = max(0, width-out.menuWidth)
 			out.renderMenuItem = func(id string, spinner string, marker string, index int, isSelected bool) string {
-				taskStyle := lipgloss.NewStyle().Foreground(color.Hash(id)).Inline(true)
-				itemStyle := lipgloss.NewStyle().Foreground(color.XXXLight).Inline(true).MaxWidth(out.menuWidth).Width(out.menuWidth)
+				taskStyle := lipgloss.NewStyle().Inline(true)
+				itemStyle := lipgloss.NewStyle().Inline(true).MaxWidth(out.menuWidth).Width(out.menuWidth)
 				return itemStyle.Render(fmt.Sprintf("  %s %s %2.1d %s", marker, spinner, index, taskStyle.Render("• "+id)))
 			}
 		}
@@ -158,7 +157,6 @@ func (m *tuiModel) styles(width, height int, focus focusArea) *styles {
 		Height(out.menuHeight).MaxHeight(out.menuHeight)
 	out.log = &logview.Styles{
 		Log: lipgloss.NewStyle().
-			Foreground(color.XXXLight).
 			Width(out.logWidth).MaxWidth(out.logWidth).
 			Height(out.logHeight).MaxHeight(out.logHeight),
 	}
@@ -180,37 +178,29 @@ func (m *tuiModel) styles(width, height int, focus focusArea) *styles {
 var (
 	headerTall = lipgloss.NewStyle().
 			Padding(0, 2).
-			Foreground(color.Yellow).
 			Bold(true)
 	headerShortActive = lipgloss.NewStyle().
 				Padding(0, 2).
-				Background(color.Light).
-				Foreground(color.XXXDark).
 				Bold(true).
 				Underline(true)
 	headerShortInactive = lipgloss.NewStyle().
-				Padding(0, 2).
-				Foreground(color.XXLight)
+				Padding(0, 2)
 	footerShort = lipgloss.NewStyle().
-			Padding(0, 2).
-			Foreground(color.XXLight)
+			Padding(0, 2)
 	footerTall = lipgloss.NewStyle().
-			Padding(0, 2).
-			Foreground(color.XXLight)
+			Padding(0, 2)
 
 	inlineHelp = &help.Styles{
 		Keys: lipgloss.NewStyle().
-			Italic(true).
-			Foreground(color.XXLight),
-		Desc: lipgloss.NewStyle().
-			Foreground(color.XLight),
+			Italic(true),
+		Desc: lipgloss.NewStyle(),
 	}
 )
 
 func hr(width int, emphasize bool) string {
 	if emphasize {
-		return lipgloss.NewStyle().Foreground(color.Yellow).Render(strings.Repeat("─", width))
+		return lipgloss.NewStyle().Render(strings.Repeat("─", width))
 	} else {
-		return lipgloss.NewStyle().Foreground(color.XDark).Render(strings.Repeat("─", width))
+		return lipgloss.NewStyle().Render(strings.Repeat("─", width))
 	}
 }
