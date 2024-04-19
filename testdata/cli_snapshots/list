@@ -1,7 +1,7 @@
      
 [1;4;4mT[0m[1;4;4mA[0m[1;4;4mS[0m[1;4;4mK[0m[1;4;4mS[0m
      
-  [38;2;253;101;255mprerelease[0m
+  [95mprerelease[0m
     Type: [3mshort[0m
     Description:
 [3m[0m      [3m- run the tests[0m           
@@ -12,19 +12,19 @@
       - generate-docs
       - validate
 
-  [38;2;101;239;255minstall[0m
+  [96minstall[0m
     Type: [3mshort[0m
     Description:
 [3m[0m      [3m"go install ./cmd/run"[0m
     Dependencies:
       - generate
 
-  [38;2;226;101;255mgenerate[0m
+  [95mgenerate[0m
     Type: [3mshort[0m
     Description:
 [3m[0m      [3m"go generate ./..."[0m
 
-  [38;2;101;151;255mvalidate[0m
+  [94mvalidate[0m
     Type: [3mshort[0m
     Dependencies:
       - generate
@@ -34,67 +34,67 @@
       - snapshot-cli
       - shellcheck
 
-  [38;2;120;101;255mtest[0m
+  [94mtest[0m
     Type: [3mshort[0m
     Description:
 [3m[0m      [3m"go test ./..."[0m
 
-  [38;2;101;255;184mvulncheck[0m
+  [92mvulncheck[0m
     Type: [3mshort[0m
     Description:
 [3m[0m      [3m"go run golang.org/x/vuln/cmd/govulncheck ./..."[0m
 
-  [38;2;255;109;101mstaticcheck[0m
+  [91mstaticcheck[0m
     Type: [3mshort[0m
     Description:
 [3m[0m      [3m"go run honnef.co/go/tools/cmd/staticcheck ./..."[0m
 
-  [38;2;255;194;101mshellcheck[0m
+  [91mshellcheck[0m
     Type: [3mshort[0m
     Description:
 [3m[0m      [3m"shellcheck $(git ls-files | grep 'sh$')"[0m
 
-  [38;2;123;101;255mscreenshots[0m
+  [94mscreenshots[0m
     Type: [3mshort[0m
     Dependencies:
       - screenshot-tui
       - screenshot-printer
       - screenshot-nontty
 
-  [38;2;233;101;255mscreenshot-tui[0m
+  [95mscreenshot-tui[0m
     Type: [3mshort[0m
     Dependencies:
       - install
       - screenshots-deps
 
-  [38;2;101;255;169mscreenshot-printer[0m
+  [92mscreenshot-printer[0m
     Type: [3mshort[0m
     Dependencies:
       - install
       - screenshots-deps
 
-  [38;2;214;101;255mscreenshot-nontty[0m
+  [95mscreenshot-nontty[0m
     Type: [3mshort[0m
     Dependencies:
       - install
       - screenshots-deps
 
-  [38;2;195;101;255mscreenshots-deps[0m
+  [95mscreenshots-deps[0m
     Type: [3mshort[0m
 
-  [38;2;255;252;101mreset-snapshot-failures[0m
+  [93mreset-snapshot-failures[0m
     Type: [3mshort[0m
 
-  [38;2;255;101;181moverwrite-snapshots[0m
+  [95moverwrite-snapshots[0m
     Type: [3mshort[0m
 
-  [38;2;255;216;101mgenerate-docs[0m
+  [93mgenerate-docs[0m
     Type: [3mshort[0m
 
-  [38;2;255;101;103mgenerate-readme-usage[0m
+  [91mgenerate-readme-usage[0m
     Type: [3mshort[0m
 
-  [38;2;202;255;101msnapshot-cli[0m
+  [93msnapshot-cli[0m
     Type: [3mshort[0m
     Dependencies:
       - generate
