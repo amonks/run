@@ -6,7 +6,6 @@ import (
 
 	"github.com/amonks/run/internal/color"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/termenv"
 )
 
 type Menu []Section
@@ -26,10 +25,6 @@ type renderedInlineHelpItem struct {
 type Key struct {
 	Keys string
 	Desc string
-}
-
-func init() {
-	lipgloss.SetColorProfile(termenv.TrueColor)
 }
 
 var (
