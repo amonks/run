@@ -27,7 +27,7 @@
 [[task]]
   id = "test"
   type = "short"
-  cmd = "go test ./..."
+  cmd = "go test ./... -v -count=5 -race"
 
 [[task]]
   id = "vulncheck"
@@ -54,7 +54,7 @@
   ]
   cmd = """
     echo Cleaning up...
-    rm example/build.log
+    rm example/build.log || echo "no cleanup to do"
   """
 
 [[task]]

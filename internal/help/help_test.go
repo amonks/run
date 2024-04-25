@@ -9,14 +9,15 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// no assertions; useful for testing visually; remove the Fail to see output
-func TestRenderInline(t *testing.T) {
+// no assertions; useful for testing visually; remove the Skip and run with -v to see output
+func TestRenderInlineVisually(t *testing.T) {
+	t.Skip("no actual test here")
+
 	for i := range 40 {
 		w := i * 2
 		fmt.Println("::::::")
 		fmt.Println(s.Copy().Width(w).MaxWidth(w).Height(2).MaxHeight(2).Render(sec.RenderInline(help.Monochrome, w, 2)))
 	}
-	// t.Fail()
 }
 
 var s = lipgloss.NewStyle().Background(color.Green)
