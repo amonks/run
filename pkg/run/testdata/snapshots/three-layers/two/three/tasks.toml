@@ -1,5 +1,0 @@
-[[task]]
-  id = "test"
-  type = "short"
-  cmd = "exit 0"
-

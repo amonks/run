@@ -1,4 +1,0 @@
-[[task]]
-  id="test"
-  type="short"
-  cmd="echo '{\"stats\":{\"roundness\":10,\"fishiness\":4}}'"
