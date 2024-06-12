@@ -26,6 +26,8 @@ For documentation and the latest version, please visit GitHub:
         Display the task list and exit. If run is invoked
         with both -list and a task ID, that task's
         dependencies are displayed.
+  -pprof
+        Run a pprof server on port 6060.
   -ui=string
         Force a particular ui. Legal values are 'tui' and
         'printer'.

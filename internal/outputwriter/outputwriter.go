@@ -10,7 +10,7 @@ import (
 )
 
 func New(stdout io.Writer) io.Writer {
-	jsonW := &jsonWriter{w: stdout}
+	jsonW := newJSONWriter(stdout)
 	bufW := &lineBufferedWriter{buf: bufio.NewWriter(jsonW)}
 	bufW.mu = mutex.New("linebuffered")
 	return bufW
@@ -43,10 +43,21 @@ func (w *lineBufferedWriter) Write(bs []byte) (n int, err error) {
 }
 
 type jsonWriter struct {
-	w io.Writer
+	mu *mutex.Mutex
+	w  io.Writer
+}
+
+func newJSONWriter(w io.Writer) *jsonWriter {
+	return &jsonWriter{
+		mu: mutex.New("jsonWriter"),
+		w:  w,
+	}
 }
 
 func (w *jsonWriter) Write(bs []byte) (int, error) {
+	w.mu.Lock("Write")
+	defer w.mu.Unlock()
+
 	var pretty bytes.Buffer
 	if err := json.Indent(&pretty, bs, "", "  "); err == nil {
 		w.w.Write(pretty.Bytes())

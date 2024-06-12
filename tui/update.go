@@ -27,7 +27,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if msg.Button == tea.MouseButtonLeft {
-			for i, id := range m.ids {
+			status := m.tui.runner.Status()
+			for i, id := range status.AllTasks {
 				if zone.Get(id).InBounds(msg) {
 					m.selectedTaskIDIndex = i
 					m.focus = focusMenu
@@ -233,19 +234,20 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9":
+			status := m.tui.runner.Status()
 			n, err := strconv.Atoi(msg.String())
 			if err != nil {
 				panic(err)
 			}
 			i := n
-			if i < len(m.ids) {
+			if i < len(status.AllTasks) {
 				m.selectedTaskIDIndex = i
 				// XXX: shouldn't this set m.activeTask?
 			}
 			return m, nil
 
 		case "r":
-			m.tui.runner.Invalidate(m.ids[m.selectedTaskIDIndex])
+			m.tui.runner.Invalidate(m.activeTaskID())
 			return m, nil
 
 		default:
@@ -254,6 +256,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case msgWrite:
 		lv := m.tasks[msg.key]
+		if lv == nil {
+			panic("logview " + msg.key + " not initialized")
+		}
 		lv.Write(msg.content)
 		return m, nil
 

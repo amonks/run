@@ -13,7 +13,6 @@ type Model struct {
 	onInit func()
 
 	focus               focusArea
-	ids                 []string
 	selectedTaskIDIndex int
 	longestIDLength     int
 
@@ -35,7 +34,12 @@ type Model struct {
 
 func (m *Model) Init() tea.Cmd {
 	m.tasks = map[string]*logview.Model{}
-	for _, id := range m.ids {
+	for _, id := range m.tui.runner.Library().IDs() {
+		lv := logview.New(logview.WithoutStatusbar)
+		lv.SetWrapMode(true)
+		m.tasks[id] = lv
+	}
+	for _, id := range []string{"@interleaved", "@watch"} {
 		lv := logview.New(logview.WithoutStatusbar)
 		lv.SetWrapMode(true)
 		m.tasks[id] = lv
@@ -65,7 +69,7 @@ func (m *Model) activeTask() *logview.Model {
 }
 
 func (m *Model) activeTaskID() string {
-	return m.ids[m.selectedTaskIDIndex]
+	return m.tui.runner.Status().AllTasks[m.selectedTaskIDIndex]
 }
 
 type focusArea int

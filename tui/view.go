@@ -115,6 +115,7 @@ func (m *Model) renderSpinner(taskStatus runner.TaskStatus, id string) string {
 		if meta.Type == "long" {
 			return m.longSpinner.View()
 		} else {
+			return "-"
 			return m.shortSpinner.View()
 		}
 	case runner.TaskStatusRestarting:
@@ -130,6 +131,9 @@ func (m *Model) renderSpinner(taskStatus runner.TaskStatus, id string) string {
 
 func (m *Model) renderLog(styles *styles) string {
 	activeLogview := m.tasks[m.activeTaskID()]
+	if activeLogview == nil {
+		panic(m.activeTaskID())
+	}
 	return activeLogview.Render(styles.log, styles.logWidth, styles.logHeight)
 }
 

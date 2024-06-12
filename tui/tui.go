@@ -26,7 +26,6 @@ func Start(ctx context.Context, stdin io.Reader, stdout io.Writer, tasks tasks.L
 		tui.p = tea.NewProgram(
 			&Model{
 				tui:    tui,
-				ids:    append([]string{runner.InternalTaskInterleaved}, tui.runner.Library().IDs()...),
 				onInit: func() { uiReady <- struct{}{} },
 			},
 			tea.WithAltScreen(),

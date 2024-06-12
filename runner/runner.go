@@ -134,10 +134,12 @@ func (r *Runner) Run(ctx context.Context, requestedTaskIDs ...string) error {
 
 	// Cancel all the tasks.
 	// TODO: parallel
+	r.mu.Lock("cancel executors")
 	for id, executor := range r.executors {
 		r.printf(id, styles.Log, "canceling")
 		executor.Cancel()
 	}
+	r.mu.Unlock()
 	r.mu.Printf("done canceling")
 
 	// Done!
@@ -171,6 +173,7 @@ func (r *Runner) Status() Status {
 	defer r.mu.Unlock()
 
 	status := Status{
+		AllTasks:       nil,
 		MetaTasks:      nil,
 		RequestedTasks: nil,
 		ActiveTasks:    nil,
@@ -194,6 +197,19 @@ func (r *Runner) Status() Status {
 			status.InactiveTasks = append(status.InactiveTasks, id)
 		}
 		status.TaskStatus[id] = r.status[id]
+	}
+
+	for _, id := range status.MetaTasks {
+		status.AllTasks = append(status.AllTasks, id)
+	}
+	for _, id := range status.RequestedTasks {
+		status.AllTasks = append(status.AllTasks, id)
+	}
+	for _, id := range status.ActiveTasks {
+		status.AllTasks = append(status.AllTasks, id)
+	}
+	for _, id := range status.InactiveTasks {
+		status.AllTasks = append(status.AllTasks, id)
 	}
 
 	return status
@@ -397,7 +413,9 @@ func (r *Runner) runTask(ctx context.Context, id string) error {
 		select {
 		case _, ok := <-onReady:
 			if ok {
+				r.printf(id, styles.Log, "try to send readiness signal...")
 				r.input <- msgTaskReady(id)
+				r.printf(id, styles.Log, "sent readiness signal.")
 			}
 		case <-stoppedEarly:
 		}
@@ -425,13 +443,16 @@ func (r *Runner) runTask(ctx context.Context, id string) error {
 		// If we haven't sent a readiness signal yet, cancel it.
 		select {
 		case stoppedEarly <- struct{}{}:
+			r.printf(id, styles.Log, "canceled readiness signal")
 		default:
+			r.printf(id, styles.Log, "readiness signal already fired")
 		}
 
 		// If we were canceled, the canceler's goroutine was already
 		// notified by the executor and resumed control flow. Otherwise,
 		// back to the main loop.
 		if notCanceled {
+			r.printf(id, styles.Log, "send exit signal")
 			r.input <- msgTaskExit{id, err}
 		}
 	}()
@@ -449,6 +470,10 @@ func (r *Runner) handleTaskReady(id string) error {
 	r.mu.Printf("'%s' becomes ready", id)
 	r.ready[id] = true
 	active := r.activeSubtree()
+	switch r.status[id] {
+	case TaskStatusRestarting:
+		r.status[id] = TaskStatusRunning
+	}
 
 	// Start tasks that depend on this one.
 	for _, other := range active.WithDependency(id) {
@@ -570,6 +595,7 @@ func (r *Runner) handleFSEvent(ev msgFSEvent) error {
 }
 
 type Status struct {
+	AllTasks       []string
 	MetaTasks      []string
 	RequestedTasks []string
 	ActiveTasks    []string

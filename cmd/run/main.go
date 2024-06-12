@@ -4,6 +4,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"reflect"
 	"strings"
@@ -31,10 +34,17 @@ var (
 	fCredits      = flag.Bool("credits", false, "Display the open source credits and exit.")
 	fContributors = flag.Bool("contributors", false, "Display the contributors list and exit.")
 	fLicense      = flag.Bool("license", false, "Display the license info and exit.")
+	fPprof        = flag.Bool("pprof", false, "Run a pprof server on port 6060.")
 )
 
 func main() {
 	flag.Parse()
+
+	if *fPprof {
+		go func() {
+			log.Println(http.ListenAndServe("localhost:6060", nil))
+		}()
+	}
 
 	if *fVersion {
 		fmt.Println(versionText())

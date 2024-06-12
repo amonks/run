@@ -38,8 +38,8 @@ func (w *MultiWriter) String(id string) string {
 		return ""
 	}
 
-	writer.mu.Lock("String-2")
-	defer writer.mu.Unlock()
+	writer.bufMu.Lock("String-2")
+	defer writer.bufMu.Unlock()
 	return writer.buf.String()
 }
 
@@ -60,23 +60,35 @@ func (w *MultiWriter) Writer(id string) io.Writer {
 	if w, exists := w.bufs[id]; exists {
 		return w
 	}
-	w.bufs[id] = newWriter(id, w.combined)
+	w.bufs[id] = newWriter(id, w.combined, w.mu)
 	return w.bufs[id]
 }
 
 type writer struct {
-	tee io.Writer
-	id  string
-	mu  *mutex.Mutex
-	buf *bytes.Buffer
+	tee   io.Writer
+	teeMu *mutex.Mutex
+
+	id    string
+	buf   *bytes.Buffer
+	bufMu *mutex.Mutex
 }
 
-func newWriter(id string, tee io.Writer) *writer {
+func newWriter(id string, tee io.Writer, teeMu *mutex.Mutex) *writer {
 	var buf bytes.Buffer
-	return &writer{tee: tee, id: id, buf: &buf}
+	return &writer{
+		tee:   tee,
+		teeMu: teeMu,
+		id:    id,
+		buf:   &buf,
+		bufMu: mutex.New("mwwriter"),
+	}
 }
 
 func (w *writer) Write(bs []byte) (int, error) {
-	w.tee.Write([]byte(fmt.Sprintf("[%s] %s", w.id, string(bs))))
+	w.teeMu.Lock("Write")
+	w.tee.Write([]byte(fmt.Sprintf("[%s] %s", w.id, string(bs)))) // MARK: read & write
+	w.teeMu.Unlock()
+
+	defer w.bufMu.Lock("Write").Unlock()
 	return w.buf.Write(bs)
 }
