@@ -37,7 +37,7 @@
   [94mtest[0m
     Type: [3mshort[0m
     Description:
-[3m[0m      [3m"go test ./..."[0m
+[3m[0m      [3m"go test ./... -v -count=5 -race"[0m
 
   [92mvulncheck[0m
     Type: [3mshort[0m

@@ -9,7 +9,9 @@ import (
 )
 
 func New(name string) *Mutex {
-	return &Mutex{name: name}
+	mu := &Mutex{name: name}
+	mu.Printf("--- begin ---")
+	return mu
 }
 
 // Mutex wraps sync.Mutex, providing these additional features:
@@ -18,10 +20,8 @@ func New(name string) *Mutex {
 //     Mutex.log.
 //   - You can log additional info to Mutex.log with [Mutex.printf].
 type Mutex struct {
-	name     string
-	holder   string
-	mu       sync.Mutex
-	internal sync.Mutex
+	name string
+	mu   sync.Mutex
 }
 
 var debug = false
@@ -39,36 +39,22 @@ func init() {
 }
 
 func (mu *Mutex) Lock(name string) *Mutex {
-	mu.printf("%s seeks lock", name)
+	mu.Printf("%s seeks lock", name)
 	mu.mu.Lock()
-	mu.printf("%s got lock", name)
+	mu.Printf("%s receives lock", name)
 
 	return mu
 }
 
 func (mu *Mutex) Unlock() {
-	mu.setHolder("")
-	mu.printf("unlocks")
+	mu.Printf("releases lock")
 	mu.mu.Unlock()
 }
 
-func (mu *Mutex) setHolder(name string) {
-	mu.internal.Lock()
-	defer mu.internal.Unlock()
-	mu.holder = name
-}
-
-func (mu *Mutex) printf(s string, args ...interface{}) {
+func (mu *Mutex) Printf(s string, args ...interface{}) {
 	if debug {
-		mu.internal.Lock()
-		defer mu.internal.Unlock()
-
 		s = strings.TrimSpace(s)
-		holder := mu.holder
 		var suffix string
-		if holder != "" {
-			suffix = fmt.Sprintf(" <held by %s>", holder)
-		}
 		d := time.Now().Format(time.StampNano)
 		prefix := fmt.Sprintf("%s [%s] ", d, mu.name)
 		fmt.Fprintf(logfile, prefix+s+suffix+"\n", args...)

@@ -2,19 +2,22 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"fmt"
+	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
-	"os/signal"
 	"reflect"
 	"strings"
-	"sync"
-	"syscall"
 
 	meta "github.com/amonks/run"
 	"github.com/amonks/run/internal/color"
-	"github.com/amonks/run/pkg/run"
+	"github.com/amonks/run/printer"
+	"github.com/amonks/run/runner"
+	"github.com/amonks/run/taskfile"
+	"github.com/amonks/run/tasks"
+	"github.com/amonks/run/tui"
 	"github.com/muesli/reflow/dedent"
 	"github.com/muesli/reflow/indent"
 	"github.com/muesli/reflow/wordwrap"
@@ -31,10 +34,17 @@ var (
 	fCredits      = flag.Bool("credits", false, "Display the open source credits and exit.")
 	fContributors = flag.Bool("contributors", false, "Display the contributors list and exit.")
 	fLicense      = flag.Bool("license", false, "Display the license info and exit.")
+	fPprof        = flag.Bool("pprof", false, "Run a pprof server on port 6060.")
 )
 
 func main() {
 	flag.Parse()
+
+	if *fPprof {
+		go func() {
+			log.Println(http.ListenAndServe("localhost:6060", nil))
+		}()
+	}
 
 	if *fVersion {
 		fmt.Println(versionText())
@@ -53,133 +63,63 @@ func main() {
 		os.Exit(0)
 	}
 
-	allTasks, err := run.Load(*fDir)
+	allTasks, err := taskfile.Load(*fDir)
 	if err != nil {
 		fmt.Println("Error loading tasks:")
 		fmt.Println(err)
 		os.Exit(1)
 	}
+	library := allTasks.ToLibrary()
+
+	if *fList {
+		fmt.Println(tasklistText(library))
+		os.Exit(0)
+	}
 
 	taskID := flag.Arg(0)
 	if taskID == "" {
-		if *fList {
-			fmt.Println(tasklistText(allTasks))
-			os.Exit(0)
-		}
 		fmt.Println(helpText())
 		os.Exit(0)
 	}
 
-	r, err := run.RunTask(*fDir, allTasks, taskID)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-		return
-	}
+	subtree := library.Subtree(taskID)
 
-	if *fList {
-		fmt.Println(tasklistText(r.Tasks()))
-		os.Exit(0)
-	}
-
-	var ui run.UI
+	var useTUI bool
 	switch *fUI {
 	case "tui":
-		ui = run.NewTUI(r)
+		useTUI = true
 	case "printer":
-		ui = run.NewPrinter(r)
+		useTUI = false
 	case "":
 		if !term.IsTerminal(int(os.Stdout.Fd())) {
-			ui = run.NewPrinter(r)
-		} else if r.Type() == run.RunTypeShort {
-			ui = run.NewPrinter(r)
+			useTUI = false
+		} else if subtree.HasAnyLongTask() {
+			useTUI = true
 		} else {
-			ui = run.NewTUI(r)
+			useTUI = false
 		}
 	default:
 		fmt.Println("Invalid value for flag -ui. Legal values are 'tui' and 'printer'.")
 		os.Exit(1)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	var wg sync.WaitGroup
-	wg.Add(2)
-
-	uiReady := make(chan struct{})
-
-	// Whether the UI or the Run exits first, that first exit is the cause
-	// of program exit, so we want to capture its error and base the exit
-	// code on it. The second exit is just a side effect of the first thing
-	// dying, so we don't need it.
-	exitReason := &first[error]{}
-
-	go func() {
-		defer wg.Done()
-		err := ui.Start(ctx, uiReady, os.Stdin, os.Stdout)
-		if !exitReason.isSet() {
-			if err != nil {
-				exitReason.set(err)
-			} else if r.Type() == run.RunTypeShort {
-				// If the UI exits before the run, and the run
-				// is short, that itself is an error even if the
-				// ui returns nil.
-				exitReason.set(errors.New("UI exited before run was complete"))
-			} else {
-				// exit ok
-				exitReason.set(context.Canceled)
-			}
-		}
-		if err != context.Canceled {
-			cancel()
-		}
-	}()
-
-	<-uiReady
-
-	go func() {
-		defer wg.Done()
-		err := r.Start(ctx, ui)
-		exitReason.set(err)
-
-		// Don't close the UI if '-tui' was explicitly set--the user
-		// indicated that they want to look carefully at output.
-		if *fUI != "tui" && err != context.Canceled {
-			cancel()
-		}
-	}()
-
-	allDone := make(chan struct{})
-	go func() { wg.Wait(); allDone <- struct{}{} }()
-
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGHUP, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
-
-	select {
-	case <-sigs:
-		cancel()
-		<-allDone
-	case <-allDone:
-	}
-
-	if err := exitReason.get(); err != nil && errors.Is(err, context.Canceled) {
-		fmt.Printf("Canceled\n")
-		os.Exit(0)
-	} else if err != nil {
-		fmt.Printf("Error: %s\n", err)
-		os.Exit(1)
+	if useTUI {
+		tui.Start(context.Background(), os.Stdin, os.Stdout, library, taskID)
 	} else {
-		os.Exit(0)
+		prn := printer.New(subtree.LongestID(), os.Stdout)
+		r := runner.New(runner.RunnerModeExit, library, *fDir, prn)
+		r.Run(context.Background(), taskID)
 	}
 }
 
-func tasklistText(tasks run.Tasks) string {
+func tasklistText(tasks tasks.Library) string {
 	b := &strings.Builder{}
 	fmt.Fprintln(b, headerStyle.Render("TASKS"))
 	for i, id := range tasks.IDs() {
 		if i != 0 {
 			b.WriteString("\n")
 		}
-		t := tasks.Get(id)
+		t := tasks.Task(id)
 		meta := t.Metadata()
 
 		fmt.Fprintf(b, "  %s\n", color.RenderHash(id))

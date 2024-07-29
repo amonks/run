@@ -3,8 +3,8 @@ package color
 import (
 	"hash/fnv"
 	"math"
-	"sync"
 
+	"github.com/amonks/run/internal/mutex"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -17,12 +17,13 @@ func Hash(s string) lipgloss.AdaptiveColor {
 }
 
 var globalColorer = &colorer{
+	mu:          mutex.New("globalColorer"),
 	colorCache:  map[string]lipgloss.AdaptiveColor{},
 	renderCache: map[string]string{},
 }
 
 type colorer struct {
-	mu          sync.Mutex
+	mu          *mutex.Mutex
 	colorCache  map[string]lipgloss.AdaptiveColor
 	renderCache map[string]string
 }
@@ -30,7 +31,7 @@ type colorer struct {
 func (c *colorer) render(s string) string {
 	color := c.hash(s)
 
-	c.mu.Lock()
+	c.mu.Lock("render")
 	defer c.mu.Unlock()
 
 	if out, ok := c.renderCache[s]; ok {
@@ -41,7 +42,7 @@ func (c *colorer) render(s string) string {
 }
 
 func (c *colorer) hash(s string) lipgloss.AdaptiveColor {
-	c.mu.Lock()
+	c.mu.Lock("hash")
 	defer c.mu.Unlock()
 
 	if color, ok := c.colorCache[s]; ok {
