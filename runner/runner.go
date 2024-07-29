@@ -18,6 +18,8 @@ import (
 )
 
 type Runner struct {
+	debug bool
+
 	mode    RunnerMode
 	library tasks.Library
 	dir     string
@@ -213,6 +215,13 @@ func (r *Runner) Status() Status {
 	}
 
 	return status
+}
+
+func (r *Runner) debugf(id, f string, args ...any) {
+	if !r.debug {
+		return
+	}
+	r.printf(id, styles.Log, f, args...)
 }
 
 func (r *Runner) printf(id string, style lipgloss.Style, f string, args ...any) {
@@ -443,16 +452,16 @@ func (r *Runner) runTask(ctx context.Context, id string) error {
 		// If we haven't sent a readiness signal yet, cancel it.
 		select {
 		case stoppedEarly <- struct{}{}:
-			r.printf(id, styles.Log, "canceled readiness signal")
+			r.debugf(id, "canceled readiness signal")
 		default:
-			r.printf(id, styles.Log, "readiness signal already fired")
+			r.debugf(id, "readiness signal already fired")
 		}
 
 		// If we were canceled, the canceler's goroutine was already
 		// notified by the executor and resumed control flow. Otherwise,
 		// back to the main loop.
 		if notCanceled {
-			r.printf(id, styles.Log, "send exit signal")
+			r.debugf(id, "send exit signal")
 			r.input <- msgTaskExit{id, err}
 		}
 	}()

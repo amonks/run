@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/amonks/run/pkg/logview"
+	"github.com/amonks/run/logview"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

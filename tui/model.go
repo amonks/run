@@ -1,7 +1,7 @@
 package tui
 
 import (
-	"github.com/amonks/run/pkg/logview"
+	"github.com/amonks/run/logview"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"

@@ -6,7 +6,7 @@ import (
 
 	"github.com/amonks/run/internal/color"
 	"github.com/amonks/run/internal/help"
-	"github.com/amonks/run/pkg/logview"
+	"github.com/amonks/run/logview"
 	"github.com/amonks/run/runner"
 	"github.com/charmbracelet/lipgloss"
 )

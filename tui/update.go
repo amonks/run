@@ -8,7 +8,7 @@ import (
 
 	"github.com/amonks/run/internal/ansi"
 	"github.com/amonks/run/internal/help"
-	"github.com/amonks/run/pkg/logview"
+	"github.com/amonks/run/logview"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	zone "github.com/lrstanley/bubblezone"
