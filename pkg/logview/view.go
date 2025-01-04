@@ -38,7 +38,7 @@ func (m *Model) Render(styles *Styles, width, height int) string {
 	// skip statusbar if window is too short
 	if height < 2 || !m.shouldShowStatusbar {
 		content := m.RenderLog(width, height)
-		logStyle := styles.Log.Copy().
+		logStyle := styles.Log.
 			Width(width).Height(height).
 			MaxWidth(width).MaxHeight(height)
 		return logStyle.Render(content)
@@ -46,11 +46,11 @@ func (m *Model) Render(styles *Styles, width, height int) string {
 
 	// render logview and statusbar
 	content := m.RenderLog(width, height-1)
-	logStyle := styles.Log.Copy().
+	logStyle := styles.Log.
 		Width(width).Height(height - 1).
 		MaxWidth(width).MaxHeight(height - 1)
 	logview := logStyle.Render(content)
-	statusbar := styles.Statusbar.Copy().
+	statusbar := styles.Statusbar.
 		Width(width).Height(1).
 		MaxWidth(width).MaxHeight(1).
 		Render(m.viewStatusbar())

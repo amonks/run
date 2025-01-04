@@ -14,7 +14,7 @@ func TestRenderInline(t *testing.T) {
 	for i := range 40 {
 		w := i * 2
 		fmt.Println("::::::")
-		fmt.Println(s.Copy().Width(w).MaxWidth(w).Height(2).MaxHeight(2).Render(sec.RenderInline(help.Monochrome, w, 2)))
+		fmt.Println(s.Width(w).MaxWidth(w).Height(2).MaxHeight(2).Render(sec.RenderInline(help.Monochrome, w, 2)))
 	}
 	// t.Fail()
 }
