@@ -81,8 +81,7 @@ func (p *printer) Write(key, message string) {
 			k, p.lastKey = key, key
 		}
 		keyStyle := keyStyle
-		keyStyle = keyStyle.Copy().
-			Foreground(color.Hash(key))
+		keyStyle = keyStyle.Foreground(color.Hash(key))
 		if p.stdout == nil {
 			panic("nil stdout")
 		}

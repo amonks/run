@@ -43,7 +43,7 @@ func (m *tuiModel) View() string {
 
 func (m *tuiModel) renderHeader(styles *styles) string {
 	var out strings.Builder
-	rightStyle := styles.headerRight.Copy().Foreground(color.Hash(m.activeTaskID()))
+	rightStyle := styles.headerRight.Foreground(color.Hash(m.activeTaskID()))
 	out.WriteString(styles.headerLeft.Render("") + rightStyle.Render(m.activeTaskID()))
 	if styles.headerLine != "" {
 		out.WriteString("\n" + styles.headerLine)

@@ -162,13 +162,13 @@ func (m *tuiModel) styles(width, height int, focus focusArea) *styles {
 			Width(out.logWidth).MaxWidth(out.logWidth).
 			Height(out.logHeight).MaxHeight(out.logHeight),
 	}
-	out.headerLeft = out.headerLeft.Copy().
+	out.headerLeft = out.headerLeft.
 		Width(out.menuWidth).MaxWidth(out.menuWidth).
 		Height(1).MaxHeight(1)
-	out.headerRight = out.headerRight.Copy().
+	out.headerRight = out.headerRight.
 		Width(out.logWidth).MaxWidth(out.logWidth).
 		Height(1).MaxHeight(1)
-	out.footer = out.footer.Width(width).MaxWidth(width).Copy().
+	out.footer = out.footer.Width(width).MaxWidth(width).
 		Height(1).MaxHeight(1 + out.inlineHelpHeight)
 
 	// these are staic
