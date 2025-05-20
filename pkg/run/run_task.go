@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/amonks/run/internal/mutex"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/v2"
 )
 
 // RunTask creates an executable Run from a taskList and a taskID.

@@ -8,7 +8,7 @@ import (
 
 	"github.com/amonks/run/internal/color"
 	"github.com/amonks/run/internal/mutex"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/v2"
 )
 
 func newPrinter(run *Run) UI {

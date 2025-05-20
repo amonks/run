@@ -5,25 +5,26 @@ import (
 	"math"
 	"sync"
 
-	"github.com/charmbracelet/lipgloss"
+	lgcompat "github.com/charmbracelet/lipgloss/v2/compat"
+	"github.com/charmbracelet/lipgloss/v2"
 )
 
 func RenderHash(s string) string {
 	return globalColorer.render(s)
 }
 
-func Hash(s string) lipgloss.AdaptiveColor {
+func Hash(s string) lgcompat.AdaptiveColor {
 	return globalColorer.hash(s)
 }
 
 var globalColorer = &colorer{
-	colorCache:  map[string]lipgloss.AdaptiveColor{},
+	colorCache:  map[string]lgcompat.AdaptiveColor{},
 	renderCache: map[string]string{},
 }
 
 type colorer struct {
 	mu          sync.Mutex
-	colorCache  map[string]lipgloss.AdaptiveColor
+	colorCache  map[string]lgcompat.AdaptiveColor
 	renderCache map[string]string
 }
 
@@ -40,7 +41,7 @@ func (c *colorer) render(s string) string {
 	return c.renderCache[s]
 }
 
-func (c *colorer) hash(s string) lipgloss.AdaptiveColor {
+func (c *colorer) hash(s string) lgcompat.AdaptiveColor {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -52,9 +53,9 @@ func (c *colorer) hash(s string) lipgloss.AdaptiveColor {
 		light = hsl{hue, 1.0, 0.7}.rgb().hex()
 		dark  = hsl{hue, 1.0, 0.3}.rgb().hex()
 	)
-	c.colorCache[s] = lipgloss.AdaptiveColor{
-		Dark:  light,
-		Light: dark,
+	c.colorCache[s] = lgcompat.AdaptiveColor{
+		Dark:  lipgloss.Color(light),
+		Light: lipgloss.Color(dark),
 	}
 	return c.colorCache[s]
 }

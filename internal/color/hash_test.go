@@ -1,6 +1,11 @@
 package color
 
-import "testing"
+import (
+	"image/color"
+	"testing"
+
+	"github.com/charmbracelet/lipgloss/v2"
+)
 
 func TestColorHash(t *testing.T) {
 	for _, tc := range []struct {
@@ -10,10 +15,19 @@ func TestColorHash(t *testing.T) {
 		{"dev", "#FF65FE"},
 	} {
 		got := Hash(tc.s)
-		if got.Dark != tc.expected {
+		if !eqColor(got.Dark, lipgloss.Color(tc.expected)) {
 			t.Errorf(`color.Hash("%s") = %s, got %s`, tc.s, tc.expected, got)
 		}
 	}
+}
+
+func eqColor(left, right color.Color) bool {
+	r, g, b, a := left.RGBA()
+	r_, g_, b_, a_ := right.RGBA()
+	if r != r_ || g != g_ || b != b_ || a != a_ {
+		return false
+	}
+	return true
 }
 
 func TestRGB(t *testing.T) {

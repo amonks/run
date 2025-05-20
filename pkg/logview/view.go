@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	help "github.com/amonks/run/internal/help"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/v2"
 	"github.com/muesli/reflow/truncate"
 	"github.com/muesli/reflow/wrap"
 )

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	help "github.com/amonks/run/internal/help"
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -151,10 +151,10 @@ func (m *Model) handleKey(msg tea.KeyMsg) tea.Cmd {
 }
 
 func (m *Model) handleMouse(msg tea.MouseMsg) {
-	switch msg.Button {
-	case tea.MouseButtonWheelDown:
+	switch msg.Mouse().Button {
+	case tea.MouseWheelDown:
 		m.ScrollBy(1)
-	case tea.MouseButtonWheelUp:
+	case tea.MouseWheelUp:
 		m.ScrollBy(-1)
 	}
 }

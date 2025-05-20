@@ -1,6 +1,7 @@
 package color
 
-import "github.com/charmbracelet/lipgloss"
+import "github.com/charmbracelet/lipgloss/v2"
+import lgcompat "github.com/charmbracelet/lipgloss/v2/compat"
 
 // https://ethanschoonover.com/solarized/#the-values
 var (
@@ -13,12 +14,12 @@ var (
 	Cyan    = lipgloss.Color("#2AA198")
 	Green   = lipgloss.Color("#859900")
 
-	XXXLight = lipgloss.AdaptiveColor{Dark: "#FDF6E3", Light: "#002B36"} // base3
-	XXLight  = lipgloss.AdaptiveColor{Dark: "#EEE8D5", Light: "#073642"} // base2
-	XLight   = lipgloss.AdaptiveColor{Dark: "#93A1A1", Light: "#586E75"} // base1
-	Light    = lipgloss.AdaptiveColor{Dark: "#839496", Light: "#657B83"} // base0
-	Dark     = lipgloss.AdaptiveColor{Dark: "#657B83", Light: "#839496"} // base00
-	XDark    = lipgloss.AdaptiveColor{Dark: "#586E75", Light: "#93A1A1"} // base01
-	XXDark   = lipgloss.AdaptiveColor{Dark: "#073642", Light: "#EEE8D5"} // base02
-	XXXDark  = lipgloss.AdaptiveColor{Dark: "#002B36", Light: "#FDF6E3"} // base03
+	XXXLight = lgcompat.AdaptiveColor{Dark: lipgloss.Color("#FDF6E3"), Light: lipgloss.Color("#002B36")} // base3
+	XXLight  = lgcompat.AdaptiveColor{Dark: lipgloss.Color("#EEE8D5"), Light: lipgloss.Color("#073642")} // base2
+	XLight   = lgcompat.AdaptiveColor{Dark: lipgloss.Color("#93A1A1"), Light: lipgloss.Color("#586E75")} // base1
+	Light    = lgcompat.AdaptiveColor{Dark: lipgloss.Color("#839496"), Light: lipgloss.Color("#657B83")} // base0
+	Dark     = lgcompat.AdaptiveColor{Dark: lipgloss.Color("#657B83"), Light: lipgloss.Color("#839496")} // base00
+	XDark    = lgcompat.AdaptiveColor{Dark: lipgloss.Color("#586E75"), Light: lipgloss.Color("#93A1A1")} // base01
+	XXDark   = lgcompat.AdaptiveColor{Dark: lipgloss.Color("#073642"), Light: lipgloss.Color("#EEE8D5")} // base02
+	XXXDark  = lgcompat.AdaptiveColor{Dark: lipgloss.Color("#002B36"), Light: lipgloss.Color("#FDF6E3")} // base03
 )

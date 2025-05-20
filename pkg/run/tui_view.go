@@ -4,8 +4,8 @@ import (
 	"strings"
 
 	"github.com/amonks/run/internal/color"
-	"github.com/charmbracelet/lipgloss"
-	zone "github.com/lrstanley/bubblezone"
+	"github.com/charmbracelet/lipgloss/v2"
+	zone "github.com/lrstanley/bubblezone/v2"
 )
 
 type uiZone = string

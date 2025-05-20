@@ -6,10 +6,10 @@ import (
 
 	"github.com/amonks/run/internal/mutex"
 	"github.com/amonks/run/pkg/logview"
-	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	zone "github.com/lrstanley/bubblezone"
+	"github.com/charmbracelet/bubbles/v2/spinner"
+	"github.com/charmbracelet/bubbles/v2/viewport"
+	tea "github.com/charmbracelet/bubbletea/v2"
+	zone "github.com/lrstanley/bubblezone/v2"
 )
 
 func newTUI(run *Run) UI {
@@ -161,7 +161,7 @@ func (m *tuiModel) Init() tea.Cmd {
 		m.tasks[id] = lv
 	}
 
-	m.help = viewport.New(m.width, m.height)
+	m.help = viewport.New(viewport.WithWidth(m.width), viewport.WithHeight(m.height))
 
 	m.shortSpinner = spinner.New()
 	m.shortSpinner.Spinner = spinner.Jump

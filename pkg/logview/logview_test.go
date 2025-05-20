@@ -2,9 +2,6 @@ package logview
 
 import (
 	"testing"
-
-	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/termenv"
 )
 
 var (
@@ -32,7 +29,7 @@ var (
 )
 
 func TestLogview(t *testing.T) {
-	lipgloss.SetColorProfile(termenv.TrueColor)
+	// compat.SetColorProfile(termenv.TrueColor)
 	for _, tc := range []struct {
 		title  string
 		input  string

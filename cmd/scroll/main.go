@@ -25,7 +25,7 @@ import (
 	"os"
 
 	"github.com/amonks/run/pkg/logview"
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
 func main() {
