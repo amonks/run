@@ -21,8 +21,9 @@ const _TaskStatus_name = "taskStatusInvalidTaskStatusNotStartedTaskStatusRunning
 var _TaskStatus_index = [...]uint8{0, 17, 37, 54, 74, 90, 104}
 
 func (i TaskStatus) String() string {
-	if i < 0 || i >= TaskStatus(len(_TaskStatus_index)-1) {
+	idx := int(i) - 0
+	if i < 0 || idx >= len(_TaskStatus_index)-1 {
 		return "TaskStatus(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
-	return _TaskStatus_name[_TaskStatus_index[i]:_TaskStatus_index[i+1]]
+	return _TaskStatus_name[_TaskStatus_index[idx]:_TaskStatus_index[idx+1]]
 }

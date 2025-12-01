@@ -18,8 +18,9 @@ const _RunType_name = "runTypeInvalidRunTypeShortRunTypeLong"
 var _RunType_index = [...]uint8{0, 14, 26, 37}
 
 func (i RunType) String() string {
-	if i < 0 || i >= RunType(len(_RunType_index)-1) {
+	idx := int(i) - 0
+	if i < 0 || idx >= len(_RunType_index)-1 {
 		return "RunType(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
-	return _RunType_name[_RunType_index[i]:_RunType_index[i+1]]
+	return _RunType_name[_RunType_index[idx]:_RunType_index[idx+1]]
 }
