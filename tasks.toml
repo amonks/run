@@ -131,6 +131,15 @@
   id = "generate-docs"
   type = "short"
   cmd = """
+    if ! which wget >/dev/null ; then
+      echo "wget must be installed to generate docs"
+      exit 1
+    fi
+    if ! which sd >/dev/null ; then
+      echo "sd must be installed to generate docs"
+      exit 1
+    fi
+
     godoc -http=0.0.0.0:3335 &
     godocpid=$!
 
