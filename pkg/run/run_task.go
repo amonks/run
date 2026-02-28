@@ -349,7 +349,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 		for {
 			select {
 			case ev := <-fsevents:
-				printf(internalTaskWatch, logStyle, ev.print())
+				printf(internalTaskWatch, logStyle, "%s", ev.print())
 				invalidations := map[string]struct{}{}
 				for _, id := range r.byWatch[ev.path] {
 					invalidations[id] = struct{}{}
