@@ -258,6 +258,9 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.help.SetContent(helpMenu.Render(help.Colored, msg.Width, msg.Height))
 		m.width, m.height = msg.Width, msg.Height
 		m.gotSize = true
+		for _, lv := range m.tasks {
+			lv.SetDimensions(msg.Width, msg.Height)
+		}
 		return m, nil
 
 	case spinner.TickMsg:

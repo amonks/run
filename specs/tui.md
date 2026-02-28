@@ -57,6 +57,10 @@ Each task ID gets a `tuiWriter` that:
 1. Writes to the interleaved printer (unless the write is from `@interleaved` itself).
 2. Sends a `writeMsg` to the BubbleTea program for the task-specific log view.
 
+## Resize Handling
+
+When a `tea.WindowSizeMsg` is received, the TUI propagates the new dimensions to all logview models via `SetDimensions()`, ensuring scroll calculations (page up/down, half-page scroll) use the correct viewport size.
+
 ## Program Configuration
 
 - Alt screen mode (fullscreen).
