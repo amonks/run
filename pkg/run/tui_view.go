@@ -1,6 +1,7 @@
 package run
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/amonks/run/internal/color"
@@ -52,9 +53,95 @@ func (m *tuiModel) renderHeader(styles *styles) string {
 }
 
 func (m *tuiModel) renderMenu(styles *styles) string {
+	total := len(m.ids)
+	height := styles.menuHeight
+	selected := m.selectedTaskIDIndex
+
+	// If all tasks fit, render as-is.
+	if total <= height {
+		var out strings.Builder
+		for i, id := range m.ids {
+			out.WriteString(m.renderMenuItem(styles, i, id) + "\n")
+		}
+		return styles.menu.Render(out.String())
+	}
+
+	// Not enough room for indicators; just window around the selection.
+	if height < 3 {
+		start := selected - height/2
+		if start < 0 {
+			start = 0
+		}
+		end := start + height
+		if end > total {
+			end = total
+			start = max(0, end-height)
+		}
+		var out strings.Builder
+		for i := start; i < end; i++ {
+			out.WriteString(m.renderMenuItem(styles, i, m.ids[i]) + "\n")
+		}
+		return styles.menu.Render(out.String())
+	}
+
+	// Scrolling with indicators.
+	offset := m.menuScrollOffset
+	if offset < 0 {
+		offset = 0
+	}
+	if offset >= total {
+		offset = total - 1
+	}
+
+	// Iteratively adjust offset so the selected task is visible,
+	// accounting for indicator lines consuming menu height.
+	for iter := 0; iter < 3; iter++ {
+		showUp := offset > 0
+		taskSlots := height
+		if showUp {
+			taskSlots--
+		}
+		showDown := offset+taskSlots < total
+		if showDown {
+			taskSlots--
+		}
+		if selected < offset {
+			offset = selected
+			continue
+		}
+		if selected >= offset+taskSlots {
+			offset = selected - taskSlots + 1
+			continue
+		}
+		break
+	}
+
+	// Final visible window computation.
+	showUp := offset > 0
+	taskSlots := height
+	if showUp {
+		taskSlots--
+	}
+	end := min(offset+taskSlots, total)
+	showDown := end < total
+	if showDown {
+		taskSlots--
+		end = min(offset+taskSlots, total)
+	}
+
+	m.menuScrollOffset = offset
+
+	indicatorStyle := lipgloss.NewStyle().Foreground(color.XDark)
+
 	var out strings.Builder
-	for i, id := range m.ids {
-		out.WriteString(m.renderMenuItem(styles, i, id) + "\n")
+	if showUp {
+		out.WriteString(indicatorStyle.Render(fmt.Sprintf("▲ %d", offset)) + "\n")
+	}
+	for i := offset; i < end; i++ {
+		out.WriteString(m.renderMenuItem(styles, i, m.ids[i]) + "\n")
+	}
+	if showDown {
+		out.WriteString(indicatorStyle.Render(fmt.Sprintf("▼ %d", total-end)) + "\n")
 	}
 	return styles.menu.Render(out.String())
 }

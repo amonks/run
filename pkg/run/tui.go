@@ -118,6 +118,7 @@ type tuiModel struct {
 	focus               focusArea
 	ids                 []string
 	selectedTaskIDIndex int
+	menuScrollOffset    int
 	longestIDLength     int
 
 	width  int

@@ -29,6 +29,16 @@ The TUI has four focus areas:
 - Status indicators: ` ` (not started), spinner (running/restarting), `✓` (done), `×` (failed).
 - Internal tasks (prefixed with `@`) show a blank spinner.
 
+### Task List Scrolling
+
+When there are more tasks than fit in the menu's available height, the task list scrolls to keep the selected task visible:
+
+- If all tasks fit within `menuHeight`, they are rendered without any scroll indicators.
+- If `menuHeight < 3`, a window around the selected task is shown without indicators (not enough room).
+- Otherwise, the view shows a window of tasks with `▲ N` / `▼ N` indicator lines (dim `color.XDark`) when tasks are hidden above or below. Each indicator consumes one line of menu height.
+- The scroll offset (`menuScrollOffset`) persists across renders and is only adjusted when the selected task would be outside the visible window, preventing unnecessary jumping.
+- Navigation keys (j/k/gg/G/0-9) only change `selectedTaskIDIndex`; the scroll offset is adjusted on the next render cycle.
+
 ### Interleaved View
 
 The TUI creates a `Printer` UI internally and feeds its output to an `@interleaved` log view. This gives users a combined view of all task output alongside individual task views.
