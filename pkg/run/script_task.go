@@ -60,17 +60,22 @@ func (t *scriptTask) Metadata() TaskMetadata {
 	return meta
 }
 
-func (t *scriptTask) Start(ctx context.Context, stdout io.Writer) error {
+func (t *scriptTask) Start(ctx context.Context, onReady chan<- struct{}, stdout io.Writer) error {
 	defer t.cleanup()
 
 	t.stdout = stdout
 
 	if !t.hasScript() {
 		// If this is a "long" task, we want to keep running until the
-		// run is killed. If this is a "short" task with no script, we
-		// should consider it done as soon as its dependencies are.
+		// run is killed. Signal readiness immediately since there is
+		// no script to wait on.
+		// If this is a "short" task with no script, we should consider
+		// it done as soon as its dependencies are.
 		if t.Metadata().Type == "long" {
+			close(onReady)
 			<-ctx.Done()
+		} else {
+			close(onReady)
 		}
 		return nil
 	}
@@ -78,6 +83,12 @@ func (t *scriptTask) Start(ctx context.Context, stdout io.Writer) error {
 	// Start the CMD.
 	if err := t.startCmd(t.stdout); err != nil {
 		return err
+	}
+
+	// For long tasks, signal readiness once the command starts
+	// successfully.
+	if t.Metadata().Type == "long" {
+		close(onReady)
 	}
 
 	// Handle the CMD's exit.
@@ -98,6 +109,10 @@ func (t *scriptTask) Start(ctx context.Context, stdout io.Writer) error {
 
 	select {
 	case err := <-exit:
+		// For short tasks, signal readiness on successful exit.
+		if err == nil {
+			close(onReady)
+		}
 		return err
 	case <-ctx.Done():
 		t.printf(logStyle, "canceled; stopping")

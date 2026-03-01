@@ -21,7 +21,7 @@ func TestFuncTask(t *testing.T) {
 
 		errs := make(chan error)
 		go func() {
-			err := task.Start(ctx, &b)
+			err := task.Start(ctx, make(chan struct{}, 1), &b)
 			errs <- err
 		}()
 
@@ -52,11 +52,12 @@ func TestFuncTask(t *testing.T) {
 	}
 }
 
-func newControllableFunc() (chan<- error, chan<- string, func(context.Context, io.Writer) error) {
+func newControllableFunc() (chan<- error, chan<- string, func(context.Context, chan<- struct{}, io.Writer) error) {
 	exit := make(chan error)
 	write := make(chan string)
 
-	f := func(c context.Context, w io.Writer) error {
+	f := func(c context.Context, onReady chan<- struct{}, w io.Writer) error {
+		close(onReady)
 		for {
 			select {
 			case str := <-write:
