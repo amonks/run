@@ -92,7 +92,8 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 	run := Run{
 		mu: mutex.New("run"),
 
-		taskStatus: taskStatus,
+		taskStatus:      taskStatus,
+		restartAttempts: newSafeMap[int](),
 
 		starts: make(chan string),
 
@@ -121,7 +122,8 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 type Run struct {
 	mu *mutex.Mutex
 
-	taskStatus *safeMap[TaskStatus]
+	taskStatus      *safeMap[TaskStatus]
+	restartAttempts *safeMap[int]
 
 	starts chan string
 
@@ -198,6 +200,7 @@ func (r *Run) Invalidate(id string) {
 	}
 	switch r.TaskStatus(id) {
 	case TaskStatusRunning, TaskStatusDone, TaskStatusFailed:
+		r.restartAttempts.set(id, 0)
 		r.starts <- id
 	default:
 	}
@@ -362,6 +365,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 					printf(internalTaskWatch, logStyle, "invalidating {%s}", strings.Join(ids, ", "))
 					go func() {
 						for _, id := range ids {
+							r.restartAttempts.set(id, 0)
 							r.starts <- id
 						}
 					}()
@@ -455,12 +459,23 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 				t := r.tasks.Get(ev.id)
 				tm := t.Metadata()
 				// If the run is "long" and the task exit was
-				// unexpected, retry in 1s.
+				// unexpected, retry with exponential backoff.
 				if r.runType == RunTypeLong && ev.err != nil {
-					printf(ev.id, logStyle, "retrying in 1 second")
+					attempts := r.restartAttempts.get(ev.id) + 1
+					r.restartAttempts.set(ev.id, attempts)
+					delay := time.Second * (1 << (attempts - 1))
+					if delay > 30*time.Second {
+						delay = 30 * time.Second
+					}
+					delaySec := int(delay.Seconds())
+					if delaySec == 1 {
+						printf(ev.id, logStyle, "retrying in 1 second")
+					} else {
+						printf(ev.id, logStyle, "retrying in %d seconds", delaySec)
+					}
 					go func() {
 						r.taskStatus.set(ev.id, TaskStatusRestarting)
-						time.Sleep(time.Second)
+						time.Sleep(delay)
 						printf(ev.id, logStyle, "retrying")
 						r.starts <- ev.id
 					}()
@@ -468,6 +483,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 				}
 				// If the task is "long", retry as a keepalive
 				if tm.Type == "long" {
+					r.restartAttempts.set(ev.id, 0)
 					r.taskStatus.set(ev.id, TaskStatusRestarting)
 					go func() { r.starts <- ev.id }()
 				}

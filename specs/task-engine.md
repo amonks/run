@@ -111,7 +111,7 @@ Tracks per-task state for UI rendering only; never affects control flow.
    - **File system events**: debounced, matched against globs, trigger task invalidation.
    - **Start requests**: cancel any running instance of the task, then restart it.
    - **Task readiness**: when a task becomes ready (short task completes, or long task runs for 500ms), start dependent and triggered tasks whose dependencies are all met.
-   - **Task exits**: update status. In short runs, exit on root task completion or any failure. In long runs, retry failed tasks after 1 second; restart long tasks as keepalive.
+   - **Task exits**: update status. In short runs, exit on root task completion or any failure. In long runs, retry failed tasks with exponential backoff (1s, 2s, 4s, … capped at 30s); restart long tasks as keepalive. Manual restarts (via `Invalidate`) and file-watch restarts reset the backoff counter.
    - **Context cancellation**: return nil.
 4. On exit, stops all file watchers, cancels all running tasks, and waits for them to finish.
 
