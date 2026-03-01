@@ -13,7 +13,7 @@ import (
 
 // In this example, we generate our own Task and run it.
 func Example_bringYourOwnTasks() {
-	tasks := run.NewTasks([]run.Task{
+	tasks := run.NewLibrary(
 		run.FuncTask(func(ctx context.Context, onReady chan<- struct{}, w io.Writer) error {
 			w.Write([]byte("sleep"))
 			time.Sleep(1 * time.Second)
@@ -21,7 +21,7 @@ func Example_bringYourOwnTasks() {
 			close(onReady)
 			return nil
 		}, run.TaskMetadata{ID: "custom", Type: "short"}),
-	})
+	)
 
 	run, err := run.RunTask(".", tasks, "custom")
 	if err != nil {

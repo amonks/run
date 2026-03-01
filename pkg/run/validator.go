@@ -23,7 +23,7 @@ func newValidatorWithCWD(cwd string) (validator, error) {
 	}
 }
 
-func (v validator) validate(ts Tasks) error {
+func (v validator) validate(ts Library) error {
 	var problems []string
 
 	ids := map[string]struct{}{}
@@ -46,7 +46,7 @@ func (v validator) validate(ts Tasks) error {
 	return nil
 }
 
-func (v validator) validateTask(ts Tasks, t Task) []error {
+func (v validator) validateTask(ts Library, t Task) []error {
 	var problems []error
 
 	meta := t.Metadata()

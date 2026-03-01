@@ -9,9 +9,8 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-// Load loads a task file from the specified directory, producing a set of
-// Tasks.
-func Load(cwd string) (Tasks, error) {
+// Load loads a task file from the specified directory, producing a Library.
+func Load(cwd string) (Library, error) {
 	var allTasks []Task
 
 	seenDirs := map[string]struct{}{}
@@ -68,17 +67,17 @@ func Load(cwd string) (Tasks, error) {
 	}
 
 	if err := ingestTaskMap("."); err != nil {
-		return Tasks{}, err
+		return Library{}, err
 	}
 
-	tf := NewTasks(allTasks)
+	tf := NewLibrary(allTasks...)
 
 	v, err := newValidatorWithCWD(cwd)
 	if err != nil {
-		return Tasks{}, err
+		return Library{}, err
 	}
 	if err := v.validate(tf); err != nil {
-		return Tasks{}, err
+		return Library{}, err
 	}
 
 	return tf, nil

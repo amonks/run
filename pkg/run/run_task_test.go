@@ -20,7 +20,7 @@ import (
 func startRun(t *testing.T, tasks []run.Task, rootID string, mw run.MultiWriter) (context.CancelFunc, <-chan error) {
 	t.Helper()
 
-	r, err := run.RunTask(".", run.NewTasks(tasks), rootID)
+	r, err := run.RunTask(".", run.NewLibrary(tasks...), rootID)
 	if err != nil {
 		t.Fatalf("RunTask: %v", err)
 	}
@@ -38,7 +38,7 @@ func startRun(t *testing.T, tasks []run.Task, rootID string, mw run.MultiWriter)
 func startRunWithHandle(t *testing.T, tasks []run.Task, rootID string, mw run.MultiWriter) (*run.Run, context.CancelFunc, <-chan error) {
 	t.Helper()
 
-	r, err := run.RunTask(".", run.NewTasks(tasks), rootID)
+	r, err := run.RunTask(".", run.NewLibrary(tasks...), rootID)
 	if err != nil {
 		t.Fatalf("RunTask: %v", err)
 	}
