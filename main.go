@@ -171,7 +171,7 @@ func main() {
 	}
 }
 
-func tasklistText(tasks run.Tasks) string {
+func tasklistText(tasks run.Library) string {
 	b := &strings.Builder{}
 	fmt.Fprintln(b, headerStyle.Render("TASKS"))
 	for i, id := range tasks.IDs() {

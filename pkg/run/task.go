@@ -5,29 +5,7 @@ import (
 	"io"
 )
 
-// Tasks is an opaque data structure representing an immutable, ordered
-// collection of [Task]s. You can create a [Run] by passing a Tasks into
-// [RunTask].
-type Tasks struct {
-	ids   []string
-	tasks map[string]Task
-}
-
-// NewTasks creates a Tasks from the given slice of tasks.
-func NewTasks(tasks []Task) Tasks {
-	ts := Tasks{
-		ids:   make([]string, len(tasks)),
-		tasks: make(map[string]Task, len(tasks)),
-	}
-	for i, t := range tasks {
-		id := t.Metadata().ID
-		ts.ids[i] = id
-		ts.tasks[id] = t
-	}
-	return ts
-}
-
-// Anything implementing Task can be run by bundling it into a [Tasks] and then
+// Anything implementing Task can be run by bundling it into a [Library] and then
 // passing it into [RunTask].
 //
 // [ScriptTask] and [FuncTask] can be used to create Tasks.
@@ -122,29 +100,4 @@ type TaskMetadata struct {
 	//  - `"./src/website/**/*.js"` watches for changes
 	//    to javascript files within src/website.
 	Watch []string
-}
-
-// IDs returns the task IDs in their canonical order.
-func (ts Tasks) IDs() []string {
-	return ts.ids
-}
-
-// Has returns true if the given ID is present among the Tasks.
-func (ts Tasks) Has(id string) bool {
-	_, ok := ts.tasks[id]
-	return ok
-}
-
-// Get looks up a specific task by its ID. If no task bearing that ID is
-// present, the task will be nil.
-func (ts Tasks) Get(id string) Task {
-	return ts.tasks[id]
-}
-
-// Validate inspects a set of Tasks and returns an error if
-// the set is invalid. If the error is not nill, its
-// [error.Error] will return a formatted multiline string
-// describing the problems with the task set.
-func (ts Tasks) Validate() error {
-	return newValidator().validate(ts)
 }

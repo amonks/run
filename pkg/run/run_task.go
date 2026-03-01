@@ -38,72 +38,29 @@ type (
 //
 // The run will handle task dependencies, watches, and triggers as documented
 // in the README.
-func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
+func RunTask(dir string, allTasks Library, taskID string) (*Run, error) {
 	if err := allTasks.Validate(); err != nil {
 		return nil, err
 	}
 
-	var (
-		tasks     = map[string]Task{}
-		byDep     = map[string][]string{}
-		byTrigger = map[string][]string{}
-		byWatch   = map[string][]string{}
-	)
+	if !allTasks.Has(taskID) {
+		lines := []string{fmt.Sprintf("Task %s not found. Tasks are,", taskID)}
+		for _, id := range allTasks.IDs() {
+			lines = append(lines, " - "+id)
+		}
+		lines = append(lines, "Run `run -list` for more information about the available tasks.")
+		return nil, errors.New(strings.Join(lines, "\n"))
+	}
+
+	tasks := allTasks.Subtree(taskID)
 
 	taskStatus := map[string]TaskStatus{}
-
-	// NOTE:
-	// ingestTask can be called multiple times for each task.
-	var ingestTask func(string) error
-	ingestTask = func(id string) error {
-		if _, alreadyIngested := tasks[id]; alreadyIngested {
-			return nil
-		}
-
-		if !allTasks.Has(id) {
-			lines := []string{fmt.Sprintf("Task %s not found. Tasks are,", id)}
-			for _, id := range allTasks.IDs() {
-				lines = append(lines, " - "+id)
-			}
-			lines = append(lines, "Run `run -list` for more information about the available tasks.")
-			return errors.New(strings.Join(lines, "\n"))
-		}
-
-		t := allTasks.Get(id)
-		tasks[id] = t
+	for _, id := range tasks.IDs() {
 		taskStatus[id] = TaskStatusNotStarted
-
-		for _, d := range t.Metadata().Triggers {
-			byTrigger[d] = append(byTrigger[d], id)
-			ingestTask(d)
-		}
-		for _, d := range t.Metadata().Dependencies {
-			byDep[d] = append(byDep[d], id)
-			if err := ingestTask(d); err != nil {
-				return err
-			}
-		}
-		for _, w := range t.Metadata().Watch {
-			byWatch[w] = append(byWatch[w], id)
-		}
-
-		return nil
-	}
-	if err := ingestTask(taskID); err != nil {
-		return nil, err
-	}
-
-	// Now that we know which tasks we need, put their IDs in the same
-	// order they appear in allTasks.
-	ids := []string{}
-	for _, id := range allTasks.IDs() {
-		if _, isIncluded := tasks[id]; isIncluded {
-			ids = append(ids, id)
-		}
 	}
 
 	runType := RunTypeShort
-	if tasks[taskID].Metadata().Type == "long" {
+	if tasks.Get(taskID).Metadata().Type == "long" {
 		runType = RunTypeLong
 	}
 
@@ -124,14 +81,8 @@ func RunTask(dir string, allTasks Tasks, taskID string) (*Run, error) {
 		runType:  runType,
 		rootID:   taskID,
 
-		tasks: Tasks{
-			ids:   ids,
-			tasks: tasks,
-		},
-
-		byDep:     byDep,
-		byTrigger: byTrigger,
-		byWatch:   byWatch,
+		tasks:          tasks,
+		requestedTasks: map[string]struct{}{taskID: {}},
 	}
 
 	return &run, nil
@@ -152,10 +103,8 @@ type Run struct {
 	executors       map[string]*executor.Executor
 	writers         map[string]io.Writer
 	watches         map[string]func() // active file watchers, keyed by path
-	tasks           Tasks              // active subset of allTasks
-	byDep           map[string][]string
-	byTrigger       map[string][]string
-	byWatch         map[string][]string
+	tasks           Library           // active subset of allTasks
+	requestedTasks  map[string]struct{}
 
 	// Single message channel for the event loop.
 	input chan any
@@ -165,7 +114,7 @@ type Run struct {
 	out MultiWriter
 
 	// Read-only after construction:
-	allTasks  Tasks // full task universe
+	allTasks  Library // full task universe
 	runType   RunType
 	rootID    string
 	dir       string
@@ -204,14 +153,14 @@ type MultiWriter interface {
 func (r *Run) IDs() []string {
 	defer r.mu.Lock("IDs").Unlock()
 	var ids []string
-	if len(r.byWatch) > 0 {
+	if len(r.tasks.Watches()) > 0 {
 		ids = append(ids, internalTaskWatch)
 	}
 	return append(ids, r.tasks.IDs()...)
 }
 
-// Tasks returns the Tasks that a Run would execute.
-func (r *Run) Tasks() Tasks {
+// Tasks returns the Library that a Run would execute.
+func (r *Run) Tasks() Library {
 	defer r.mu.Lock("Tasks").Unlock()
 	return r.tasks
 }
@@ -256,7 +205,7 @@ func (r *Run) Start(ctx context.Context, out MultiWriter) error {
 
 	// Start all the file watchers. Do this before starting tasks so that
 	// tasks can trigger file watcher events.
-	for _, p := range r.watchedPaths() {
+	for _, p := range r.tasks.Watches() {
 		if err := r.startWatcher(p); err != nil {
 			return err
 		}
@@ -410,14 +359,14 @@ func (r *Run) handleTaskReady(id string) {
 
 	// If this task is short, invalidate all tasks that list this as a trigger.
 	if tm.Type == "short" {
-		for _, depID := range r.byTrigger[id] {
+		for _, depID := range r.tasks.WithTrigger(id) {
 			invalidations[depID] = struct{}{}
 		}
 	}
 
 	// Invalidate "short" or unstarted tasks that list this as a
 	// dependency and have all of their dependencies met.
-	for _, depID := range r.byDep[id] {
+	for _, depID := range r.tasks.WithDependency(id) {
 		isShort := r.tasks.Get(depID).Metadata().Type == "short"
 		r.mu.Lock("handleTaskReady:check")
 		_, isRunning := r.executors[depID]
@@ -537,7 +486,7 @@ func (r *Run) handleFSEvent(msg msgFSEvent) {
 	r.printf(internalTaskWatch, logStyle, "%s", printFSEvent(msg))
 
 	invalidations := map[string]struct{}{}
-	for _, id := range r.byWatch[msg.path] {
+	for _, id := range r.tasks.WithWatch(msg.path) {
 		invalidations[id] = struct{}{}
 	}
 	if len(invalidations) > 0 {
@@ -571,60 +520,42 @@ func (r *Run) handleInvalidate(id string) {
 // handleAddTasks activates tasks and their transitive dependencies, sets up
 // watchers, creates writers, and starts zero-dep tasks.
 func (r *Run) handleAddTasks(ctx context.Context, ids []string) {
+	r.mu.Lock("handleAddTasks:requested")
+	oldTasks := r.tasks
+	for _, id := range ids {
+		if r.allTasks.Has(id) {
+			r.requestedTasks[id] = struct{}{}
+		}
+	}
+	allRequested := make([]string, 0, len(r.requestedTasks))
+	for id := range r.requestedTasks {
+		allRequested = append(allRequested, id)
+	}
+	r.tasks = r.allTasks.Subtree(allRequested...)
+	newTasks := r.tasks
+	r.mu.Unlock()
+
+	// Set up newly added tasks.
 	var newlyAdded []string
-
-	// ingestTask recursively activates a task and its deps/triggers/watches.
-	var ingestTask func(string)
-	ingestTask = func(id string) {
-		r.mu.Lock("handleAddTasks:check")
-		_, alreadyActive := r.tasks.tasks[id]
-		r.mu.Unlock()
-		if alreadyActive {
-			return
+	for _, id := range newTasks.IDs() {
+		if !oldTasks.Has(id) {
+			newlyAdded = append(newlyAdded, id)
 		}
-		if !r.allTasks.Has(id) {
-			return
-		}
+	}
 
-		t := r.allTasks.Get(id)
-
-		r.mu.Lock("handleAddTasks:activate")
-		r.tasks.tasks[id] = t
-		r.tasks.ids = append(r.tasks.ids, id)
+	r.mu.Lock("handleAddTasks:setup")
+	for _, id := range newlyAdded {
 		r.taskStatus[id] = TaskStatusNotStarted
-		for _, d := range t.Metadata().Triggers {
-			r.byTrigger[d] = append(r.byTrigger[d], id)
-		}
-		for _, d := range t.Metadata().Dependencies {
-			r.byDep[d] = append(r.byDep[d], id)
-		}
-		for _, w := range t.Metadata().Watch {
-			r.byWatch[w] = append(r.byWatch[w], id)
-		}
 		if r.out != nil {
 			r.writers[id] = newOutputWriter(r.out.Writer(id))
 		}
-		r.mu.Unlock()
-
-		newlyAdded = append(newlyAdded, id)
-
-		// Recurse into deps and triggers.
-		for _, d := range t.Metadata().Dependencies {
-			ingestTask(d)
-		}
-		for _, d := range t.Metadata().Triggers {
-			ingestTask(d)
-		}
 	}
-
-	for _, id := range ids {
-		ingestTask(id)
-	}
+	r.mu.Unlock()
 
 	// Start new file watchers for any watch paths that don't have one yet.
 	r.mu.Lock("handleAddTasks:watches")
 	var newWatchPaths []string
-	for p := range r.byWatch {
+	for _, p := range newTasks.Watches() {
 		if _, exists := r.watches[p]; !exists {
 			newWatchPaths = append(newWatchPaths, p)
 		}
@@ -636,7 +567,7 @@ func (r *Run) handleAddTasks(ctx context.Context, ids []string) {
 
 	// Ensure the @watch writer exists if we now have watches.
 	r.mu.Lock("handleAddTasks:watchWriter")
-	if len(r.byWatch) > 0 {
+	if len(newTasks.Watches()) > 0 {
 		if _, ok := r.writers[internalTaskWatch]; !ok && r.out != nil {
 			r.writers[internalTaskWatch] = newOutputWriter(r.out.Writer(internalTaskWatch))
 		}
@@ -652,7 +583,7 @@ func (r *Run) handleAddTasks(ctx context.Context, ids []string) {
 	}
 }
 
-// handleRemoveTask deactivates a task and any exclusively-owned dependencies.
+// handleRemoveTask deactivates a task and recomputes the active subtree.
 func (r *Run) handleRemoveTask(id string) {
 	r.mu.Lock("handleRemoveTask:check")
 	_, active := r.tasks.tasks[id]
@@ -661,10 +592,33 @@ func (r *Run) handleRemoveTask(id string) {
 		return
 	}
 
-	// Compute exclusively-owned tasks: tasks that are only needed by the
-	// removed task and not by any other active task.
-	toRemove := r.exclusivelyOwned(id)
-	toRemove = append(toRemove, id)
+	r.mu.Lock("handleRemoveTask:recompute")
+	oldTasks := r.tasks
+	delete(r.requestedTasks, id)
+	allRequested := make([]string, 0, len(r.requestedTasks))
+	for rid := range r.requestedTasks {
+		allRequested = append(allRequested, rid)
+	}
+	sub := r.allTasks.Subtree(allRequested...)
+	// The removed task may still appear in the subtree as a transitive
+	// dependency of another requested task. Explicitly exclude it.
+	var filteredTasks []Task
+	for _, tid := range sub.IDs() {
+		if tid != id {
+			filteredTasks = append(filteredTasks, sub.Get(tid))
+		}
+	}
+	r.tasks = NewLibrary(filteredTasks...)
+	newTasks := r.tasks
+	r.mu.Unlock()
+
+	// Determine tasks to remove (in old but not in new).
+	var toRemove []string
+	for _, oid := range oldTasks.IDs() {
+		if !newTasks.Has(oid) {
+			toRemove = append(toRemove, oid)
+		}
+	}
 
 	r.mu.Lock("handleRemoveTask:cleanup")
 	for _, rid := range toRemove {
@@ -674,114 +628,27 @@ func (r *Run) handleRemoveTask(id string) {
 			delete(r.executors, rid)
 		}
 
-		// Remove from tasks.
-		delete(r.tasks.tasks, rid)
-		r.tasks.ids = removeFromSlice(r.tasks.ids, rid)
-
 		// Clean up status maps.
 		delete(r.taskStatus, rid)
 		delete(r.restartAttempts, rid)
 		delete(r.ran, rid)
 		delete(r.writers, rid)
+	}
 
-		// Clean up reverse-lookup maps.
-		t := r.allTasks.Get(rid)
-		if t != nil {
-			for _, d := range t.Metadata().Dependencies {
-				r.byDep[d] = removeFromSlice(r.byDep[d], rid)
-			}
-			for _, d := range t.Metadata().Triggers {
-				r.byTrigger[d] = removeFromSlice(r.byTrigger[d], rid)
-			}
-			for _, w := range t.Metadata().Watch {
-				r.byWatch[w] = removeFromSlice(r.byWatch[w], rid)
-				// Stop watcher if no tasks watch this path.
-				if len(r.byWatch[w]) == 0 {
-					if stop, ok := r.watches[w]; ok {
-						stop()
-						delete(r.watches, w)
-					}
-					delete(r.byWatch, w)
-				}
+	// Stop watchers for paths no longer watched.
+	oldWatches := map[string]struct{}{}
+	for _, p := range oldTasks.Watches() {
+		oldWatches[p] = struct{}{}
+	}
+	for p := range oldWatches {
+		if !newTasks.HasWatch(p) {
+			if stop, ok := r.watches[p]; ok {
+				stop()
+				delete(r.watches, p)
 			}
 		}
 	}
 	r.mu.Unlock()
-}
-
-// exclusivelyOwned returns task IDs that are transitive dependencies or
-// triggers of `id` but not needed by any other active task.
-func (r *Run) exclusivelyOwned(id string) []string {
-	r.mu.Lock("exclusivelyOwned")
-	defer r.mu.Unlock()
-
-	t := r.tasks.tasks[id]
-	if t == nil {
-		return nil
-	}
-
-	// Collect all transitive deps/triggers of the task being removed.
-	candidates := map[string]struct{}{}
-	var collect func(string)
-	collect = func(tid string) {
-		task := r.tasks.tasks[tid]
-		if task == nil {
-			return
-		}
-		for _, d := range task.Metadata().Dependencies {
-			if _, seen := candidates[d]; !seen {
-				candidates[d] = struct{}{}
-				collect(d)
-			}
-		}
-		for _, d := range task.Metadata().Triggers {
-			if _, seen := candidates[d]; !seen {
-				candidates[d] = struct{}{}
-				collect(d)
-			}
-		}
-	}
-	collect(id)
-
-	// Check each candidate: is it needed by any other active task?
-	var exclusive []string
-	for cand := range candidates {
-		needed := false
-		// Check byDep: is any active task (other than id and other
-		// candidates) depending on cand?
-		for _, depOf := range r.byDep[cand] {
-			if depOf == id {
-				continue
-			}
-			if _, isCand := candidates[depOf]; isCand {
-				continue
-			}
-			if _, isActive := r.tasks.tasks[depOf]; isActive {
-				needed = true
-				break
-			}
-		}
-		if needed {
-			continue
-		}
-		// Check byTrigger similarly.
-		for _, trigOf := range r.byTrigger[cand] {
-			if trigOf == id {
-				continue
-			}
-			if _, isCand := candidates[trigOf]; isCand {
-				continue
-			}
-			if _, isActive := r.tasks.tasks[trigOf]; isActive {
-				needed = true
-				break
-			}
-		}
-		if !needed {
-			exclusive = append(exclusive, cand)
-		}
-	}
-	return exclusive
 }
 
 // startWatcher starts a file watcher for the given path and stores it in
@@ -826,24 +693,6 @@ func (r *Run) printf(id string, style lipgloss.Style, f string, args ...interfac
 	}
 	s := fmt.Sprintf(f, args...)
 	w.Write([]byte(style.Render(s) + "\n"))
-}
-
-func (r *Run) watchedPaths() []string {
-	var ps []string
-	for p := range r.byWatch {
-		ps = append(ps, p)
-	}
-	return ps
-}
-
-func removeFromSlice(s []string, val string) []string {
-	out := s[:0]
-	for _, v := range s {
-		if v != val {
-			out = append(out, v)
-		}
-	}
-	return out
 }
 
 func printFSEvent(e msgFSEvent) string {

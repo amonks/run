@@ -55,7 +55,7 @@ func TestTaskfileNestingWithDot(t *testing.T) {
 		ts.Get("child/grandchild/test").(*scriptTask).Dir())
 }
 
-func testNesting(t *testing.T, ts Tasks) {
+func testNesting(t *testing.T, ts Library) {
 	metas := map[string]TaskMetadata{}
 	for _, id := range ts.IDs() {
 		metas[id] = ts.Get(id).Metadata()
