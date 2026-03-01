@@ -165,7 +165,7 @@ func (m *tuiModel) Init() tea.Cmd {
 	m.shortSpinner = spinner.New()
 	m.shortSpinner.Spinner = spinner.Jump
 	m.longSpinner = spinner.New()
-	m.longSpinner.Spinner = spinner.Hamburger
+	m.longSpinner.Spinner = spinner.MiniDot
 
 	for _, id := range m.ids {
 		if len(id) > m.longestIDLength {

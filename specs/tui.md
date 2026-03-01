@@ -25,7 +25,7 @@ The TUI has four focus areas:
 
 - Displays all task IDs plus `@interleaved` (combined output from all tasks).
 - Selected task indicated with `>` marker.
-- Status spinners: `Jump` spinner for short tasks, `Hamburger` spinner for long tasks.
+- Status spinners: `Jump` spinner for short tasks, `MiniDot` spinner for long tasks.
 - Status indicators: ` ` (not started), spinner (running/restarting), `✓` (done), `×` (failed).
 - Internal tasks (prefixed with `@`) show a blank spinner.
 
