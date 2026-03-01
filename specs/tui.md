@@ -73,9 +73,8 @@ When a `tea.WindowSizeMsg` is received, the TUI propagates the new dimensions to
 
 ## Program Configuration
 
-- Alt screen mode (fullscreen).
+- Alt screen and mouse cell motion are set via `tea.View` fields (BubbleTea v2 pattern), not `tea.NewProgram` options.
 - 120 FPS rendering.
-- Mouse cell motion tracking.
 - Zone-based click detection via `bubblezone`.
 
 ## Styling

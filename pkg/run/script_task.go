@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/amonks/run/internal/mutex"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 )
 
 // ScriptTask produces a runnable Task from a bash script and working

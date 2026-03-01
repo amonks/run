@@ -2,9 +2,6 @@ package logview
 
 import (
 	"testing"
-
-	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/termenv"
 )
 
 var (
@@ -13,10 +10,10 @@ var (
 
 	searchwrapped   = "abca\nbcab\ncabc"
 	searchunwrapped = "abcabcabcabc"
-	searchResults   = string([]byte{
-		27, 91, 51, 56, 59, 50, 59, 48, 59, 48, 59, 48, 59, 52, 56, 59, 50, 59, 50, 53, 53, 59, 50, 53, 53, 59, 48, 109, 97, 27, 91, 48, 109, 98, 99, 27, 91, 51, 56, 59, 50, 59, 48, 59, 48, 59, 48, 59, 52, 56, 59, 50, 59, 50, 53, 53, 59, 50, 53, 53, 59, 48, 109, 97, 27, 91, 48, 109, 10,
-		98, 99, 27, 91, 51, 56, 59, 50, 59, 48, 59, 48, 59, 48, 59, 52, 56, 59, 50, 59, 50, 53, 53, 59, 50, 53, 53, 59, 48, 109, 97, 27, 91, 48, 109, 98, 10,
-		99, 27, 91, 51, 56, 59, 50, 59, 48, 59, 48, 59, 48, 59, 52, 56, 59, 50, 59, 50, 53, 53, 59, 50, 53, 53, 59, 48, 109, 97, 27, 91, 48, 109, 98, 99,
+	searchResults = string([]byte{
+		27, 91, 51, 56, 59, 50, 59, 48, 59, 48, 59, 48, 59, 52, 56, 59, 50, 59, 50, 53, 53, 59, 50, 53, 53, 59, 48, 109, 97, 27, 91, 109, 98, 99, 27, 91, 51, 56, 59, 50, 59, 48, 59, 48, 59, 48, 59, 52, 56, 59, 50, 59, 50, 53, 53, 59, 50, 53, 53, 59, 48, 109, 97, 27, 91, 109, 10,
+		98, 99, 27, 91, 51, 56, 59, 50, 59, 48, 59, 48, 59, 48, 59, 52, 56, 59, 50, 59, 50, 53, 53, 59, 50, 53, 53, 59, 48, 109, 97, 27, 91, 109, 98, 10,
+		99, 27, 91, 51, 56, 59, 50, 59, 48, 59, 48, 59, 48, 59, 52, 56, 59, 50, 59, 50, 53, 53, 59, 50, 53, 53, 59, 48, 109, 97, 27, 91, 109, 98, 99,
 	})
 )
 
@@ -32,7 +29,6 @@ var (
 )
 
 func TestLogview(t *testing.T) {
-	lipgloss.SetColorProfile(termenv.TrueColor)
 	for _, tc := range []struct {
 		title  string
 		input  string
@@ -68,7 +64,7 @@ func testView(t *testing.T, input, expect string, mods []mod) {
 		mod(m)
 	}
 
-	if got := firstNLines(m.View(), 3); got != expect {
+	if got := firstNLines(m.ViewString(), 3); got != expect {
 		t.Errorf("bad output:\n%s\n---- (%d bytes)\n%v\nexpected:\n%s\n---- (%d bytes)\n%v",
 			got, len(got), []byte(got),
 			expect, len(expect), []byte(expect))

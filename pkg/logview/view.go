@@ -5,7 +5,8 @@ import (
 	"strings"
 
 	help "github.com/amonks/run/internal/help"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/muesli/reflow/truncate"
 	"github.com/muesli/reflow/wrap"
 )
@@ -20,7 +21,11 @@ var defaultStyles = &Styles{
 	Statusbar: lipgloss.NewStyle(),
 }
 
-func (m *Model) View() string {
+func (m *Model) View() tea.View {
+	return tea.NewView(m.ViewString())
+}
+
+func (m *Model) ViewString() string {
 	return m.Render(defaultStyles, m.windowWidth, m.windowHeight)
 }
 

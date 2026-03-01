@@ -6,16 +6,16 @@ import (
 	"strings"
 
 	help "github.com/amonks/run/internal/help"
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		cmd := m.handleKey(msg)
 		return m, cmd
-	case tea.MouseMsg:
-		m.handleMouse(msg)
+	case tea.MouseWheelMsg:
+		m.handleMouseWheel(msg)
 	default:
 		newInput, cmd := m.input.Update(msg)
 		m.input = &newInput
@@ -60,7 +60,7 @@ var helpmenu = help.Menu{
 	},
 }
 
-func (m *Model) handleKey(msg tea.KeyMsg) tea.Cmd {
+func (m *Model) handleKey(msg tea.KeyPressMsg) tea.Cmd {
 	if m.focus == FocusHelp {
 		switch msg.String() {
 		case "esc", "ctrl+c", "q", "h", "?":
@@ -150,11 +150,11 @@ func (m *Model) handleKey(msg tea.KeyMsg) tea.Cmd {
 	return nil
 }
 
-func (m *Model) handleMouse(msg tea.MouseMsg) {
+func (m *Model) handleMouseWheel(msg tea.MouseWheelMsg) {
 	switch msg.Button {
-	case tea.MouseButtonWheelDown:
+	case tea.MouseWheelDown:
 		m.ScrollBy(1)
-	case tea.MouseButtonWheelUp:
+	case tea.MouseWheelUp:
 		m.ScrollBy(-1)
 	}
 }
