@@ -5,12 +5,12 @@ For documentation and the latest version, please visit GitHub:
   https://github.com/amonks/run
 
      
-[1;4;4mU[0m[1;4;4mS[0m[1;4;4mA[0m[1;4;4mG[0m[1;4;4mE[0m
+[1;4;4mU[m[1;4;4mS[m[1;4;4mA[m[1;4;4mG[m[1;4;4mE[m
      
   run [flags] <task>
 
      
-[1;4;4mF[0m[1;4;4mL[0m[1;4;4mA[0m[1;4;4mG[0m[1;4;4mS[0m
+[1;4;4mF[m[1;4;4mL[m[1;4;4mA[m[1;4;4mG[m[1;4;4mS[m
      
   -contributors
         Display the contributors list and exit.
@@ -33,12 +33,12 @@ For documentation and the latest version, please visit GitHub:
         Display the version and exit.
 
        
-[1;4;4mV[0m[1;4;4mE[0m[1;4;4mR[0m[1;4;4mS[0m[1;4;4mI[0m[1;4;4mO[0m[1;4;4mN[0m
+[1;4;4mV[m[1;4;4mE[m[1;4;4mR[m[1;4;4mS[m[1;4;4mI[m[1;4;4mO[m[1;4;4mN[m
        
   Version: devel
 
        
-[1;4;4mL[0m[1;4;4mI[0m[1;4;4mC[0m[1;4;4mE[0m[1;4;4mN[0m[1;4;4mS[0m[1;4;4mE[0m
+[1;4;4mL[m[1;4;4mI[m[1;4;4mC[m[1;4;4mE[m[1;4;4mN[m[1;4;4mS[m[1;4;4mE[m
        
   Run is free for noncommercial and small-business use, with a
   guarantee that fair, reasonable, and nondiscriminatory paid-
