@@ -19,7 +19,7 @@
 | [tui.md](./tui.md) | [pkg/run/tui*.go](../pkg/run/) | Interactive terminal UI built on BubbleTea |
 | [printer.md](./printer.md) | [pkg/run/printer.go](../pkg/run/printer.go) | Non-interactive printer UI for CI and piped output |
 | [logview.md](./logview.md) | [pkg/logview/](../pkg/logview/) | Reusable BubbleTea log viewer component |
-| [cli.md](./cli.md) | [cmd/run/](../cmd/run/) | CLI entry point, flag parsing, and UI selection |
+| [cli.md](./cli.md) | [.](../) | CLI entry point, flag parsing, and UI selection |
 | [scroll.md](./scroll.md) | [cmd/scroll/](../cmd/scroll/) | Standalone tailing log pager |
 | [testing.md](./testing.md) | | Testing patterns and snapshot tests |
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `run` CLI (`cmd/run`) is the main entry point. It parses flags, loads tasks, selects a UI, and orchestrates execution.
+The `run` CLI (root package) is the main entry point. It parses flags, loads tasks, selects a UI, and orchestrates execution. It can be installed with `go install github.com/amonks/run@latest`.
 
 ## Usage
 

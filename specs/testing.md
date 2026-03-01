@@ -9,7 +9,7 @@ Run's tests are organized into unit tests, example tests, and snapshot-based int
 - `pkg/run/*_test.go`: unit and integration tests for the core package.
 - `pkg/logview/*_test.go`: tests for the log viewer.
 - `internal/color/hash_test.go`: tests for color hashing.
-- `cmd/run/first_test.go`: tests for the synchronization helper.
+- `first_test.go`: tests for the synchronization helper.
 
 ## Example Tests
 

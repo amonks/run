@@ -12,7 +12,6 @@ import (
 	"sync"
 	"syscall"
 
-	meta "github.com/amonks/run"
 	"github.com/amonks/run/internal/color"
 	"github.com/amonks/run/pkg/run"
 	"github.com/muesli/reflow/dedent"
@@ -294,14 +293,14 @@ func isZeroValue(f *flag.Flag, value string) (ok bool) {
 func versionText() string {
 	b := &strings.Builder{}
 	fmt.Fprintln(b, headerStyle.Render("VERSION"))
-	fmt.Fprintln(b, "  Version:", meta.Version)
-	if meta.Revision != "unknown" {
-		if meta.DirtyBuild {
+	fmt.Fprintln(b, "  Version:", Version)
+	if Revision != "unknown" {
+		if DirtyBuild {
 			fmt.Fprintln(b, "  Dirty Build")
-			fmt.Fprintln(b, "  Last commit:", meta.ReleaseDate)
+			fmt.Fprintln(b, "  Last commit:", ReleaseDate)
 		} else {
-			fmt.Fprintln(b, "  Revision:", meta.Revision)
-			fmt.Fprintln(b, "  Committed:", meta.ReleaseDate)
+			fmt.Fprintln(b, "  Revision:", Revision)
+			fmt.Fprintln(b, "  Committed:", ReleaseDate)
 		}
 	}
 	return b.String()
@@ -310,14 +309,14 @@ func versionText() string {
 func creditsText() string {
 	b := &strings.Builder{}
 	fmt.Fprintln(b, headerStyle.Render("CREDITS"))
-	fmt.Fprintln(b, indent.String(wordwrap.String(meta.Credits, 78), 2))
+	fmt.Fprintln(b, indent.String(wordwrap.String(Credits, 78), 2))
 	return b.String()
 }
 
 func contributorsText() string {
 	b := &strings.Builder{}
 	fmt.Fprintln(b, headerStyle.Render("CONTRIBUTORS"))
-	fmt.Fprintln(b, indent.String(wordwrap.String(meta.Contributors, 78), 2))
+	fmt.Fprintln(b, indent.String(wordwrap.String(Contributors, 78), 2))
 	return b.String()
 }
 
@@ -331,7 +330,7 @@ func licenseText() string {
 	b.WriteString(indent.String(wordwrap.String(statement, 70), 2) + "\n")
 	b.WriteString("\n")
 	b.WriteString("\n")
-	b.WriteString(indent.String(wordwrap.String(meta.License, 70), 2))
+	b.WriteString(indent.String(wordwrap.String(License, 70), 2))
 	return b.String()
 }
 

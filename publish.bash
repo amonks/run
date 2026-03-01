@@ -108,7 +108,7 @@ function build() {
 		go build \
 		-ldflags="-s -w -X 'github.com/amonks/run.Version=${version_name}'" \
 		-o "${bdir}/run_${goos}_${goarch}" \
-		./cmd/run
+		.
 }
 
 ## make_macos_universal_binary combines $bdir/run_darwin_amd64 and
