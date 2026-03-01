@@ -1,31 +1,31 @@
      
-[1;4;4mT[0m[1;4;4mA[0m[1;4;4mS[0m[1;4;4mK[0m[1;4;4mS[0m
+[1;4;4mT[m[1;4;4mA[m[1;4;4mS[m[1;4;4mK[m[1;4;4mS[m
      
-  [95mprerelease[0m
-    Type: [3mshort[0m
+  [38;2;253;101;255mprerelease[m
+    Type: [3mshort[m
     Description:
-[3m[0m      [3m- run the tests[0m           
-[3m[0m      [3m- generate the docs[0m       
-[3m[0m      [3m- generate the screenshots[0m
+[3m[0m      [3m- run the tests[m           
+[3m[0m      [3m[m[3m- generate the docs[m       
+[3m[0m      [3m[m[3m[m[3m- generate the screenshots[m
     Dependencies:
       - screenshots
       - generate-docs
       - validate
 
-  [96minstall[0m
-    Type: [3mshort[0m
+  [38;2;101;239;255minstall[m
+    Type: [3mshort[m
     Description:
-[3m[0m      [3m"go install ./cmd/run"[0m
+[3m[0m      [3m"go install ./cmd/run"[m
     Dependencies:
       - generate
 
-  [95mgenerate[0m
-    Type: [3mshort[0m
+  [38;2;226;101;255mgenerate[m
+    Type: [3mshort[m
     Description:
-[3m[0m      [3m"go generate ./..."[0m
+[3m[0m      [3m"go generate ./..."[m
 
-  [94mvalidate[0m
-    Type: [3mshort[0m
+  [38;2;101;151;255mvalidate[m
+    Type: [3mshort[m
     Dependencies:
       - generate
       - test
@@ -34,68 +34,68 @@
       - snapshot-cli
       - shellcheck
 
-  [94mtest[0m
-    Type: [3mshort[0m
+  [38;2;120;101;255mtest[m
+    Type: [3mshort[m
     Description:
-[3m[0m      [3m"go test ./..."[0m
+[3m[0m      [3m"go test ./..."[m
 
-  [92mvulncheck[0m
-    Type: [3mshort[0m
+  [38;2;101;255;184mvulncheck[m
+    Type: [3mshort[m
     Description:
-[3m[0m      [3m"go run golang.org/x/vuln/cmd/govulncheck ./..."[0m
+[3m[0m      [3m"go run golang.org/x/vuln/cmd/govulncheck ./..."[m
 
-  [91mstaticcheck[0m
-    Type: [3mshort[0m
+  [38;2;255;109;101mstaticcheck[m
+    Type: [3mshort[m
     Description:
-[3m[0m      [3m"go run honnef.co/go/tools/cmd/staticcheck ./..."[0m
+[3m[0m      [3m"go run honnef.co/go/tools/cmd/staticcheck ./..."[m
 
-  [91mshellcheck[0m
-    Type: [3mshort[0m
+  [38;2;255;194;101mshellcheck[m
+    Type: [3mshort[m
     Description:
-[3m[0m      [3m"shellcheck $(git ls-files | grep 'sh$')"[0m
+[3m[0m      [3m"shellcheck $(git ls-files | grep 'sh$')"[m
 
-  [94mscreenshots[0m
-    Type: [3mshort[0m
+  [38;2;123;101;255mscreenshots[m
+    Type: [3mshort[m
     Dependencies:
       - screenshot-tui
       - screenshot-printer
       - screenshot-nontty
 
-  [95mscreenshot-tui[0m
-    Type: [3mshort[0m
+  [38;2;233;101;255mscreenshot-tui[m
+    Type: [3mshort[m
     Dependencies:
       - install
       - screenshots-deps
 
-  [92mscreenshot-printer[0m
-    Type: [3mshort[0m
+  [38;2;101;255;169mscreenshot-printer[m
+    Type: [3mshort[m
     Dependencies:
       - install
       - screenshots-deps
 
-  [95mscreenshot-nontty[0m
-    Type: [3mshort[0m
+  [38;2;214;101;255mscreenshot-nontty[m
+    Type: [3mshort[m
     Dependencies:
       - install
       - screenshots-deps
 
-  [95mscreenshots-deps[0m
-    Type: [3mshort[0m
+  [38;2;196;101;255mscreenshots-deps[m
+    Type: [3mshort[m
 
-  [93mreset-snapshot-failures[0m
-    Type: [3mshort[0m
+  [38;2;255;252;101mreset-snapshot-failures[m
+    Type: [3mshort[m
 
-  [95moverwrite-snapshots[0m
-    Type: [3mshort[0m
+  [38;2;255;101;181moverwrite-snapshots[m
+    Type: [3mshort[m
 
-  [93mgenerate-docs[0m
-    Type: [3mshort[0m
+  [38;2;255;216;101mgenerate-docs[m
+    Type: [3mshort[m
 
-  [91mgenerate-readme-usage[0m
-    Type: [3mshort[0m
+  [38;2;255;101;103mgenerate-readme-usage[m
+    Type: [3mshort[m
 
-  [93msnapshot-cli[0m
-    Type: [3mshort[0m
+  [38;2;202;255;101msnapshot-cli[m
+    Type: [3mshort[m
     Dependencies:
       - generate
 
