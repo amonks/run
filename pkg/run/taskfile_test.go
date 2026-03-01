@@ -14,11 +14,11 @@ func TestTaskfileNestingWithDir(t *testing.T) {
 	testNesting(t, ts)
 
 	assert.Equal(t, "testdata/very-nested",
-		ts.Get("test").(*scriptTask).dir)
+		ts.Get("test").(*scriptTask).Dir())
 	assert.Equal(t, "testdata/very-nested/child",
-		ts.Get("child/test").(*scriptTask).dir)
+		ts.Get("child/test").(*scriptTask).Dir())
 	assert.Equal(t, "testdata/very-nested/child/grandchild",
-		ts.Get("child/grandchild/test").(*scriptTask).dir)
+		ts.Get("child/grandchild/test").(*scriptTask).Dir())
 }
 
 func TestTaskfileNestingWithParentDir(t *testing.T) {
@@ -31,11 +31,11 @@ func TestTaskfileNestingWithParentDir(t *testing.T) {
 	testNesting(t, ts)
 
 	assert.Equal(t, "..",
-		ts.Get("test").(*scriptTask).dir)
+		ts.Get("test").(*scriptTask).Dir())
 	assert.Equal(t, "../child",
-		ts.Get("child/test").(*scriptTask).dir)
+		ts.Get("child/test").(*scriptTask).Dir())
 	assert.Equal(t, "../child/grandchild",
-		ts.Get("child/grandchild/test").(*scriptTask).dir)
+		ts.Get("child/grandchild/test").(*scriptTask).Dir())
 }
 
 func TestTaskfileNestingWithDot(t *testing.T) {
@@ -48,11 +48,11 @@ func TestTaskfileNestingWithDot(t *testing.T) {
 	testNesting(t, ts)
 
 	assert.Equal(t, ".",
-		ts.Get("test").(*scriptTask).dir)
+		ts.Get("test").(*scriptTask).Dir())
 	assert.Equal(t, "child",
-		ts.Get("child/test").(*scriptTask).dir)
+		ts.Get("child/test").(*scriptTask).Dir())
 	assert.Equal(t, "child/grandchild",
-		ts.Get("child/grandchild/test").(*scriptTask).dir)
+		ts.Get("child/grandchild/test").(*scriptTask).Dir())
 }
 
 func testNesting(t *testing.T, ts Tasks) {

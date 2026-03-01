@@ -91,7 +91,7 @@ func (v validator) validateTask(ts Tasks, t Task) []error {
 			problems = append(problems, fmt.Errorf("Task '%s' wants to watch path '%s', which is absolute.", meta.ID, path))
 		}
 		if s, isScript := t.(*scriptTask); isScript {
-			if abs, err := filepath.Abs(filepath.Join(s.dir, path)); err != nil {
+			if abs, err := filepath.Abs(filepath.Join(s.Dir(), path)); err != nil {
 				problems = append(problems, fmt.Errorf("Task '%s' had an error resolving path '%s': %s.", meta.ID, path, err))
 			} else if !strings.HasPrefix(abs, v.cwd) {
 				problems = append(problems, fmt.Errorf("Task '%s' wants to watch path '%s', which is outside of the working directory.", meta.ID, path))

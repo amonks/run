@@ -32,5 +32,6 @@
 | [internal-help.md](./internal-help.md) | [internal/help/](../internal/help/) | Help menu rendering with section/key layout |
 | [internal-mutex.md](./internal-mutex.md) | [internal/mutex/](../internal/mutex/) | Debug-capable mutex with defer-friendly API |
 | [internal-watcher.md](./internal-watcher.md) | [internal/watcher/](../internal/watcher/) | File system watching with debouncing, globs, and mock support |
+| [internal-script.md](./internal-script.md) | [internal/script/](../internal/script/) | Immutable, reentrant bash script executor with robust cancellation |
 | | [internal/fixtures/](../internal/fixtures/) | Test doubles: mock Task and recording MultiWriter |
 | | [internal/seq/](../internal/seq/) | Sequence assertion helper for ordered subsequence checks |
