@@ -49,21 +49,19 @@ An opaque, immutable, ordered collection of tasks.
 
 ### ScriptTask
 
-Runs a bash script in a subprocess.
+Runs a bash script in a subprocess. Delegates to `internal/script.Script` for process management.
 
 ```go
 func ScriptTask(script string, dir string, env []string, metadata TaskMetadata) Task
 ```
 
-- Executes via `bash -c "$script"` in a new process group (`Setpgid: true`).
+- Delegates execution to `internal/script.Script`, which handles process lifecycle and cancellation.
 - Stdout and stderr are merged and forwarded to the provided writer.
 - No stdin is provided.
-- Environment inherits `os.Environ()` plus the provided `env` entries.
-- On context cancellation: sends SIGINT to the process group, waits up to 2 seconds, then sends SIGKILL.
 - A task with no script: closes `onReady` immediately; long tasks block until context cancellation; short tasks return immediately.
-- A long task with a script: closes `onReady` after the command starts successfully.
+- A long task with a script: closes `onReady` before execution starts.
 - A short task with a script: closes `onReady` on successful exit (nil error).
-- Bash is located once via `which bash` and cached for the process lifetime.
+- `scriptTask` is stateless (no mutex, no mutable fields); all mutable process state lives in `internal/script`.
 
 ### FuncTask
 
