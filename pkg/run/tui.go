@@ -3,6 +3,7 @@ package run
 import (
 	"context"
 	"io"
+	"time"
 
 	"github.com/amonks/run/internal/mutex"
 	"github.com/amonks/run/pkg/logview"
@@ -165,7 +166,10 @@ func (m *tuiModel) Init() tea.Cmd {
 	m.shortSpinner = spinner.New()
 	m.shortSpinner.Spinner = spinner.Jump
 	m.longSpinner = spinner.New()
-	m.longSpinner.Spinner = spinner.MiniDot
+	m.longSpinner.Spinner = spinner.Spinner{
+		Frames: []string{"⣤", "⣠", "⣄", "⡤", "⣤", "⡤",  "⢤", "⣠" },
+		FPS:    time.Second / 4,
+	}
 
 	for _, id := range m.ids {
 		if len(id) > m.longestIDLength {
