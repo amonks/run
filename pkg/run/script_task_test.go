@@ -16,7 +16,7 @@ func TestScriptTaskOK(t *testing.T) {
 		b := strings.Builder{}
 
 		exit := make(chan error)
-		go func() { exit <- task.Start(ctx, &b) }()
+		go func() { exit <- task.Start(ctx, make(chan struct{}, 1), &b) }()
 
 		select {
 		case <-time.After(200 * time.Millisecond):
@@ -36,7 +36,7 @@ func TestScriptTaskFail(t *testing.T) {
 		b := strings.Builder{}
 
 		exit := make(chan error)
-		go func() { exit <- task.Start(ctx, &b) }()
+		go func() { exit <- task.Start(ctx, make(chan struct{}, 1), &b) }()
 
 		select {
 		case <-time.After(200 * time.Millisecond):

@@ -7,8 +7,10 @@ Run's tests are organized into unit tests, example tests, and snapshot-based int
 ## Test Files
 
 - `pkg/run/*_test.go`: unit and integration tests for the core package.
+- `pkg/run/run_task_test.go`: event loop tests exercising the runner's message dispatch, dependency resolution, triggers, file watching, dynamic Add/Remove, and Invalidate.
 - `pkg/logview/*_test.go`: tests for the log viewer.
 - `internal/color/hash_test.go`: tests for color hashing.
+- `internal/seq/seq_test.go`: tests for the sequence assertion helper.
 - `first_test.go`: tests for the synchronization helper.
 
 ## Example Tests
@@ -48,6 +50,39 @@ Scenarios cover: short task success/failure, long task behavior, dependencies, t
 ## CLI Snapshots
 
 The `snapshot-cli` task validates CLI output for `-version`, `-help`, `-credits`, `-contributors`, `-license`, and `-list` flags against checked-in snapshots in `testdata/cli_snapshots/`.
+
+## Test Fixtures
+
+Located in `internal/fixtures/`:
+
+- **`task.go`**: Mock `run.Task` implementation with builder API (`WithWatch`, `WithDependencies`, `WithTriggers`, `WithOutput`, `WithReady`, `WithExit`, `WithCancel`, `WithImmediateFailure`). Supports three execution modes: immediate return, blocking until exit signal, and blocking until context cancellation.
+- **`writer.go`**: Recording `MultiWriter` that captures per-stream and combined output with `[id]` prefixes. Strips ANSI escape codes for assertion-friendly output.
+
+Located in `internal/seq/`:
+
+- **`seq.go`**: `ContainsSequence` checks that a list of lines contains a given subsequence in order, and that no subsequence element appears outside its matched position. `AssertStringContainsSequence` is a test helper that splits on newlines first.
+
+## Event Loop Tests
+
+`pkg/run/run_task_test.go` exercises the runner's single-channel event loop (the `handleMessage` dispatch in `run_task.go`) through 15 black-box tests:
+
+1. Short run, no deps, succeeds
+2. Short run, no deps, fails (error propagation)
+3. Short run with dependency chain (ordering)
+4. Failing dependency prevents dependent
+5. Context cancellation (clean shutdown)
+6. Watch-triggered restart (long task)
+7. Trigger completion causes main task restart
+8. Watch event on trigger causes cascade restart
+9. Dependency rerun does not restart long task
+10. JSON output is prettified
+11. Long task onReady enables dependent
+12. Dynamic Add
+13. Dynamic Remove
+14. Invalidate restarts running task
+15. Watch-triggered restart (short dep in long run)
+
+Tests use `watcher.Mock()` for synthetic file system events and `sync/atomic` counters for race-free start counting. All tests pass under `-race`.
 
 ## Self-Hosting
 

@@ -34,7 +34,12 @@ func NewTasks(tasks []Task) Tasks {
 //
 // A Task must be safe to access concurrently from multiple goroutines.
 type Task interface {
-	Start(ctx context.Context, stdout io.Writer) error
+	// Start runs the task. It should write output to stdout and close
+	// onReady when the task is ready (i.e., has produced whatever output
+	// dependents need). For short tasks, close onReady on successful
+	// completion. For long tasks, close onReady as soon as the task is
+	// serving / ready.
+	Start(ctx context.Context, onReady chan<- struct{}, stdout io.Writer) error
 	Metadata() TaskMetadata
 }
 
@@ -78,15 +83,14 @@ type TaskMetadata struct {
 	// task A lists short task B as a dependency, and B reruns because a
 	// watched file is changed, we will not restart A, assuming that A has
 	// its own mechanism for detecting file changes. If A does not have
-	// such a mechanhism, use a trigger rather than a dependency.
+	// such a mechanism, use a trigger rather than a dependency.
 	//
 	// Dependencies can be task IDs from child directories. For example,
 	// the dependency "css/build" specifies the task with ID "build" in the
 	// tasks file "./css/tasks.toml".
 	//
-	// If a task depends on a "long" task, Run doesn't really know when the
-	// long task has produced whatever output is depended on, so the
-	// dependent is run 500ms after the long task starts.
+	// If a task depends on a "long" task, the dependent is started once
+	// the long task signals readiness by closing its onReady channel.
 	Dependencies []string
 
 	// Triggers are other task IDs which should always be run alongside
