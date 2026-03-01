@@ -7,7 +7,7 @@ import (
 	"github.com/amonks/run/internal/color"
 	"github.com/amonks/run/internal/help"
 	"github.com/amonks/run/pkg/logview"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 )
 
 type styles struct {

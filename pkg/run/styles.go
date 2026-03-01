@@ -2,7 +2,7 @@ package run
 
 import (
 	"github.com/amonks/run/internal/color"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 )
 
 var (

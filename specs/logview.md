@@ -53,7 +53,8 @@ const (
 
 ## Rendering
 
-- `View() string`: standard BubbleTea rendering.
+- `View() tea.View`: standard BubbleTea v2 rendering (returns `tea.View`).
+- `ViewString() string`: returns the rendered content as a plain string.
 - `Render(styles *Styles, width, height int) string`: custom rendering with external styles (used by the TUI to control layout).
 - Status bar shows line position and search state.
 - Wrap mode is toggleable at runtime with `SetWrapMode(bool)` or `ToggleWrapMode()`.

@@ -1,6 +1,10 @@
 package color
 
-import "testing"
+import (
+	"testing"
+
+	"charm.land/lipgloss/v2"
+)
 
 func TestColorHash(t *testing.T) {
 	for _, tc := range []struct {
@@ -10,8 +14,8 @@ func TestColorHash(t *testing.T) {
 		{"dev", "#FF65FE"},
 	} {
 		got := Hash(tc.s)
-		if got.Dark != tc.expected {
-			t.Errorf(`color.Hash("%s") = %s, got %s`, tc.s, tc.expected, got)
+		if got.Dark != lipgloss.Color(tc.expected) {
+			t.Errorf(`color.Hash("%s") = %v, got %v`, tc.s, tc.expected, got)
 		}
 	}
 }

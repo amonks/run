@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/amonks/run/internal/color"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 )
 
 type Menu []Section

@@ -6,7 +6,7 @@ import (
 
 	"github.com/amonks/run/internal/color"
 	"github.com/amonks/run/internal/help"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 )
 
 // no assertions; useful for testing visually; remove the Fail to see output

@@ -8,9 +8,9 @@ import (
 
 	"github.com/amonks/run/internal/help"
 	"github.com/amonks/run/pkg/logview"
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	zone "github.com/lrstanley/bubblezone"
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
+	zone "github.com/lrstanley/bubblezone/v2"
 )
 
 func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -20,12 +20,12 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.onInit()
 		return m, nil
 
-	case tea.MouseMsg:
+	case tea.MouseClickMsg:
 		if m.focus == focusHelp {
 			return m.passthroughToHelp(msg)
 		}
 
-		if msg.Button == tea.MouseButtonLeft {
+		if msg.Button == tea.MouseLeft {
 			for i, id := range m.ids {
 				if zone.Get(id).InBounds(msg) {
 					m.selectedTaskIDIndex = i
@@ -42,7 +42,18 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		return m, nil
 
-	case tea.KeyMsg:
+	case tea.MouseWheelMsg:
+		if m.focus == focusHelp {
+			return m.passthroughToHelp(msg)
+		}
+
+		if zone.Get(uiZoneLogs).InBounds(msg) {
+			return m.passthroughToLogview(msg)
+		}
+
+		return m, nil
+
+	case tea.KeyPressMsg:
 		if !m.didInit || !m.gotSize {
 			return m, nil
 		}
@@ -254,7 +265,8 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.WindowSizeMsg:
-		m.help.Width, m.help.Height = msg.Width, msg.Height
+		m.help.SetWidth(msg.Width)
+		m.help.SetHeight(msg.Height)
 		m.help.SetContent(helpMenu.Render(help.Colored, msg.Width, msg.Height))
 		m.width, m.height = msg.Width, msg.Height
 		m.gotSize = true

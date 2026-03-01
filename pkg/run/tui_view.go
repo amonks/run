@@ -5,8 +5,9 @@ import (
 	"strings"
 
 	"github.com/amonks/run/internal/color"
-	"github.com/charmbracelet/lipgloss"
-	zone "github.com/lrstanley/bubblezone"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	zone "github.com/lrstanley/bubblezone/v2"
 )
 
 type uiZone = string
@@ -15,31 +16,34 @@ const (
 	uiZoneLogs uiZone = "logs"
 )
 
-func (m *tuiModel) View() string {
+func (m *tuiModel) View() tea.View {
+	var content string
 	if !m.didInit || !m.gotSize {
-		return ""
-	}
+		content = ""
+	} else if m.focus == focusHelp {
+		content = m.help.View()
+	} else {
+		styles := m.styles(m.width, m.height, m.focus)
 
-	if m.focus == focusHelp {
-		return m.help.View()
+		var sections []string
+		if styles.includeHeader {
+			sections = append(sections, m.renderHeader(styles))
+		}
+		sections = append(sections, lipgloss.JoinHorizontal(lipgloss.Top,
+			m.renderMenu(styles),
+			zone.Mark(uiZoneLogs, m.renderLog(styles)),
+		))
+		if styles.includeFooter {
+			sections = append(sections, m.renderFooter(styles))
+		}
+		content = zone.Scan(
+			lipgloss.JoinVertical(lipgloss.Left, sections...),
+		)
 	}
-
-	styles := m.styles(m.width, m.height, m.focus)
-
-	var sections []string
-	if styles.includeHeader {
-		sections = append(sections, m.renderHeader(styles))
-	}
-	sections = append(sections, lipgloss.JoinHorizontal(lipgloss.Top,
-		m.renderMenu(styles),
-		zone.Mark(uiZoneLogs, m.renderLog(styles)),
-	))
-	if styles.includeFooter {
-		sections = append(sections, m.renderFooter(styles))
-	}
-	return zone.Scan(
-		lipgloss.JoinVertical(lipgloss.Left, sections...),
-	)
+	v := tea.NewView(content)
+	v.AltScreen = true
+	v.MouseMode = tea.MouseModeCellMotion
+	return v
 }
 
 func (m *tuiModel) renderHeader(styles *styles) string {

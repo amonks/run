@@ -25,15 +25,13 @@ import (
 	"os"
 
 	"github.com/amonks/run/pkg/logview"
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 func main() {
 	flag.Parse()
 
-	program := tea.NewProgram(newScroll(),
-		tea.WithAltScreen(),
-		tea.WithMouseCellMotion())
+	program := tea.NewProgram(newScroll())
 
 	filename := flag.Arg(0)
 
@@ -100,4 +98,9 @@ func (t *scroll) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return t, cmd
 }
 
-func (t *scroll) View() string { return t.logview.View() }
+func (t *scroll) View() tea.View {
+	v := tea.NewView(t.logview.ViewString())
+	v.AltScreen = true
+	v.MouseMode = tea.MouseModeCellMotion
+	return v
+}

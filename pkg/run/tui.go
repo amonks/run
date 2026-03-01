@@ -6,10 +6,10 @@ import (
 
 	"github.com/amonks/run/internal/mutex"
 	"github.com/amonks/run/pkg/logview"
-	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	zone "github.com/lrstanley/bubblezone"
+	"charm.land/bubbles/v2/spinner"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	zone "github.com/lrstanley/bubblezone/v2"
 )
 
 func newTUI(run *Run) UI {
@@ -82,10 +82,8 @@ func (a *tui) Start(ctx context.Context, ready chan<- struct{}, stdin io.Reader,
 			ids:    append([]string{internalTaskInterleaved}, a.run.IDs()...),
 			onInit: func() { ready <- struct{}{} },
 		},
-		tea.WithAltScreen(),
 		tea.WithContext(ctx),
-		tea.WithFPS(120),
-		tea.WithMouseCellMotion())
+		tea.WithFPS(120))
 	a.p = program
 
 	interleavedWriter := a.Writer(internalTaskInterleaved)
@@ -162,7 +160,7 @@ func (m *tuiModel) Init() tea.Cmd {
 		m.tasks[id] = lv
 	}
 
-	m.help = viewport.New(m.width, m.height)
+	m.help = viewport.New(viewport.WithWidth(m.width), viewport.WithHeight(m.height))
 
 	m.shortSpinner = spinner.New()
 	m.shortSpinner.Spinner = spinner.Jump

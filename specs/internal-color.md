@@ -6,7 +6,7 @@ The `internal/color` package provides deterministic hash-based color generation 
 
 ## Hash-Based Colors
 
-- `Hash(s string) lipgloss.AdaptiveColor`: generates a deterministic color from a string.
+- `Hash(s string) compat.AdaptiveColor`: generates a deterministic color from a string (uses `charm.land/lipgloss/v2/compat`).
   - Uses FNV-32a hash to derive a hue value in [0, 1].
   - Creates HSL colors with full saturation: lightness 0.7 for dark backgrounds, 0.3 for light backgrounds.
   - Results are cached per string for performance.
@@ -24,7 +24,7 @@ Exports named colors from the [Solarized](https://ethanschoonover.com/solarized/
 Internal HSL-to-RGB conversion:
 - `hsl` type with `h`, `s`, `l` fields in [0, 1].
 - `rgb` type with `r`, `g`, `b` fields in [0, 255].
-- `hex()` method produces `#RRGGBB` strings for lipgloss.
+- `hex()` method produces `#RRGGBB` strings passed to `lipgloss.Color()` which returns `color.Color`.
 
 ## Thread Safety
 
