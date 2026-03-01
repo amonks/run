@@ -94,6 +94,9 @@ func (s *Section) RenderInline(styles *Styles, width, height int) string {
 	var out strings.Builder
 	i := 0
 	for range height {
+		if i >= len(s.rendered) {
+			break
+		}
 		out.WriteString("\n")
 		lineLength := 0
 		first := s.rendered[i]
