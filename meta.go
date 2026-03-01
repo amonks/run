@@ -1,9 +1,4 @@
-// Meta provides metadata about the Run project, like contributor and
-// license information.
-//
-// The project itself can be imported from package,
-//     github.com/amonks/run/pkg/run
-package meta
+package main
 
 import (
 	_ "embed"

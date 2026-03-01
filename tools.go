@@ -1,7 +1,7 @@
 //go:build tools
 // +build tools
 
-package run
+package main
 
 import (
 	_ "github.com/charmbracelet/vhs"

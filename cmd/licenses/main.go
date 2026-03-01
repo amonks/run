@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	cmd := exec.Command("go", "build", "./cmd/run")
+	cmd := exec.Command("go", "build", ".")
 	defer os.Remove("run")
 
 	if err := cmd.Run(); err != nil {

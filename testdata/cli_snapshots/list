@@ -15,7 +15,7 @@
   [38;2;101;239;255minstall[m
     Type: [3mshort[m
     Description:
-[3m[0m      [3m"go install ./cmd/run"[m
+[3m[0m      [3m"go install ."[m
     Dependencies:
       - generate
 

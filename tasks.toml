@@ -12,7 +12,7 @@
   id = "install"
   type = "short"
   dependencies = ["generate"]
-  cmd = "go install ./cmd/run"
+  cmd = "go install ."
 
 [[task]]
   id = "generate"
@@ -211,7 +211,7 @@
   type = "short"
   cmd = """
   README_USAGE_SECTION=$(sed -n '/<!-- usage-start -->/,/<!-- usage-end -->/p' README.md | sed '/<!-- usage-start -->\\|<!-- usage-end -->\\|```/d')
-  RUN_COMMAND_USAGE=$(go run ./cmd/run/... | sed -n '/USAGE/,/VERSION/p' | sed '/VERSION/d')
+  RUN_COMMAND_USAGE=$(go run . | sed -n '/USAGE/,/VERSION/p' | sed '/VERSION/d')
 
   # Compare and update if necessary
   if ! diff <(echo "$README_USAGE_SECTION") <(echo "$RUN_COMMAND_USAGE") > /dev/null; then
@@ -241,12 +241,12 @@
   cmd = """
     mkdir -p testdata/cli_snapshots
 
-    CLICOLOR_FORCE=true go run ./cmd/run -version &> testdata/cli_snapshots/version
-    CLICOLOR_FORCE=true go run ./cmd/run -help &> testdata/cli_snapshots/help
-    CLICOLOR_FORCE=true go run ./cmd/run -credits &> testdata/cli_snapshots/credits
-    CLICOLOR_FORCE=true go run ./cmd/run -contributors &> testdata/cli_snapshots/contributors
-    CLICOLOR_FORCE=true go run ./cmd/run -license &> testdata/cli_snapshots/license
-    CLICOLOR_FORCE=true go run ./cmd/run -list &> testdata/cli_snapshots/list
+    CLICOLOR_FORCE=true go run . -version &> testdata/cli_snapshots/version
+    CLICOLOR_FORCE=true go run . -help &> testdata/cli_snapshots/help
+    CLICOLOR_FORCE=true go run . -credits &> testdata/cli_snapshots/credits
+    CLICOLOR_FORCE=true go run . -contributors &> testdata/cli_snapshots/contributors
+    CLICOLOR_FORCE=true go run . -license &> testdata/cli_snapshots/license
+    CLICOLOR_FORCE=true go run . -list &> testdata/cli_snapshots/list
 
     if ! git diff --exit-code -- testdata/cli_snapshots ; then
             exit 1
