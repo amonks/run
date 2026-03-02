@@ -17,6 +17,7 @@ Takes one argument: the task ID to run. Looks for `tasks.toml` in the current di
 - `-ui=string`: force `tui` or `printer` UI (auto-detected by default).
 - `-dir=string` (default `"."`): look for a root taskfile in this directory.
 - `-list`: display the task list and exit. With a task ID, shows that task's dependencies.
+- `-skip=task-id`: skip a task, replacing it with a no-op stub. Can be passed more than once. Short stubs print "skipping" and exit immediately; long stubs become ready immediately and block until interrupted.
 - `-version`: display version info and exit.
 - `-help`: display help text and exit.
 - `-credits`: display open source credits and exit.
@@ -35,14 +36,15 @@ When `-ui` is not specified:
 
 1. Parse flags. Handle info flags (`-version`, `-help`, etc.) and exit.
 2. Load tasks via `taskfile.Load(dir)`.
-3. If no task ID and `-list`: print task list and exit.
-4. If no task ID: print help and exit.
-5. Create `Run` via `runner.New(dir, tasks, taskID)`.
-6. If `-list` with task ID: print that task's dependency tree and exit.
-7. Select and instantiate UI.
-8. Start UI in a goroutine; wait for readiness signal.
-9. Start Run in a goroutine.
-10. Wait for either completion or a signal (SIGHUP, SIGTERM, SIGINT, SIGQUIT).
+3. If `-skip` flags were given, validate that each task ID exists, then replace those tasks with `SkipTask` stubs and rebuild the library.
+4. If no task ID and `-list`: print task list and exit.
+5. If no task ID: print help and exit.
+6. Create `Run` via `runner.New(dir, tasks, taskID)`.
+7. If `-list` with task ID: print that task's dependency tree and exit.
+8. Select and instantiate UI.
+9. Start UI in a goroutine; wait for readiness signal.
+10. Start Run in a goroutine.
+11. Wait for either completion or a signal (SIGHUP, SIGTERM, SIGINT, SIGQUIT).
 
 ## Exit Behavior
 

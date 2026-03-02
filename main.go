@@ -28,6 +28,7 @@ var (
 	fUI   = flag.String("ui", "", "Force a particular ui. Legal values are 'tui' and 'printer'.")
 	fDir  = flag.String("dir", ".", "Look for a root taskfile in the given directory.")
 	fList = flag.Bool("list", false, "Display the task list and exit. If run is invoked with both -list and a task ID, that task's dependencies are displayed.")
+	fSkip []string
 
 	fVersion      = flag.Bool("version", false, "Display the version and exit.")
 	fHelp         = flag.Bool("help", false, "Display the help text and exit.")
@@ -35,6 +36,13 @@ var (
 	fContributors = flag.Bool("contributors", false, "Display the contributors list and exit.")
 	fLicense      = flag.Bool("license", false, "Display the license info and exit.")
 )
+
+func init() {
+	flag.Func("skip", "Skip a task, replacing it with a no-op stub. Can be passed more than once.", func(s string) error {
+		fSkip = append(fSkip, s)
+		return nil
+	})
+}
 
 func main() {
 	flag.Parse()
@@ -61,6 +69,28 @@ func main() {
 		fmt.Println("Error loading tasks:")
 		fmt.Println(err)
 		os.Exit(1)
+	}
+
+	if len(fSkip) > 0 {
+		for _, id := range fSkip {
+			if !allTasks.Has(id) {
+				fmt.Printf("Cannot skip %q: task not found.\n", id)
+				os.Exit(1)
+			}
+		}
+		skipSet := map[string]struct{}{}
+		for _, id := range fSkip {
+			skipSet[id] = struct{}{}
+		}
+		var tasks []task.Task
+		for _, id := range allTasks.IDs() {
+			t := allTasks.Get(id)
+			if _, ok := skipSet[id]; ok {
+				t = task.SkipTask(t)
+			}
+			tasks = append(tasks, t)
+		}
+		allTasks = task.NewLibrary(tasks...)
 	}
 
 	taskID := flag.Arg(0)

@@ -85,6 +85,20 @@ func FuncTask(fn func(ctx context.Context, onReady chan<- struct{}, w io.Writer)
 - The function receives an `onReady` channel that it must close when it is ready.
 - Simpler alternative to `ScriptTask` for programmatic use.
 
+### SkipTask
+
+Wraps an existing task with a no-op stub, preserving the original task's metadata so the dependency graph remains valid.
+
+```go
+func SkipTask(original Task) Task
+```
+
+- Writes "skipping\n" to stdout.
+- Closes `onReady` immediately.
+- Short tasks: returns nil immediately.
+- Long tasks: blocks until context cancellation, then returns nil.
+- Used by the CLI's `-skip` flag to bypass specific tasks.
+
 ## Run
 
 A `Run` represents the execution of a task and all its transitive dependencies, triggers, and watches.
