@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="doc2go">
+    <link href="../_/css/main.css" rel="stylesheet" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../_/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../_/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../_/icons/favicon-16x16.png">
+    <link rel="shortcut icon" href="../_/icons/favicon.ico"><title>printer</title>
+</head>
+  <body>
+    <nav>
+        <a href="..">github.com/amonks/run</a>/printer<span class="navbar-right">
+          <a href="..">Root</a> | <a href="#pkg-index">Index</a></span>
+      </nav>
+    <main><h2 id="pkg-overview">package printer</h2>
+<pre class="chroma"><span class="kn">import</span><span class="w"> </span><span class="s">&#34;github.com/amonks/run/printer&#34;</span></pre>
+<p>Package printer provides a non-interactive UI for displaying interleaved
+multiplexed streams. The UI prints interleaved output from all of the
+streams to its Stdout. The output is suitable for piping to a file.
+<h3 id="pkg-index">Index</h3>
+<ul>
+  <li><a href="#New">func New(run *runner.Run) runner.UI</a></li>
+  </ul><h3 id="pkg-functions">Functions</h3>
+  <h3 id="New">func New</h3>
+    <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="nf">New</span><span class="p">(</span><span class="nx">run</span><span class="w"> </span><span class="o">*</span><a href="../runner"><span class="nx">runner</span></a><span class="p">.</span><a href="../runner#Run"><span class="nx">Run</span></a><span class="p">)</span><span class="w"> </span><a href="../runner"><span class="nx">runner</span></a><span class="p">.</span><a href="../runner#UI"><span class="nx">UI</span></a></pre>
+    <p>New produces a non-interactive UI for displaying interleaved
+multiplexed streams. The UI prints interleaved output from all of the
+streams to its Stdout. The output is suitable for piping to a file.
+<p>The UI can be passed into <a href="../runner#Run.Start">runner.Run.Start</a> to display a run&apos;s execution.
+<p>The UI is safe to access concurrently from multiple goroutines.
+</main>
+    <hr>
+    <footer>
+      <small id="generated-by-footer">
+        Generated with <a href="https://abhinav.github.io/doc2go/">doc2go</a>
+      </small>
+    </footer>
+    <script src="../_/js/permalink.js"></script></body>
+</html>

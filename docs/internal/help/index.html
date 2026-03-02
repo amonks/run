@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="doc2go">
+    <link href="../../_/css/main.css" rel="stylesheet" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../../_/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../_/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../_/icons/favicon-16x16.png">
+    <link rel="shortcut icon" href="../../_/icons/favicon.ico"><title>help</title>
+</head>
+  <body>
+    <nav>
+        <a href="../..">github.com/amonks/run</a>/<a href="..">internal</a>/help<span class="navbar-right">
+          <a href="../..">Root</a> | <a href="#pkg-index">Index</a></span>
+      </nav>
+    <main><h2 id="pkg-overview">package help</h2>
+<pre class="chroma"><span class="kn">import</span><span class="w"> </span><span class="s">&#34;github.com/amonks/run/internal/help&#34;</span></pre>
+<h3 id="pkg-index">Index</h3>
+<ul>
+  <li><a href="#pkg-variables">Variables</a></li><li>
+      <a href="#Key">type Key</a>
+      </li>
+  <li>
+      <a href="#Menu">type Menu</a>
+      <ul>
+          <li><a href="#Menu.Render">func (m Menu) Render(styles *Styles, width, height int) string</a></li>
+          </ul>
+      </li>
+  <li>
+      <a href="#Section">type Section</a>
+      <ul>
+          <li><a href="#Section.RenderInline">func (s *Section) RenderInline(styles *Styles, width, height int) string</a></li>
+          </ul>
+      </li>
+  <li>
+      <a href="#Styles">type Styles</a>
+      </li>
+  </ul><h3 id="pkg-variables">Variables</h3>
+  <pre class="chroma"><span class="kd">var</span><span class="w"> </span><span class="p">(</span><span class="w">
+</span><span class="w">	</span><span id="Monochrome"><span class="nx">Monochrome</span></span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="o">&amp;</span><a href="#Styles"><span class="nx">Styles</span></a><span class="p">{</span><span class="w">
+</span><span class="w">		</span><span class="nx">Container</span><span class="p">:</span><span class="w"> </span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0"><span class="nx">lipgloss</span></a><span class="p">.</span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0#NewStyle"><span class="nf">NewStyle</span></a><span class="p">(),</span><span class="w">
+</span><span class="w">		</span><span class="nx">Header</span><span class="p">:</span><span class="w">    </span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0"><span class="nx">lipgloss</span></a><span class="p">.</span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0#NewStyle"><span class="nf">NewStyle</span></a><span class="p">().</span><span class="nf">Transform</span><span class="p">(</span><a href="https://pkg.go.dev/strings"><span class="nx">strings</span></a><span class="p">.</span><a href="https://pkg.go.dev/strings#ToUpper"><span class="nx">ToUpper</span></a><span class="p">),</span><span class="w">
+</span><span class="w">		</span><span class="nx">Keys</span><span class="p">:</span><span class="w">      </span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0"><span class="nx">lipgloss</span></a><span class="p">.</span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0#NewStyle"><span class="nf">NewStyle</span></a><span class="p">().</span><span class="nf">Bold</span><span class="p">(</span><a href="https://pkg.go.dev/builtin#true"><span class="kc">true</span></a><span class="p">),</span><span class="w">
+</span><span class="w">		</span><span class="nx">Desc</span><span class="p">:</span><span class="w">      </span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0"><span class="nx">lipgloss</span></a><span class="p">.</span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0#NewStyle"><span class="nf">NewStyle</span></a><span class="p">().</span><span class="nf">Italic</span><span class="p">(</span><a href="https://pkg.go.dev/builtin#true"><span class="kc">true</span></a><span class="p">),</span><span class="w">
+</span><span class="w">	</span><span class="p">}</span><span class="w">
+</span><span class="w">	</span><span id="Colored"><span class="nx">Colored</span></span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="o">&amp;</span><a href="#Styles"><span class="nx">Styles</span></a><span class="p">{</span><span class="w">
+</span><span class="w">		</span><span class="nx">Container</span><span class="p">:</span><span class="w"> </span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0"><span class="nx">lipgloss</span></a><span class="p">.</span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0#NewStyle"><span class="nf">NewStyle</span></a><span class="p">().</span><span class="w">
+</span><span class="w">			</span><span class="nf">Padding</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">),</span><span class="w">
+</span><span class="w">		</span><span class="nx">Header</span><span class="p">:</span><span class="w"> </span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0"><span class="nx">lipgloss</span></a><span class="p">.</span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0#NewStyle"><span class="nf">NewStyle</span></a><span class="p">().</span><span class="w">
+</span><span class="w">			</span><span class="nf">Underline</span><span class="p">(</span><a href="https://pkg.go.dev/builtin#true"><span class="kc">true</span></a><span class="p">).</span><span class="w">
+</span><span class="w">			</span><span class="nf">Bold</span><span class="p">(</span><a href="https://pkg.go.dev/builtin#true"><span class="kc">true</span></a><span class="p">).</span><span class="w">
+</span><span class="w">			</span><span class="nf">MarginBottom</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="w">
+</span><span class="w">			</span><span class="nf">Foreground</span><span class="p">(</span><a href="../color"><span class="nx">color</span></a><span class="p">.</span><a href="../color#Yellow"><span class="nx">Yellow</span></a><span class="p">),</span><span class="w">
+</span><span class="w">		</span><span class="nx">Keys</span><span class="p">:</span><span class="w"> </span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0"><span class="nx">lipgloss</span></a><span class="p">.</span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0#NewStyle"><span class="nf">NewStyle</span></a><span class="p">().</span><span class="nf">Bold</span><span class="p">(</span><a href="https://pkg.go.dev/builtin#true"><span class="kc">true</span></a><span class="p">).</span><span class="w">
+</span><span class="w">			</span><span class="nf">Foreground</span><span class="p">(</span><a href="../color"><span class="nx">color</span></a><span class="p">.</span><a href="../color#XXXLight"><span class="nx">XXXLight</span></a><span class="p">),</span><span class="w">
+</span><span class="w">		</span><span class="nx">Desc</span><span class="p">:</span><span class="w"> </span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0"><span class="nx">lipgloss</span></a><span class="p">.</span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0#NewStyle"><span class="nf">NewStyle</span></a><span class="p">().</span><span class="nf">Italic</span><span class="p">(</span><a href="https://pkg.go.dev/builtin#true"><span class="kc">true</span></a><span class="p">).</span><span class="w">
+</span><span class="w">			</span><span class="nf">Foreground</span><span class="p">(</span><a href="../color"><span class="nx">color</span></a><span class="p">.</span><a href="../color#XXLight"><span class="nx">XXLight</span></a><span class="p">),</span><span class="w">
+</span><span class="w">	</span><span class="p">}</span><span class="w">
+</span><span class="w"></span><span class="p">)</span></pre>
+  <h3 id="pkg-types">Types</h3>
+  <h3 id="Key">type Key</h3>
+    <pre class="chroma"><span class="kd">type</span><span class="w"> </span><span class="nx">Key</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">	</span><span id="Key.Keys"><span class="nx">Keys</span></span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="w">
+</span><span class="w">	</span><span id="Key.Desc"><span class="nx">Desc</span></span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="w">
+</span><span class="w"></span><span class="p">}</span></pre>
+    <h3 id="Menu">type Menu</h3>
+    <pre class="chroma"><span class="kd">type</span><span class="w"> </span><span class="nx">Menu</span><span class="w"> </span><span class="p">[]</span><a href="#Section"><span class="nx">Section</span></a></pre>
+    <h4 id="Menu.Render">func (Menu) Render</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><a href="#Menu"><span class="nx">Menu</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Render</span><span class="p">(</span><span class="nx">styles</span><span class="w"> </span><span class="o">*</span><a href="#Styles"><span class="nx">Styles</span></a><span class="p">,</span><span class="w"> </span><span class="nx">width</span><span class="p">,</span><span class="w"> </span><span class="nx">height</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#int"><span class="kt">int</span></a><span class="p">)</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
+  <h3 id="Section">type Section</h3>
+    <pre class="chroma"><span class="kd">type</span><span class="w"> </span><span class="nx">Section</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">	</span><span id="Section.Title"><span class="nx">Title</span></span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="w">
+</span><span class="w">	</span><span id="Section.Keys"><span class="nx">Keys</span></span><span class="w">  </span><span class="p">[]</span><a href="#Key"><span class="nx">Key</span></a><span class="w">
+</span><span class="w">	</span><span class="c1">// contains filtered or unexported fields</span><span class="w">
+</span><span class="w"></span><span class="p">}</span></pre>
+    <h4 id="Section.RenderInline">func (*Section) RenderInline</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><a href="#Section"><span class="nx">Section</span></a><span class="p">)</span><span class="w"> </span><span class="nf">RenderInline</span><span class="p">(</span><span class="nx">styles</span><span class="w"> </span><span class="o">*</span><a href="#Styles"><span class="nx">Styles</span></a><span class="p">,</span><span class="w"> </span><span class="nx">width</span><span class="p">,</span><span class="w"> </span><span class="nx">height</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#int"><span class="kt">int</span></a><span class="p">)</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
+  <h3 id="Styles">type Styles</h3>
+    <pre class="chroma"><span class="kd">type</span><span class="w"> </span><span class="nx">Styles</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">	</span><span id="Styles.Container"><span class="nx">Container</span></span><span class="w"> </span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0"><span class="nx">lipgloss</span></a><span class="p">.</span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0#Style"><span class="nx">Style</span></a><span class="w">
+</span><span class="w">	</span><span id="Styles.Header"><span class="nx">Header</span></span><span class="w">    </span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0"><span class="nx">lipgloss</span></a><span class="p">.</span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0#Style"><span class="nx">Style</span></a><span class="w">
+</span><span class="w">	</span><span id="Styles.Keys"><span class="nx">Keys</span></span><span class="w">      </span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0"><span class="nx">lipgloss</span></a><span class="p">.</span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0#Style"><span class="nx">Style</span></a><span class="w">
+</span><span class="w">	</span><span id="Styles.Desc"><span class="nx">Desc</span></span><span class="w">      </span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0"><span class="nx">lipgloss</span></a><span class="p">.</span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0#Style"><span class="nx">Style</span></a><span class="w">
+</span><span class="w"></span><span class="p">}</span></pre>
+    </main>
+    <hr>
+    <footer>
+      <small id="generated-by-footer">
+        Generated with <a href="https://abhinav.github.io/doc2go/">doc2go</a>
+      </small>
+    </footer>
+    <script src="../../_/js/permalink.js"></script></body>
+</html>

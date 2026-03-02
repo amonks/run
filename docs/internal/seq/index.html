@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="doc2go">
+    <link href="../../_/css/main.css" rel="stylesheet" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../../_/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../_/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../_/icons/favicon-16x16.png">
+    <link rel="shortcut icon" href="../../_/icons/favicon.ico"><title>seq</title>
+</head>
+  <body>
+    <nav>
+        <a href="../..">github.com/amonks/run</a>/<a href="..">internal</a>/seq<span class="navbar-right">
+          <a href="../..">Root</a> | <a href="#pkg-index">Index</a></span>
+      </nav>
+    <main><h2 id="pkg-overview">package seq</h2>
+<pre class="chroma"><span class="kn">import</span><span class="w"> </span><span class="s">&#34;github.com/amonks/run/internal/seq&#34;</span></pre>
+<p>Package seq provides helpers for asserting that a sequence of strings
+appears in order within a larger list of lines.
+<h3 id="pkg-index">Index</h3>
+<ul>
+  <li><a href="#AssertContainsSequence">func AssertContainsSequence(t *testing.T, lines []string, seq ...string)</a></li>
+  <li><a href="#AssertStringContainsSequence">func AssertStringContainsSequence(t *testing.T, s string, seq ...string)</a></li>
+  <li><a href="#ContainsSequence">func ContainsSequence(lines []string, seq ...string) (bool, string)</a></li>
+  </ul><h3 id="pkg-functions">Functions</h3>
+  <h3 id="AssertContainsSequence">func AssertContainsSequence</h3>
+    <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="nf">AssertContainsSequence</span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><a href="https://pkg.go.dev/testing"><span class="nx">testing</span></a><span class="p">.</span><a href="https://pkg.go.dev/testing#T"><span class="nx">T</span></a><span class="p">,</span><span class="w"> </span><span class="nx">lines</span><span class="w"> </span><span class="p">[]</span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">,</span><span class="w"> </span><span class="nx">seq</span><span class="w"> </span><span class="o">...</span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span></pre>
+    <p>AssertContainsSequence is a test helper that asserts lines contains seq as
+a clean ordered subsequence.
+<h3 id="AssertStringContainsSequence">func AssertStringContainsSequence</h3>
+    <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="nf">AssertStringContainsSequence</span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><a href="https://pkg.go.dev/testing"><span class="nx">testing</span></a><span class="p">.</span><a href="https://pkg.go.dev/testing#T"><span class="nx">T</span></a><span class="p">,</span><span class="w"> </span><span class="nx">s</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">,</span><span class="w"> </span><span class="nx">seq</span><span class="w"> </span><span class="o">...</span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span></pre>
+    <p>AssertStringContainsSequence splits s on newlines and asserts the
+subsequence.
+<h3 id="ContainsSequence">func ContainsSequence</h3>
+    <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="nf">ContainsSequence</span><span class="p">(</span><span class="nx">lines</span><span class="w"> </span><span class="p">[]</span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">,</span><span class="w"> </span><span class="nx">seq</span><span class="w"> </span><span class="o">...</span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span><span class="w"> </span><span class="p">(</span><a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a><span class="p">,</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span></pre>
+    <p>ContainsSequence reports whether lines contains seq as an ordered
+subsequence, and that no element of seq appears anywhere in lines outside
+of the matched positions. It returns true if the subsequence is found
+cleanly, or false with a descriptive reason otherwise.
+</main>
+    <hr>
+    <footer>
+      <small id="generated-by-footer">
+        Generated with <a href="https://abhinav.github.io/doc2go/">doc2go</a>
+      </small>
+    </footer>
+    <script src="../../_/js/permalink.js"></script></body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="doc2go">
+    <link href="../../_/css/main.css" rel="stylesheet" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../../_/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../_/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../_/icons/favicon-16x16.png">
+    <link rel="shortcut icon" href="../../_/icons/favicon.ico"><title>fixtures</title>
+</head>
+  <body>
+    <nav>
+        <a href="../..">github.com/amonks/run</a>/<a href="..">internal</a>/fixtures<span class="navbar-right">
+          <a href="../..">Root</a> | <a href="#pkg-index">Index</a></span>
+      </nav>
+    <main><h2 id="pkg-overview">package fixtures</h2>
+<pre class="chroma"><span class="kn">import</span><span class="w"> </span><span class="s">&#34;github.com/amonks/run/internal/fixtures&#34;</span></pre>
+<p>Package fixtures provides test doubles for the run package.
+<h3 id="pkg-index">Index</h3>
+<ul>
+  <li>
+      <a href="#Task">type Task</a>
+      <ul>
+          <li><a href="#NewTask">func NewTask(id, taskType string) *Task</a></li>
+          <li><a href="#Task.Metadata">func (t *Task) Metadata() task.TaskMetadata</a></li>
+          <li><a href="#Task.Start">func (t *Task) Start(ctx context.Context, onReady chan&lt;- struct{}, stdout io.Writer) error</a></li>
+          <li><a href="#Task.WithCancel">func (t *Task) WithCancel(err error) *Task</a></li>
+          <li><a href="#Task.WithDependencies">func (t *Task) WithDependencies(deps ...string) *Task</a></li>
+          <li><a href="#Task.WithExit">func (t *Task) WithExit(ch &lt;-chan error) *Task</a></li>
+          <li><a href="#Task.WithImmediateFailure">func (t *Task) WithImmediateFailure(err error) *Task</a></li>
+          <li><a href="#Task.WithOutput">func (t *Task) WithOutput(output string) *Task</a></li>
+          <li><a href="#Task.WithReady">func (t *Task) WithReady(ch &lt;-chan struct{}) *Task</a></li>
+          <li><a href="#Task.WithTriggers">func (t *Task) WithTriggers(triggers ...string) *Task</a></li>
+          <li><a href="#Task.WithWatch">func (t *Task) WithWatch(watch ...string) *Task</a></li>
+          </ul>
+      </li>
+  <li>
+      <a href="#Writer">type Writer</a>
+      <ul>
+          <li><a href="#NewWriter">func NewWriter() *Writer</a></li>
+          <li><a href="#Writer.CombinedString">func (w *Writer) CombinedString() string</a></li>
+          <li><a href="#Writer.String">func (w *Writer) String(id string) string</a></li>
+          <li><a href="#Writer.Writer">func (w *Writer) Writer(id string) io.Writer</a></li>
+          </ul>
+      </li>
+  </ul><h3 id="pkg-types">Types</h3>
+  <h3 id="Task">type Task</h3>
+    <pre class="chroma"><span class="kd">type</span><span class="w"> </span><span class="nx">Task</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">	</span><span class="c1">// contains filtered or unexported fields</span><span class="w">
+</span><span class="w"></span><span class="p">}</span></pre>
+    <p>Task is a controllable mock implementation of task.Task for testing.
+<h4 id="NewTask">func NewTask</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="nf">NewTask</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span><span class="w"> </span><span class="nx">taskType</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span><span class="w"> </span><span class="o">*</span><a href="#Task"><span class="nx">Task</span></a></pre>
+  <p>NewTask creates a new mock task with the given ID and type.
+<h4 id="Task.Metadata">func (*Task) Metadata</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><a href="#Task"><span class="nx">Task</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Metadata</span><span class="p">()</span><span class="w"> </span><a href="../../task"><span class="nx">task</span></a><span class="p">.</span><a href="../../task#TaskMetadata"><span class="nx">TaskMetadata</span></a></pre>
+  <h4 id="Task.Start">func (*Task) Start</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><a href="#Task"><span class="nx">Task</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Start</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><a href="https://pkg.go.dev/context"><span class="nx">context</span></a><span class="p">.</span><a href="https://pkg.go.dev/context#Context"><span class="nx">Context</span></a><span class="p">,</span><span class="w"> </span><span class="nx">onReady</span><span class="w"> </span><span class="kd">chan</span><span class="o">&lt;-</span><span class="w"> </span><span class="kd">struct</span><span class="p">{},</span><span class="w"> </span><span class="nx">stdout</span><span class="w"> </span><a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
+  <h4 id="Task.WithCancel">func (*Task) WithCancel</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><a href="#Task"><span class="nx">Task</span></a><span class="p">)</span><span class="w"> </span><span class="nf">WithCancel</span><span class="p">(</span><span class="nx">err</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a><span class="p">)</span><span class="w"> </span><span class="o">*</span><a href="#Task"><span class="nx">Task</span></a></pre>
+  <p>WithCancel configures the task to block on ctx.Done() and return err when
+canceled.
+<h4 id="Task.WithDependencies">func (*Task) WithDependencies</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><a href="#Task"><span class="nx">Task</span></a><span class="p">)</span><span class="w"> </span><span class="nf">WithDependencies</span><span class="p">(</span><span class="nx">deps</span><span class="w"> </span><span class="o">...</span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span><span class="w"> </span><span class="o">*</span><a href="#Task"><span class="nx">Task</span></a></pre>
+  <h4 id="Task.WithExit">func (*Task) WithExit</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><a href="#Task"><span class="nx">Task</span></a><span class="p">)</span><span class="w"> </span><span class="nf">WithExit</span><span class="p">(</span><span class="nx">ch</span><span class="w"> </span><span class="o">&lt;-</span><span class="kd">chan</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a><span class="p">)</span><span class="w"> </span><span class="o">*</span><a href="#Task"><span class="nx">Task</span></a></pre>
+  <p>WithExit configures the task to block until an error is sent on ch. Send
+nil for a clean exit.
+<h4 id="Task.WithImmediateFailure">func (*Task) WithImmediateFailure</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><a href="#Task"><span class="nx">Task</span></a><span class="p">)</span><span class="w"> </span><span class="nf">WithImmediateFailure</span><span class="p">(</span><span class="nx">err</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a><span class="p">)</span><span class="w"> </span><span class="o">*</span><a href="#Task"><span class="nx">Task</span></a></pre>
+  <p>WithImmediateFailure configures Start to return err immediately.
+<h4 id="Task.WithOutput">func (*Task) WithOutput</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><a href="#Task"><span class="nx">Task</span></a><span class="p">)</span><span class="w"> </span><span class="nf">WithOutput</span><span class="p">(</span><span class="nx">output</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span><span class="w"> </span><span class="o">*</span><a href="#Task"><span class="nx">Task</span></a></pre>
+  <h4 id="Task.WithReady">func (*Task) WithReady</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><a href="#Task"><span class="nx">Task</span></a><span class="p">)</span><span class="w"> </span><span class="nf">WithReady</span><span class="p">(</span><span class="nx">ch</span><span class="w"> </span><span class="o">&lt;-</span><span class="kd">chan</span><span class="w"> </span><span class="kd">struct</span><span class="p">{})</span><span class="w"> </span><span class="o">*</span><a href="#Task"><span class="nx">Task</span></a></pre>
+  <p>WithReady configures the task to wait for a readiness signal. The caller
+should close the returned channel to signal readiness.
+<h4 id="Task.WithTriggers">func (*Task) WithTriggers</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><a href="#Task"><span class="nx">Task</span></a><span class="p">)</span><span class="w"> </span><span class="nf">WithTriggers</span><span class="p">(</span><span class="nx">triggers</span><span class="w"> </span><span class="o">...</span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span><span class="w"> </span><span class="o">*</span><a href="#Task"><span class="nx">Task</span></a></pre>
+  <h4 id="Task.WithWatch">func (*Task) WithWatch</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><a href="#Task"><span class="nx">Task</span></a><span class="p">)</span><span class="w"> </span><span class="nf">WithWatch</span><span class="p">(</span><span class="nx">watch</span><span class="w"> </span><span class="o">...</span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span><span class="w"> </span><span class="o">*</span><a href="#Task"><span class="nx">Task</span></a></pre>
+  <h3 id="Writer">type Writer</h3>
+    <pre class="chroma"><span class="kd">type</span><span class="w"> </span><span class="nx">Writer</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">	</span><span class="c1">// contains filtered or unexported fields</span><span class="w">
+</span><span class="w"></span><span class="p">}</span></pre>
+    <p>Writer is a test MultiWriter that records per-stream and combined output.
+It strips ANSI escape codes so that assertions don&apos;t need to account for
+styling.
+<h4 id="NewWriter">func NewWriter</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="nf">NewWriter</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><a href="#Writer"><span class="nx">Writer</span></a></pre>
+  <p>NewWriter creates a new recording Writer.
+<h4 id="Writer.CombinedString">func (*Writer) CombinedString</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">w</span><span class="w"> </span><span class="o">*</span><a href="#Writer"><span class="nx">Writer</span></a><span class="p">)</span><span class="w"> </span><span class="nf">CombinedString</span><span class="p">()</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
+  <p>CombinedString returns all output interleaved with [id] prefixes, with
+ANSI codes stripped.
+<h4 id="Writer.String">func (*Writer) String</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">w</span><span class="w"> </span><span class="o">*</span><a href="#Writer"><span class="nx">Writer</span></a><span class="p">)</span><span class="w"> </span><span class="nf">String</span><span class="p">(</span><span class="nx">id</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
+  <p>String returns the raw output for a single stream, with ANSI codes
+stripped.
+<h4 id="Writer.Writer">func (*Writer) Writer</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">w</span><span class="w"> </span><span class="o">*</span><a href="#Writer"><span class="nx">Writer</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Writer</span><span class="p">(</span><span class="nx">id</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span><span class="w"> </span><a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a></pre>
+  <p>Writer returns an io.Writer for the given stream ID. Each write is
+recorded both in the per-stream buffer and in the combined buffer
+(prefixed with &quot;[id] &quot;).
+</main>
+    <hr>
+    <footer>
+      <small id="generated-by-footer">
+        Generated with <a href="https://abhinav.github.io/doc2go/">doc2go</a>
+      </small>
+    </footer>
+    <script src="../../_/js/permalink.js"></script></body>
+</html>

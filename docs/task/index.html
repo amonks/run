@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="doc2go">
+    <link href="../_/css/main.css" rel="stylesheet" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../_/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../_/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../_/icons/favicon-16x16.png">
+    <link rel="shortcut icon" href="../_/icons/favicon.ico"><title>task</title>
+</head>
+  <body>
+    <nav>
+        <a href="..">github.com/amonks/run</a>/task<span class="navbar-right">
+          <a href="..">Root</a> | <a href="#pkg-index">Index</a></span>
+      </nav>
+    <main><h2 id="pkg-overview">package task</h2>
+<pre class="chroma"><span class="kn">import</span><span class="w"> </span><span class="s">&#34;github.com/amonks/run/task&#34;</span></pre>
+<details id="example-package-BringYourOwnTasks" class="example">
+      <summary>Example (BringYourOwnTasks)</summary>
+      <p>In this example, we generate our own Task and run it.
+<pre class="chroma"><span class="kn">package</span><span class="w"> </span><span class="nx">main</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="kn">import</span><span class="w"> </span><span class="p">(</span><span class="w">
+</span><span class="w">	</span><span class="s">&#34;context&#34;</span><span class="w">
+</span><span class="w">	</span><span class="s">&#34;fmt&#34;</span><span class="w">
+</span><span class="w">	</span><span class="s">&#34;io&#34;</span><span class="w">
+</span><span class="w">	</span><span class="s">&#34;log&#34;</span><span class="w">
+</span><span class="w">	</span><span class="s">&#34;strings&#34;</span><span class="w">
+</span><span class="w">	</span><span class="s">&#34;time&#34;</span><span class="w">
+</span><span class="w">
+</span><span class="w">	</span><span class="s">&#34;github.com/amonks/run/task&#34;</span><span class="w">
+</span><span class="w"></span><span class="p">)</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="kd">func</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">	</span><span class="nx">tasks</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">task</span><span class="p">.</span><span class="nf">NewLibrary</span><span class="p">(</span><span class="w">
+</span><span class="w">		</span><span class="nx">task</span><span class="p">.</span><span class="nf">FuncTask</span><span class="p">(</span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">onReady</span><span class="w"> </span><span class="kd">chan</span><span class="o">&lt;-</span><span class="w"> </span><span class="kd">struct</span><span class="p">{},</span><span class="w"> </span><span class="nx">w</span><span class="w"> </span><span class="nx">io</span><span class="p">.</span><span class="nx">Writer</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">			</span><span class="nx">w</span><span class="p">.</span><span class="nf">Write</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="s">&#34;sleep&#34;</span><span class="p">))</span><span class="w">
+</span><span class="w">			</span><span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span><span class="w">
+</span><span class="w">			</span><span class="nx">w</span><span class="p">.</span><span class="nf">Write</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="s">&#34;done&#34;</span><span class="p">))</span><span class="w">
+</span><span class="w">			</span><span class="nb">close</span><span class="p">(</span><span class="nx">onReady</span><span class="p">)</span><span class="w">
+</span><span class="w">			</span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="w">
+</span><span class="w">		</span><span class="p">},</span><span class="w"> </span><span class="nx">task</span><span class="p">.</span><span class="nx">TaskMetadata</span><span class="p">{</span><span class="nx">ID</span><span class="p">:</span><span class="w"> </span><span class="s">&#34;custom&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">Type</span><span class="p">:</span><span class="w"> </span><span class="s">&#34;short&#34;</span><span class="p">}),</span><span class="w">
+</span><span class="w">	</span><span class="p">)</span><span class="w">
+</span><span class="w">
+</span><span class="w">	</span><span class="nx">ids</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">tasks</span><span class="p">.</span><span class="nf">IDs</span><span class="p">()</span><span class="w">
+</span><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="nx">ids</span><span class="p">)</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">		</span><span class="nx">log</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="s">&#34;expected 1 task&#34;</span><span class="p">)</span><span class="w">
+</span><span class="w">	</span><span class="p">}</span><span class="w">
+</span><span class="w">
+</span><span class="w">	</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">strings</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">ids</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;, &#34;</span><span class="p">))</span><span class="w">
+</span><span class="w"></span><span class="p">}</span></pre>
+      <div>
+          <p>Output:</p>
+          <pre>custom
+</pre>
+        </div></details>
+  <h3 id="pkg-index">Index</h3>
+<ul>
+  <li>
+      <a href="#Library">type Library</a>
+      <ul>
+          <li><a href="#NewLibrary">func NewLibrary(tasks ...Task) Library</a></li>
+          <li><a href="#Library.Get">func (lib Library) Get(id string) Task</a></li>
+          <li><a href="#Library.Has">func (lib Library) Has(id string) bool</a></li>
+          <li><a href="#Library.HasWatch">func (lib Library) HasWatch(path string) bool</a></li>
+          <li><a href="#Library.IDs">func (lib Library) IDs() []string</a></li>
+          <li><a href="#Library.LongestID">func (lib Library) LongestID() int</a></li>
+          <li><a href="#Library.Size">func (lib Library) Size() int</a></li>
+          <li><a href="#Library.Subtree">func (lib Library) Subtree(ids ...string) Library</a></li>
+          <li><a href="#Library.Validate">func (lib Library) Validate() error</a></li>
+          <li><a href="#Library.ValidateWithCWD">func (lib Library) ValidateWithCWD(cwd string) error</a></li>
+          <li><a href="#Library.Watches">func (lib Library) Watches() []string</a></li>
+          <li><a href="#Library.WithDependency">func (lib Library) WithDependency(dep string) []string</a></li>
+          <li><a href="#Library.WithTrigger">func (lib Library) WithTrigger(trigger string) []string</a></li>
+          <li><a href="#Library.WithWatch">func (lib Library) WithWatch(path string) []string</a></li>
+          </ul>
+      </li>
+  <li>
+      <a href="#Task">type Task</a>
+      <ul>
+          <li><a href="#FuncTask">func FuncTask(fn func(ctx context.Context, onReady chan&lt;- struct{}, w io.Writer) error, ...) Task</a></li>
+          <li><a href="#ScriptTask">func ScriptTask(scriptText string, dir string, env []string, metadata TaskMetadata) Task</a></li>
+          </ul>
+      </li>
+  <li>
+      <a href="#TaskMetadata">type TaskMetadata</a>
+      </li>
+  </ul><h4 id="pkg-examples">Examples</h4>
+<ul>
+  <li><a href="#example-package-BringYourOwnTasks">package (BringYourOwnTasks)</a></li>
+  </ul><h3 id="pkg-types">Types</h3>
+  <h3 id="Library">type Library</h3>
+    <pre class="chroma"><span class="kd">type</span><span class="w"> </span><span class="nx">Library</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">	</span><span class="c1">// contains filtered or unexported fields</span><span class="w">
+</span><span class="w"></span><span class="p">}</span></pre>
+    <p>Library is an opaque data structure representing an immutable, ordered
+collection of [Task]s. You can create a [runner.Run] by passing a Library into
+[runner.New].
+<h4 id="NewLibrary">func NewLibrary</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="nf">NewLibrary</span><span class="p">(</span><span class="nx">tasks</span><span class="w"> </span><span class="o">...</span><a href="#Task"><span class="nx">Task</span></a><span class="p">)</span><span class="w"> </span><a href="#Library"><span class="nx">Library</span></a></pre>
+  <p>NewLibrary creates a Library from the given tasks.
+<h4 id="Library.Get">func (Library) Get</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">lib</span><span class="w"> </span><a href="#Library"><span class="nx">Library</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Get</span><span class="p">(</span><span class="nx">id</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span><span class="w"> </span><a href="#Task"><span class="nx">Task</span></a></pre>
+  <p>Get looks up a specific task by its ID. If no task bearing that ID is
+present, the task will be nil.
+<h4 id="Library.Has">func (Library) Has</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">lib</span><span class="w"> </span><a href="#Library"><span class="nx">Library</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Has</span><span class="p">(</span><span class="nx">id</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a></pre>
+  <p>Has returns true if the given ID is present among the Library.
+<h4 id="Library.HasWatch">func (Library) HasWatch</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">lib</span><span class="w"> </span><a href="#Library"><span class="nx">Library</span></a><span class="p">)</span><span class="w"> </span><span class="nf">HasWatch</span><span class="p">(</span><span class="nx">path</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a></pre>
+  <p>HasWatch returns true if any task in the Library watches the given path.
+<h4 id="Library.IDs">func (Library) IDs</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">lib</span><span class="w"> </span><a href="#Library"><span class="nx">Library</span></a><span class="p">)</span><span class="w"> </span><span class="nf">IDs</span><span class="p">()</span><span class="w"> </span><span class="p">[]</span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
+  <p>IDs returns the task IDs in their canonical order.
+<h4 id="Library.LongestID">func (Library) LongestID</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">lib</span><span class="w"> </span><a href="#Library"><span class="nx">Library</span></a><span class="p">)</span><span class="w"> </span><span class="nf">LongestID</span><span class="p">()</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#int"><span class="kt">int</span></a></pre>
+  <p>LongestID returns the length of the longest task ID.
+<h4 id="Library.Size">func (Library) Size</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">lib</span><span class="w"> </span><a href="#Library"><span class="nx">Library</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Size</span><span class="p">()</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#int"><span class="kt">int</span></a></pre>
+  <p>Size returns the number of tasks in the Library.
+<h4 id="Library.Subtree">func (Library) Subtree</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">lib</span><span class="w"> </span><a href="#Library"><span class="nx">Library</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Subtree</span><span class="p">(</span><span class="nx">ids</span><span class="w"> </span><span class="o">...</span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span><span class="w"> </span><a href="#Library"><span class="nx">Library</span></a></pre>
+  <p>Subtree returns a new Library containing only the given task IDs and their
+transitive dependencies and triggers, preserving the canonical order from
+the original Library.
+<h4 id="Library.Validate">func (Library) Validate</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">lib</span><span class="w"> </span><a href="#Library"><span class="nx">Library</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Validate</span><span class="p">()</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
+  <p>Validate inspects a Library and returns an error if
+it is invalid. If the error is not nil, its
+[error.Error] will return a formatted multiline string
+describing the problems with the task set.
+<h4 id="Library.ValidateWithCWD">func (Library) ValidateWithCWD</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">lib</span><span class="w"> </span><a href="#Library"><span class="nx">Library</span></a><span class="p">)</span><span class="w"> </span><span class="nf">ValidateWithCWD</span><span class="p">(</span><span class="nx">cwd</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
+  <p>ValidateWithCWD inspects a Library and returns an error if it is invalid,
+using the given working directory for path validation.
+<h4 id="Library.Watches">func (Library) Watches</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">lib</span><span class="w"> </span><a href="#Library"><span class="nx">Library</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Watches</span><span class="p">()</span><span class="w"> </span><span class="p">[]</span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
+  <p>Watches returns a sorted slice of unique watched paths across all tasks.
+<h4 id="Library.WithDependency">func (Library) WithDependency</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">lib</span><span class="w"> </span><a href="#Library"><span class="nx">Library</span></a><span class="p">)</span><span class="w"> </span><span class="nf">WithDependency</span><span class="p">(</span><span class="nx">dep</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span><span class="w"> </span><span class="p">[]</span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
+  <p>WithDependency returns the IDs of tasks that list dep as a dependency.
+<h4 id="Library.WithTrigger">func (Library) WithTrigger</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">lib</span><span class="w"> </span><a href="#Library"><span class="nx">Library</span></a><span class="p">)</span><span class="w"> </span><span class="nf">WithTrigger</span><span class="p">(</span><span class="nx">trigger</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span><span class="w"> </span><span class="p">[]</span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
+  <p>WithTrigger returns the IDs of tasks that list trigger as a trigger.
+<h4 id="Library.WithWatch">func (Library) WithWatch</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">lib</span><span class="w"> </span><a href="#Library"><span class="nx">Library</span></a><span class="p">)</span><span class="w"> </span><span class="nf">WithWatch</span><span class="p">(</span><span class="nx">path</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span><span class="w"> </span><span class="p">[]</span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
+  <p>WithWatch returns the IDs of tasks that watch the given path.
+<h3 id="Task">type Task</h3>
+    <pre class="chroma"><span class="kd">type</span><span class="w"> </span><span class="nx">Task</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">	</span><span class="c1">// Start runs the task. It should write output to stdout and close</span><span class="w">
+</span><span class="w">	</span><span class="c1">// onReady when the task is ready (i.e., has produced whatever output</span><span class="w">
+</span><span class="w">	</span><span class="c1">// dependents need). For short tasks, close onReady on successful</span><span class="w">
+</span><span class="w">	</span><span class="c1">// completion. For long tasks, close onReady as soon as the task is</span><span class="w">
+</span><span class="w">	</span><span class="c1">// serving / ready.</span><span class="w">
+</span><span class="w">	</span><span id="Task.Start"><span class="nf">Start</span></span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><a href="https://pkg.go.dev/context"><span class="nx">context</span></a><span class="p">.</span><a href="https://pkg.go.dev/context#Context"><span class="nx">Context</span></a><span class="p">,</span><span class="w"> </span><span class="nx">onReady</span><span class="w"> </span><span class="kd">chan</span><span class="o">&lt;-</span><span class="w"> </span><span class="kd">struct</span><span class="p">{},</span><span class="w"> </span><span class="nx">stdout</span><span class="w"> </span><a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a><span class="w">
+</span><span class="w">	</span><span id="Task.Metadata"><span class="nf">Metadata</span></span><span class="p">()</span><span class="w"> </span><a href="#TaskMetadata"><span class="nx">TaskMetadata</span></a><span class="w">
+</span><span class="w"></span><span class="p">}</span></pre>
+    <p>Anything implementing Task can be run by bundling it into a <a href="#Library">Library</a> and then
+passing it into [runner.New].
+<p><a href="#ScriptTask">ScriptTask</a> and <a href="#FuncTask">FuncTask</a> can be used to create Tasks.
+<p>A Task must be safe to access concurrently from multiple goroutines.
+<h4 id="FuncTask">func FuncTask</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="nf">FuncTask</span><span class="p">(</span><span class="nx">fn</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><a href="https://pkg.go.dev/context"><span class="nx">context</span></a><span class="p">.</span><a href="https://pkg.go.dev/context#Context"><span class="nx">Context</span></a><span class="p">,</span><span class="w"> </span><span class="nx">onReady</span><span class="w"> </span><span class="kd">chan</span><span class="o">&lt;-</span><span class="w"> </span><span class="kd">struct</span><span class="p">{},</span><span class="w"> </span><span class="nx">w</span><span class="w"> </span><a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a><span class="p">,</span><span class="w"> </span><span class="nx">metadata</span><span class="w"> </span><a href="#TaskMetadata"><span class="nx">TaskMetadata</span></a><span class="p">)</span><span class="w"> </span><a href="#Task"><span class="nx">Task</span></a></pre>
+  <p>FuncTask produces a runnable Task from a go function. The function receives
+an onReady channel that it should close when it is ready (i.e., has produced
+whatever output dependents need). metadata.Dir is ignored.
+<h4 id="ScriptTask">func ScriptTask</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="nf">ScriptTask</span><span class="p">(</span><span class="nx">scriptText</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">,</span><span class="w"> </span><span class="nx">dir</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">,</span><span class="w"> </span><span class="nx">env</span><span class="w"> </span><span class="p">[]</span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">,</span><span class="w"> </span><span class="nx">metadata</span><span class="w"> </span><a href="#TaskMetadata"><span class="nx">TaskMetadata</span></a><span class="p">)</span><span class="w"> </span><a href="#Task"><span class="nx">Task</span></a></pre>
+  <p>ScriptTask produces a runnable Task from a bash script and working
+directory. The script will execute in metadata.Dir. The script&apos;s Stdout and
+Stderr will be provided by the Run, and will be forwarded to the UI. The
+script will not get a Stdin.
+<p>Script runs in a new bash process, and can have multiple lines. It is run
+basically like this:
+<pre>$ cd $DIR
+$ bash -c &quot;$CMD&quot; 2&amp;&gt;1 /some/ui
+</pre>
+<h3 id="TaskMetadata">type TaskMetadata</h3>
+    <pre class="chroma"><span class="kd">type</span><span class="w"> </span><span class="nx">TaskMetadata</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">	</span><span class="c1">// ID identifies a task, for example,</span><span class="w">
+</span><span class="w">	</span><span class="c1">//   - for command line invocation, as in `$ run &lt;id&gt;`</span><span class="w">
+</span><span class="w">	</span><span class="c1">//   - in the TUI&#39;s task list.</span><span class="w">
+</span><span class="w">	</span><span id="TaskMetadata.ID"><span class="nx">ID</span></span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="w">
+</span><span class="w">
+</span><span class="w">	</span><span class="c1">// Description optionally provides additional information about a task,</span><span class="w">
+</span><span class="w">	</span><span class="c1">// which can be displayed, for example, by running `run -list`. It can</span><span class="w">
+</span><span class="w">	</span><span class="c1">// be one line or many lines.</span><span class="w">
+</span><span class="w">	</span><span id="TaskMetadata.Description"><span class="nx">Description</span></span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="w">
+</span><span class="w">
+</span><span class="w">	</span><span class="c1">// Type specifies how we manage a task.</span><span class="w">
+</span><span class="w">	</span><span class="c1">//
+</span><span class="c1">	// If the Type is &#34;long&#34;,</span><span class="w">
+</span><span class="w">	</span><span class="c1">//   - We will keep the task alive by restarting it if it exits.</span><span class="w">
+</span><span class="w">	</span><span class="c1">//   - If the long task A is a dependency of task B, we will begin B as</span><span class="w">
+</span><span class="w">	</span><span class="c1">//     soon as A starts.</span><span class="w">
+</span><span class="w">	</span><span class="c1">//   - It is invalid to use a long task as a trigger, since long tasks</span><span class="w">
+</span><span class="w">	</span><span class="c1">//     aren&#39;t expected to end.</span><span class="w">
+</span><span class="w">	</span><span class="c1">//
+</span><span class="c1">	// If the Type is &#34;short&#34;,</span><span class="w">
+</span><span class="w">	</span><span class="c1">//   - If the Start returns nil, we will consider it done.</span><span class="w">
+</span><span class="w">	</span><span class="c1">//   - If the Start returns an error, we will wait 1 second and rerun it.</span><span class="w">
+</span><span class="w">	</span><span class="c1">//   - If the short task A is a dependency or trigger of task B, we will</span><span class="w">
+</span><span class="w">	</span><span class="c1">//     wait for A to complete before starting B.</span><span class="w">
+</span><span class="w">	</span><span class="c1">//
+</span><span class="c1">	// Any Type besides &#34;long&#34; or &#34;short&#34; is invalid. There is no default</span><span class="w">
+</span><span class="w">	</span><span class="c1">// type: every task must specify its type.</span><span class="w">
+</span><span class="w">	</span><span id="TaskMetadata.Type"><span class="nx">Type</span></span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="w">
+</span><span class="w">
+</span><span class="w">	</span><span class="c1">// Dependencies are other tasks IDs which should always run alongside</span><span class="w">
+</span><span class="w">	</span><span class="c1">// this task. If a task A lists B as a dependency, running A will first</span><span class="w">
+</span><span class="w">	</span><span class="c1">// run B.</span><span class="w">
+</span><span class="w">	</span><span class="c1">//
+</span><span class="c1">	// Dependencies do not set up an invalidation relationship: if long</span><span class="w">
+</span><span class="w">	</span><span class="c1">// task A lists short task B as a dependency, and B reruns because a</span><span class="w">
+</span><span class="w">	</span><span class="c1">// watched file is changed, we will not restart A, assuming that A has</span><span class="w">
+</span><span class="w">	</span><span class="c1">// its own mechanism for detecting file changes. If A does not have</span><span class="w">
+</span><span class="w">	</span><span class="c1">// such a mechanism, use a trigger rather than a dependency.</span><span class="w">
+</span><span class="w">	</span><span class="c1">//
+</span><span class="c1">	// Dependencies can be task IDs from child directories. For example,</span><span class="w">
+</span><span class="w">	</span><span class="c1">// the dependency &#34;css/build&#34; specifies the task with ID &#34;build&#34; in the</span><span class="w">
+</span><span class="w">	</span><span class="c1">// tasks file &#34;./css/tasks.toml&#34;.</span><span class="w">
+</span><span class="w">	</span><span class="c1">//
+</span><span class="c1">	// If a task depends on a &#34;long&#34; task, the dependent is started once</span><span class="w">
+</span><span class="w">	</span><span class="c1">// the long task signals readiness by closing its onReady channel.</span><span class="w">
+</span><span class="w">	</span><span id="TaskMetadata.Dependencies"><span class="nx">Dependencies</span></span><span class="w"> </span><span class="p">[]</span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="w">
+</span><span class="w">
+</span><span class="w">	</span><span class="c1">// Triggers are other task IDs which should always be run alongside</span><span class="w">
+</span><span class="w">	</span><span class="c1">// this task, and whose success should cause this task to re-execute.</span><span class="w">
+</span><span class="w">	</span><span class="c1">// If a task A lists B as a dependency, and both A and B are running,</span><span class="w">
+</span><span class="w">	</span><span class="c1">// successful execution of B will always trigger an execution of A.</span><span class="w">
+</span><span class="w">	</span><span class="c1">//
+</span><span class="c1">	// Triggers can be task IDs from child directories. For example, the</span><span class="w">
+</span><span class="w">	</span><span class="c1">// trigger &#34;css/build&#34; specifies the task with ID &#34;build&#34; in the tasks</span><span class="w">
+</span><span class="w">	</span><span class="c1">// file &#34;./css/tasks.toml&#34;.</span><span class="w">
+</span><span class="w">	</span><span class="c1">//
+</span><span class="c1">	// It is invalid to use a &#34;long&#34; task as a trigger.</span><span class="w">
+</span><span class="w">	</span><span id="TaskMetadata.Triggers"><span class="nx">Triggers</span></span><span class="w"> </span><span class="p">[]</span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="w">
+</span><span class="w">
+</span><span class="w">	</span><span class="c1">// Watch specifies file paths where, if a change to</span><span class="w">
+</span><span class="w">	</span><span class="c1">// the file path is detected, we should restart the</span><span class="w">
+</span><span class="w">	</span><span class="c1">// task. Watch supports globs, and does **not**</span><span class="w">
+</span><span class="w">	</span><span class="c1">// support the &#34;./...&#34; style used typical of Go</span><span class="w">
+</span><span class="w">	</span><span class="c1">// command line tools.</span><span class="w">
+</span><span class="w">	</span><span class="c1">//
+</span><span class="c1">	// For example,</span><span class="w">
+</span><span class="w">	</span><span class="c1">//  - `&#34;.&#34;` watches for changes to the working</span><span class="w">
+</span><span class="w">	</span><span class="c1">//    directory only, but not changes within</span><span class="w">
+</span><span class="w">	</span><span class="c1">//    subdirectories.</span><span class="w">
+</span><span class="w">	</span><span class="c1">//  - `&#34;**&#34; watches for changes at any level within</span><span class="w">
+</span><span class="w">	</span><span class="c1">//    the working directory.</span><span class="w">
+</span><span class="w">	</span><span class="c1">//  - `&#34;./some/path/file.txt&#34;` watches for changes</span><span class="w">
+</span><span class="w">	</span><span class="c1">//    to the file, which must already exist.</span><span class="w">
+</span><span class="w">	</span><span class="c1">//  - `&#34;./src/website/**/*.js&#34;` watches for changes</span><span class="w">
+</span><span class="w">	</span><span class="c1">//    to javascript files within src/website.</span><span class="w">
+</span><span class="w">	</span><span id="TaskMetadata.Watch"><span class="nx">Watch</span></span><span class="w"> </span><span class="p">[]</span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="w">
+</span><span class="w"></span><span class="p">}</span></pre>
+    <p>TaskMetadata contains the data which, regardless of the type of Task, a
+[runner.Run] uses for task execution.
+</main>
+    <hr>
+    <footer>
+      <small id="generated-by-footer">
+        Generated with <a href="https://abhinav.github.io/doc2go/">doc2go</a>
+      </small>
+    </footer>
+    <script src="../_/js/permalink.js"></script></body>
+</html>

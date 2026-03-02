@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="doc2go">
+    <link href="../../_/css/main.css" rel="stylesheet" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../../_/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../_/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../_/icons/favicon-16x16.png">
+    <link rel="shortcut icon" href="../../_/icons/favicon.ico"><title>scroll</title>
+</head>
+  <body>
+    <nav>
+        <a href="../..">github.com/amonks/run</a>/<a href="..">cmd</a>/scroll<span class="navbar-right">
+          <a href="../..">Root</a></span>
+      </nav>
+    <main><h2 id="pkg-overview">scroll</h2>
+
+<p>Scroll is a tailing pager.
+<ul>
+<li><p>Unlike tail, it has interactive features like
+paging and incremental regex search.
+<li><p>Unlike less, it continuously tries to keep reading
+more bytes from the input file.
+<li><p>Unlike less and tail, it loads the whole file into
+memory before starting, which makes it perform worse
+on files which are already large.
+</ul>
+<p>On my machine, I start to notice perceptible latency:
+<ul>
+<li>Changing search query in a file larger than a few dozen MB
+<li>Opening a file larger than a few hundred MB
+</ul>
+<p>I never notice latency in scrolling or tailing, even in
+files up to 15 GB. I didn&apos;t test any files larger than that
+because they take too long to open.
+</main>
+    <hr>
+    <footer>
+      <small id="generated-by-footer">
+        Generated with <a href="https://abhinav.github.io/doc2go/">doc2go</a>
+      </small>
+    </footer>
+    <script src="../../_/js/permalink.js"></script></body>
+</html>

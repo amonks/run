@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="doc2go">
+    <link href="../_/css/main.css" rel="stylesheet" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../_/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../_/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../_/icons/favicon-16x16.png">
+    <link rel="shortcut icon" href="../_/icons/favicon.ico"><title>runner</title>
+</head>
+  <body>
+    <nav>
+        <a href="..">github.com/amonks/run</a>/runner<span class="navbar-right">
+          <a href="..">Root</a> | <a href="#pkg-index">Index</a></span>
+      </nav>
+    <main><h2 id="pkg-overview">package runner</h2>
+<pre class="chroma"><span class="kn">import</span><span class="w"> </span><span class="s">&#34;github.com/amonks/run/runner&#34;</span></pre>
+<p>Package runner executes a collection of tasks with dependency management,
+file watching, and process lifecycle control.
+<h3 id="hdr-Conceptual_Overview">Conceptual Overview</h3>
+<p>1. You call [taskfile.Load] to parse task files and get a <a href="../task#Library">task.Library</a>.
+<ul>
+<li>You can also generate your own task set, or append your own tasks onto it.
+<li>Tasks just implement an interface.
+</ul>
+<p>2. You combine a task library with an ID to get a <a href="#Run">Run</a> using <a href="#New">New</a>.
+3. You pass a <a href="#UI">UI</a> into a Run and Start it.
+<ul>
+<li>You can also make your own UI.
+<li>You can also use a Run UI with any other collection of processes
+that expect io.Writers.
+</ul>
+<details id="example-package" class="example">
+      <summary>Example</summary>
+      <p>In this example, we use components from Run to build our own version of
+the run CLI tool. See the root package for the source of the -real- run CLI,
+which isn&apos;t too much more complex.
+<pre class="chroma"><span class="kn">package</span><span class="w"> </span><span class="nx">main</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="kn">import</span><span class="w"> </span><span class="p">(</span><span class="w">
+</span><span class="w">	</span><span class="s">&#34;context&#34;</span><span class="w">
+</span><span class="w">	</span><span class="s">&#34;os&#34;</span><span class="w">
+</span><span class="w">
+</span><span class="w">	</span><span class="s">&#34;github.com/amonks/run/runner&#34;</span><span class="w">
+</span><span class="w">	</span><span class="s">&#34;github.com/amonks/run/taskfile&#34;</span><span class="w">
+</span><span class="w">	</span><span class="s">&#34;github.com/amonks/run/tui&#34;</span><span class="w">
+</span><span class="w"></span><span class="p">)</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="kd">func</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">	</span><span class="nx">tasks</span><span class="p">,</span><span class="w"> </span><span class="nx">_</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">taskfile</span><span class="p">.</span><span class="nf">Load</span><span class="p">(</span><span class="s">&#34;.&#34;</span><span class="p">)</span><span class="w">
+</span><span class="w">	</span><span class="nx">r</span><span class="p">,</span><span class="w"> </span><span class="nx">_</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">runner</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="s">&#34;.&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">tasks</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;dev&#34;</span><span class="p">)</span><span class="w">
+</span><span class="w">	</span><span class="nx">ui</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">tui</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="nx">r</span><span class="p">)</span><span class="w">
+</span><span class="w">
+</span><span class="w">	</span><span class="nx">ctx</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">()</span><span class="w">
+</span><span class="w">	</span><span class="nx">uiReady</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nb">make</span><span class="p">(</span><span class="kd">chan</span><span class="w"> </span><span class="kd">struct</span><span class="p">{})</span><span class="w">
+</span><span class="w">
+</span><span class="w">	</span><span class="k">go</span><span class="w"> </span><span class="nx">ui</span><span class="p">.</span><span class="nf">Start</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">uiReady</span><span class="p">,</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nx">Stdin</span><span class="p">,</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nx">Stdout</span><span class="p">)</span><span class="w">
+</span><span class="w">	</span><span class="o">&lt;-</span><span class="nx">uiReady</span><span class="w">
+</span><span class="w">
+</span><span class="w">	</span><span class="nx">r</span><span class="p">.</span><span class="nf">Start</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">ui</span><span class="p">)</span><span class="w"> </span><span class="c1">// blocks until done</span><span class="w">
+</span><span class="w"></span><span class="p">}</span></pre>
+      </details>
+  <details id="example-package-BringYourOwnUI" class="example">
+      <summary>Example (BringYourOwnUI)</summary>
+      <p>In this example, we build a version of the run CLI tool that uses a UI we
+provide ourselves.
+<pre class="chroma"><span class="kn">package</span><span class="w"> </span><span class="nx">main</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="kn">import</span><span class="w"> </span><span class="p">(</span><span class="w">
+</span><span class="w">	</span><span class="s">&#34;context&#34;</span><span class="w">
+</span><span class="w">	</span><span class="s">&#34;io&#34;</span><span class="w">
+</span><span class="w">	</span><span class="s">&#34;log&#34;</span><span class="w">
+</span><span class="w">	</span><span class="s">&#34;os&#34;</span><span class="w">
+</span><span class="w">
+</span><span class="w">	</span><span class="s">&#34;github.com/amonks/run/runner&#34;</span><span class="w">
+</span><span class="w">	</span><span class="s">&#34;github.com/amonks/run/taskfile&#34;</span><span class="w">
+</span><span class="w"></span><span class="p">)</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="c1">// ui implements MultiWriter</span><span class="w">
+</span><span class="w"></span><span class="kd">var</span><span class="w"> </span><span class="nx">_</span><span class="w"> </span><span class="nx">runner</span><span class="p">.</span><span class="nx">MultiWriter</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">ui</span><span class="p">{}</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="kd">type</span><span class="w"> </span><span class="nx">ui</span><span class="w"> </span><span class="kd">struct</span><span class="p">{}</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">w</span><span class="w"> </span><span class="nx">ui</span><span class="p">)</span><span class="w"> </span><span class="nf">Writer</span><span class="p">(</span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="nx">io</span><span class="p">.</span><span class="nx">Writer</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">	</span><span class="k">return</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nx">Stdout</span><span class="w">
+</span><span class="w"></span><span class="p">}</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="c1">// In this example, we build a version of the run CLI tool that uses a UI we</span><span class="w">
+</span><span class="w"></span><span class="c1">// provide ourselves.</span><span class="w">
+</span><span class="w"></span><span class="kd">func</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">	</span><span class="nx">tasks</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">taskfile</span><span class="p">.</span><span class="nf">Load</span><span class="p">(</span><span class="s">&#34;.&#34;</span><span class="p">)</span><span class="w">
+</span><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">		</span><span class="nx">log</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span><span class="w">
+</span><span class="w">	</span><span class="p">}</span><span class="w">
+</span><span class="w">
+</span><span class="w">	</span><span class="nx">run</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">runner</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="s">&#34;.&#34;</span><span class="p">,</span><span class="w"> </span><span class="nx">tasks</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;dev&#34;</span><span class="p">)</span><span class="w">
+</span><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">		</span><span class="nx">log</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span><span class="w">
+</span><span class="w">	</span><span class="p">}</span><span class="w">
+</span><span class="w">
+</span><span class="w">	</span><span class="nx">ui</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">ui</span><span class="p">{}</span><span class="w">
+</span><span class="w">
+</span><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">run</span><span class="p">.</span><span class="nf">Start</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">(),</span><span class="w"> </span><span class="nx">ui</span><span class="p">);</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">		</span><span class="nx">log</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span><span class="w">
+</span><span class="w">	</span><span class="p">}</span><span class="w">
+</span><span class="w"></span><span class="p">}</span></pre>
+      </details>
+  <h3 id="pkg-index">Index</h3>
+<ul>
+  <li><a href="#pkg-constants">Constants</a></li><li><a href="#pkg-variables">Variables</a></li><li><a href="#StripANSIEscapeCodes">func StripANSIEscapeCodes(s string) string</a></li>
+  <li>
+      <a href="#MultiWriter">type MultiWriter</a>
+      </li>
+  <li>
+      <a href="#Run">type Run</a>
+      <ul>
+          <li><a href="#New">func New(dir string, allTasks task.Library, taskID string) (*Run, error)</a></li>
+          <li><a href="#Run.Add">func (r *Run) Add(ids ...string)</a></li>
+          <li><a href="#Run.IDs">func (r *Run) IDs() []string</a></li>
+          <li><a href="#Run.Invalidate">func (r *Run) Invalidate(id string)</a></li>
+          <li><a href="#Run.Remove">func (r *Run) Remove(id string)</a></li>
+          <li><a href="#Run.Start">func (r *Run) Start(ctx context.Context, out MultiWriter) error</a></li>
+          <li><a href="#Run.TaskStatus">func (r *Run) TaskStatus(id string) TaskStatus</a></li>
+          <li><a href="#Run.Tasks">func (r *Run) Tasks() task.Library</a></li>
+          <li><a href="#Run.Type">func (r *Run) Type() RunType</a></li>
+          </ul>
+      </li>
+  <li>
+      <a href="#RunType">type RunType</a>
+      <ul>
+          <li><a href="#RunType.String">func (i RunType) String() string</a></li>
+          </ul>
+      </li>
+  <li>
+      <a href="#TaskStatus">type TaskStatus</a>
+      <ul>
+          <li><a href="#TaskStatus.String">func (i TaskStatus) String() string</a></li>
+          </ul>
+      </li>
+  <li>
+      <a href="#UI">type UI</a>
+      </li>
+  </ul><h4 id="pkg-examples">Examples</h4>
+<ul>
+  <li><a href="#example-package">package</a></li>
+  <li><a href="#example-package-BringYourOwnUI">package (BringYourOwnUI)</a></li>
+  </ul><h3 id="pkg-constants">Constants</h3>
+  <pre class="chroma"><span class="kd">const</span><span class="w"> </span><span id="InternalTaskInterleaved"><span class="nx">InternalTaskInterleaved</span></span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#34;@interleaved&#34;</span></pre>
+  <p>InternalTaskInterleaved is the ID used for the interleaved output stream.
+<pre class="chroma"><span class="kd">const</span><span class="w"> </span><span id="InternalTaskWatch"><span class="nx">InternalTaskWatch</span></span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#34;@watch&#34;</span></pre>
+  <p>InternalTaskWatch is the ID used for file-watcher messaging.
+<h3 id="pkg-variables">Variables</h3>
+  <pre class="chroma"><span class="kd">var</span><span class="w"> </span><span id="LogStyle"><span class="nx">LogStyle</span></span><span class="w"> </span><span class="p">=</span><span class="w"> </span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0"><span class="nx">lipgloss</span></a><span class="p">.</span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0#NewStyle"><span class="nf">NewStyle</span></a><span class="p">().</span><span class="w">
+</span><span class="w">	</span><span class="nf">Foreground</span><span class="p">(</span><a href="../internal/color"><span class="nx">color</span></a><span class="p">.</span><a href="../internal/color#XXXLight"><span class="nx">XXXLight</span></a><span class="p">).</span><span class="w">
+</span><span class="w">	</span><span class="nf">Italic</span><span class="p">(</span><a href="https://pkg.go.dev/builtin#true"><span class="kc">true</span></a><span class="p">)</span></pre>
+  <p>LogStyle is the style used for run system messages (starting, exit, etc.).
+<h3 id="pkg-functions">Functions</h3>
+  <h3 id="StripANSIEscapeCodes">func StripANSIEscapeCodes</h3>
+    <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="nf">StripANSIEscapeCodes</span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
+    <p>StripANSIEscapeCodes removes ANSI escape codes from a string.
+<h3 id="pkg-types">Types</h3>
+  <h3 id="MultiWriter">type MultiWriter</h3>
+    <pre class="chroma"><span class="kd">type</span><span class="w"> </span><span class="nx">MultiWriter</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">	</span><span id="MultiWriter.Writer"><span class="nf">Writer</span></span><span class="p">(</span><span class="nx">id</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span><span class="w"> </span><a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="w">
+</span><span class="w"></span><span class="p">}</span></pre>
+    <p>MultiWriter is the interface Runs use to display UI. To start a Run, you
+must pass a MultiWriter into <a href="#Run.Start">Run.Start</a>.
+<p>MultiWriter is a subset of <a href="#UI">UI</a>, so the UIs produced by [tui.New] and
+[printer.New] implement MultiWriter.
+<h3 id="Run">type Run</h3>
+    <pre class="chroma"><span class="kd">type</span><span class="w"> </span><span class="nx">Run</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">	</span><span class="c1">// contains filtered or unexported fields</span><span class="w">
+</span><span class="w"></span><span class="p">}</span></pre>
+    <p>A Run represents an execution of a task, including,
+<ul>
+<li>execution of other tasks that it depends on
+<li>configuration of file-watches for retriggering tasks.
+</ul>
+<p>A Run is safe to access concurrently from multiple goroutines.
+<h4 id="New">func New</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="nf">New</span><span class="p">(</span><span class="nx">dir</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">,</span><span class="w"> </span><span class="nx">allTasks</span><span class="w"> </span><a href="../task"><span class="nx">task</span></a><span class="p">.</span><a href="../task#Library"><span class="nx">Library</span></a><span class="p">,</span><span class="w"> </span><span class="nx">taskID</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><a href="#Run"><span class="nx">Run</span></a><span class="p">,</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a><span class="p">)</span></pre>
+  <p>New creates an executable Run from a taskList and a taskID.
+<p>The run will handle task dependencies, watches, and triggers as documented
+in the README.
+<h4 id="Run.Add">func (*Run) Add</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><a href="#Run"><span class="nx">Run</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Add</span><span class="p">(</span><span class="nx">ids</span><span class="w"> </span><span class="o">...</span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span></pre>
+  <p>Add dynamically adds tasks (by ID) to the active run. The task IDs must
+exist in the allTasks collection passed to New. Their transitive
+dependencies, triggers, and watches are also activated.
+<h4 id="Run.IDs">func (*Run) IDs</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><a href="#Run"><span class="nx">Run</span></a><span class="p">)</span><span class="w"> </span><span class="nf">IDs</span><span class="p">()</span><span class="w"> </span><span class="p">[]</span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
+  <p>IDs returns the list of output stream names that a Run would write to. This
+includes the IDs of each Task that will be used in the run, plus (if
+applicable) the id &quot;@watch&quot;, which the Run uses for messaging about file
+watchers.
+<h4 id="Run.Invalidate">func (*Run) Invalidate</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><a href="#Run"><span class="nx">Run</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Invalidate</span><span class="p">(</span><span class="nx">id</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span></pre>
+  <p>Invalidate asks a task to rerun.
+<h4 id="Run.Remove">func (*Run) Remove</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><a href="#Run"><span class="nx">Run</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Remove</span><span class="p">(</span><span class="nx">id</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span></pre>
+  <p>Remove dynamically removes a task (by ID) from the active run. Tasks
+exclusively owned by the removed task are also cleaned up.
+<h4 id="Run.Start">func (*Run) Start</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><a href="#Run"><span class="nx">Run</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Start</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><a href="https://pkg.go.dev/context"><span class="nx">context</span></a><span class="p">.</span><a href="https://pkg.go.dev/context#Context"><span class="nx">Context</span></a><span class="p">,</span><span class="w"> </span><span class="nx">out</span><span class="w"> </span><a href="#MultiWriter"><span class="nx">MultiWriter</span></a><span class="p">)</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
+  <p>Start starts the Run, waits for it to complete, and returns an error.
+Remember that &quot;long&quot; runs will never complete until canceled.
+<h4 id="Run.TaskStatus">func (*Run) TaskStatus</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><a href="#Run"><span class="nx">Run</span></a><span class="p">)</span><span class="w"> </span><span class="nf">TaskStatus</span><span class="p">(</span><span class="nx">id</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span><span class="w"> </span><a href="#TaskStatus"><span class="nx">TaskStatus</span></a></pre>
+  <p>TaskStatus, given a task ID, returns that task&apos;s TaskStatus.
+<h4 id="Run.Tasks">func (*Run) Tasks</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><a href="#Run"><span class="nx">Run</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Tasks</span><span class="p">()</span><span class="w"> </span><a href="../task"><span class="nx">task</span></a><span class="p">.</span><a href="../task#Library"><span class="nx">Library</span></a></pre>
+  <p>Tasks returns the Library that a Run would execute.
+<h4 id="Run.Type">func (*Run) Type</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">r</span><span class="w"> </span><span class="o">*</span><a href="#Run"><span class="nx">Run</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Type</span><span class="p">()</span><span class="w"> </span><a href="#RunType"><span class="nx">RunType</span></a></pre>
+  <p>Type returns the RunType of a run. It is RunTypeLong if any task is &quot;long&quot;,
+otherwise it is RunTypeShort.
+<p>If a run is RunTypeShort, it will exit once all of its tasks have succeeded.
+If a run is RunTypeLong, it will continue running until it is interrupted.
+File watches are only used if a run is RunTypeLong.
+<h3 id="RunType">type RunType</h3>
+    <pre class="chroma"><span class="kd">type</span><span class="w"> </span><span class="nx">RunType</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#int"><span class="kt">int</span></a></pre>
+    <p>A Run&apos;s RunType is RunTypeLong if any task is &quot;long&quot;, otherwise it is
+RunTypeShort.
+<p>If a run is RunTypeShort, it will exit once all of its tasks have succeeded.
+If a run is RunTypeLong, it will continue running until it is interrupted.
+File watches are only used if a run is RunTypeLong.
+<pre class="chroma"><span class="kd">const</span><span class="w"> </span><span class="p">(</span><span class="w">
+</span><span class="w">	</span><span id="RunTypeShort"><span class="nx">RunTypeShort</span></span><span class="w"> </span><a href="#RunType"><span class="nx">RunType</span></a><span class="w">
+</span><span class="w">	</span><span id="RunTypeLong"><span class="nx">RunTypeLong</span></span><span class="w">
+</span><span class="w"></span><span class="p">)</span></pre>
+  <h4 id="RunType.String">func (RunType) String</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">i</span><span class="w"> </span><a href="#RunType"><span class="nx">RunType</span></a><span class="p">)</span><span class="w"> </span><span class="nf">String</span><span class="p">()</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
+  <h3 id="TaskStatus">type TaskStatus</h3>
+    <pre class="chroma"><span class="kd">type</span><span class="w"> </span><span class="nx">TaskStatus</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#int"><span class="kt">int</span></a></pre>
+    <pre class="chroma"><span class="kd">const</span><span class="w"> </span><span class="p">(</span><span class="w">
+</span><span class="w">	</span><span id="TaskStatusNotStarted"><span class="nx">TaskStatusNotStarted</span></span><span class="w"> </span><a href="#TaskStatus"><span class="nx">TaskStatus</span></a><span class="w">
+</span><span class="w">	</span><span id="TaskStatusRunning"><span class="nx">TaskStatusRunning</span></span><span class="w">
+</span><span class="w">	</span><span id="TaskStatusRestarting"><span class="nx">TaskStatusRestarting</span></span><span class="w">
+</span><span class="w">	</span><span id="TaskStatusFailed"><span class="nx">TaskStatusFailed</span></span><span class="w">
+</span><span class="w">	</span><span id="TaskStatusDone"><span class="nx">TaskStatusDone</span></span><span class="w">
+</span><span class="w"></span><span class="p">)</span></pre>
+  <h4 id="TaskStatus.String">func (TaskStatus) String</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">i</span><span class="w"> </span><a href="#TaskStatus"><span class="nx">TaskStatus</span></a><span class="p">)</span><span class="w"> </span><span class="nf">String</span><span class="p">()</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
+  <h3 id="UI">type UI</h3>
+    <pre class="chroma"><span class="kd">type</span><span class="w"> </span><span class="nx">UI</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">	</span><span id="UI.Start"><span class="nf">Start</span></span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><a href="https://pkg.go.dev/context"><span class="nx">context</span></a><span class="p">.</span><a href="https://pkg.go.dev/context#Context"><span class="nx">Context</span></a><span class="p">,</span><span class="w"> </span><span class="nx">ready</span><span class="w"> </span><span class="kd">chan</span><span class="o">&lt;-</span><span class="w"> </span><span class="kd">struct</span><span class="p">{},</span><span class="w"> </span><span class="nx">stdin</span><span class="w"> </span><a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Reader"><span class="nx">Reader</span></a><span class="p">,</span><span class="w"> </span><span class="nx">stdout</span><span class="w"> </span><a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a><span class="w">
+</span><span class="w">	</span><span id="UI.Writer"><span class="nf">Writer</span></span><span class="p">(</span><span class="nx">id</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span><span class="w"> </span><a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="w">
+</span><span class="w"></span><span class="p">}</span></pre>
+    <p>A UI is essentially a multiplexed <a href="https://pkg.go.dev/io#Writer">io.Writer</a> that can be started and
+stopped. Since UIs implement <a href="#MultiWriter">MultiWriter</a>, they can be passed into
+<a href="#Run.Start">Run.Start</a> to display run execution.
+<p>The packages [tui] and [printer] produce implementors of UI.
+</main>
+    <hr>
+    <footer>
+      <small id="generated-by-footer">
+        Generated with <a href="https://abhinav.github.io/doc2go/">doc2go</a>
+      </small>
+    </footer>
+    <script src="../_/js/permalink.js"></script></body>
+</html>
