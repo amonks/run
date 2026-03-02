@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 
-	"github.com/amonks/run/runner"
 	"github.com/amonks/run/taskfile"
 	"github.com/amonks/run/tui"
 )
@@ -14,14 +13,5 @@ import (
 // which isn't too much more complex.
 func Example() {
 	tasks, _ := taskfile.Load(".")
-	r, _ := runner.New(".", tasks, "dev")
-	ui := tui.New(r)
-
-	ctx := context.Background()
-	uiReady := make(chan struct{})
-
-	go ui.Start(ctx, uiReady, os.Stdin, os.Stdout)
-	<-uiReady
-
-	r.Start(ctx, ui) // blocks until done
+	tui.Start(context.Background(), os.Stdin, os.Stdout, ".", tasks, "dev")
 }

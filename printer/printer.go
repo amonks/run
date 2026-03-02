@@ -19,32 +19,39 @@ import (
 // multiplexed streams. The UI prints interleaved output from all of the
 // streams to its Stdout. The output is suitable for piping to a file.
 //
-// The UI can be passed into [runner.Run.Start] to display a run's execution.
+// The gutterWidth parameter controls the width of the task-ID gutter
+// (typically the length of the longest task ID). The stdout parameter
+// receives the formatted output.
 //
-// The UI is safe to access concurrently from multiple goroutines.
-func New(run *runner.Run) runner.UI {
-	return &printer{mu: mutex.New("printer"), run: run}
+// The Printer is safe to access concurrently from multiple goroutines.
+func New(gutterWidth int, stdout io.Writer) *Printer {
+	return &Printer{
+		mu:        mutex.New("printer"),
+		stdout:    stdout,
+		keyLength: gutterWidth,
+	}
 }
 
-type printer struct {
+// Printer is a non-interactive UI that writes interleaved task output to
+// a single stream, prefixed with color-coded task IDs.
+type Printer struct {
 	mu        *mutex.Mutex
-	run       *runner.Run
 	stdout    io.Writer
 	keyLength int
 	lastKey   string
 }
 
-// *printer implements MultiWriter
-var _ runner.MultiWriter = &printer{}
+// *Printer implements MultiWriter
+var _ runner.MultiWriter = &Printer{}
 
-func (p *printer) Writer(id string) io.Writer {
+func (p *Printer) Writer(id string) io.Writer {
 	return printerWriter{p, id}
 }
 
 var _ io.Writer = printerWriter{}
 
 type printerWriter struct {
-	printer *printer
+	printer *Printer
 	id      string
 }
 
@@ -53,25 +60,19 @@ func (w printerWriter) Write(bs []byte) (int, error) {
 	return len(bs), nil
 }
 
-func (p *printer) Start(ctx context.Context, ready chan<- struct{}, _ io.Reader, stdout io.Writer) error {
-	p.mu.Lock("Write")
-	p.stdout = stdout
-	p.keyLength = 0
-	for _, id := range p.run.IDs() {
-		if len(id) > p.keyLength {
-			p.keyLength = len(id)
-		}
+// Start implements [runner.UI]. It signals readiness immediately and
+// blocks until the context is canceled.
+func (p *Printer) Start(ctx context.Context, ready chan<- struct{}, _ io.Reader, _ io.Writer) error {
+	if ready != nil {
+		ready <- struct{}{}
 	}
-	p.mu.Unlock()
-
-	ready <- struct{}{}
 
 	<-ctx.Done()
 
 	return nil
 }
 
-func (p *printer) write(key, message string) {
+func (p *Printer) write(key, message string) {
 	defer p.mu.Lock("Write").Unlock()
 
 	if p.stdout == nil {

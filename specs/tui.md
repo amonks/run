@@ -2,15 +2,25 @@
 
 ## Overview
 
-The interactive TUI provides a split-pane terminal interface for viewing task output, built on the BubbleTea framework. It is used when stdout is a TTY and any running task is long.
+The interactive TUI provides a split-pane terminal interface for viewing task output, built on the BubbleTea framework. It is used when stdout is a TTY and the root task is long.
 
 ## Construction
 
 ```go
-func New(run *runner.Run) runner.UI
+func Start(ctx context.Context, stdin io.Reader, stdout io.Writer, dir string, allTasks task.Library, taskID string) error
 ```
 
-Returns a `UI` that renders an interactive terminal interface.
+`Start` is a blocking function that creates a [runner.Run] with [runner.RunTypeLong], wires up the BubbleTea program and interleaved printer, and runs until the user quits or the context is canceled.
+
+Internally, `Start`:
+
+1. Creates the `tui` struct (implements `runner.MultiWriter`).
+2. Creates a `runner.Run` with `RunTypeLong`, passing the tui as `MultiWriter`.
+3. Creates a `tea.Program` with a `tuiModel`.
+4. Creates an interleaved `printer.Printer` whose output goes to the `@interleaved` log view.
+5. Starts the runner in a goroutine from the `onInit` callback (once BubbleTea's event loop is active).
+6. Blocks on `program.Run()`.
+7. On exit, cancels the runner's context and waits for it to finish.
 
 ## Layout
 
@@ -41,7 +51,7 @@ When there are more tasks than fit in the menu's available height, the task list
 
 ### Interleaved View
 
-The TUI creates a `Printer` UI internally and feeds its output to an `@interleaved` log view. This gives users a combined view of all task output alongside individual task views.
+The TUI creates a `Printer` internally and feeds its output to an `@interleaved` log view. This gives users a combined view of all task output alongside individual task views.
 
 ## Input Handling
 
@@ -86,6 +96,6 @@ Styles are computed dynamically based on terminal width, height, and current foc
 The TUI is selected automatically when:
 
 1. Stdout is a TTY, AND
-2. The run type is `RunTypeLong` (any task is long).
+2. The root task type is `"long"`.
 
 Can be forced with `run -ui=tui`.

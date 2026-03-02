@@ -104,19 +104,22 @@ func SkipTask(original Task) Task
 A `Run` represents the execution of a task and all its transitive dependencies, triggers, and watches.
 
 ```go
-func New(dir string, allTasks task.Library, taskID string) (*Run, error)
+func New(runType RunType, dir string, allTasks task.Library, taskID string, out MultiWriter) (*Run, error)
 ```
 
+- Accepts an explicit `RunType` controlling the run's lifecycle behavior.
+- Accepts a `MultiWriter` for task output (its `Writer` method is not called until `Start`).
 - Validates the task set before proceeding.
 - Uses `allTasks.Subtree(taskID)` to compute the active task set from the requested task and all reachable tasks via dependencies and triggers.
 - Preserves the canonical ordering from `allTasks`.
-- Determines `RunType`: `RunTypeLong` if the root task is long, `RunTypeShort` otherwise.
 - Tracks requested task IDs in a `requestedTasks` set for dynamic recomputation.
 
 ### RunType
 
+The caller chooses the run's lifecycle behavior explicitly:
+
 - `RunTypeShort`: exits once the root task succeeds, or immediately on any task failure.
-- `RunTypeLong`: runs until context cancellation. File watches are only active in long runs.
+- `RunTypeLong`: runs until context cancellation. Restarts failed tasks with exponential backoff. File watches are only active in long runs.
 
 ### TaskStatus
 
@@ -130,9 +133,9 @@ Tracks per-task state for UI rendering only; never affects control flow.
 
 ### Execution
 
-`Run.Start(ctx context.Context, out MultiWriter) error` starts execution:
+`Run.Start(ctx context.Context) error` starts execution:
 
-1. Sets up output writers.
+1. Sets up output writers using the `MultiWriter` passed to `New`.
 2. Starts file watchers for all watched paths (via `r.tasks.Watches()`).
 3. Sends `msgRunTask` for each zero-dependency task to the input channel.
 4. Enters the single-channel event loop, dispatching messages from `r.input`:
@@ -192,7 +195,7 @@ type MultiWriter interface {
 }
 ```
 
-The output interface that `Run.Start` requires. Both `TUI` and `Printer` implement it.
+The output interface that a Run requires, passed to `New`. The `Printer` implements it; the TUI implements it internally within `tui.Start`.
 
 ### Internal Task IDs
 

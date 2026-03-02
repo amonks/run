@@ -27,14 +27,12 @@ func Example_bringYourOwnUI() {
 		log.Fatal(err)
 	}
 
-	run, err := runner.New(".", tasks, "dev")
+	run, err := runner.New(runner.RunTypeLong, ".", tasks, "dev", ui{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	ui := ui{}
-
-	if err := run.Start(context.Background(), ui); err != nil {
+	if err := run.Start(context.Background()); err != nil {
 		log.Fatal(err)
 	}
 }

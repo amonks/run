@@ -29,8 +29,8 @@ Takes one argument: the task ID to run. Looks for `tasks.toml` in the current di
 When `-ui` is not specified:
 
 1. If stdout is not a TTY: use `Printer`.
-2. If the run type is `RunTypeShort`: use `Printer`.
-3. Otherwise: use `TUI`.
+2. If the root task type is `"long"`: use `TUI`.
+3. Otherwise: use `Printer`.
 
 ## Execution Flow
 
@@ -39,20 +39,18 @@ When `-ui` is not specified:
 3. If `-skip` flags were given, validate that each task ID exists, then replace those tasks with `SkipTask` stubs and rebuild the library.
 4. If no task ID and `-list`: print task list and exit.
 5. If no task ID: print help and exit.
-6. Create `Run` via `runner.New(dir, tasks, taskID)`.
-7. If `-list` with task ID: print that task's dependency tree and exit.
-8. Select and instantiate UI.
-9. Start UI in a goroutine; wait for readiness signal.
-10. Start Run in a goroutine.
-11. Wait for either completion or a signal (SIGHUP, SIGTERM, SIGINT, SIGQUIT).
+6. Validate task ID exists.
+7. If `-list` with task ID: print that task's dependency subtree and exit.
+8. Determine UI mode based on flags and root task type.
+9. Set up signal handling via `signal.NotifyContext` (SIGHUP, SIGTERM, SIGINT, SIGQUIT).
+10. If TUI mode: call `tui.Start(ctx, stdin, stdout, dir, allTasks, taskID)` which creates the runner internally with `RunTypeLong` and blocks.
+11. If printer mode: create `printer.New(gutterWidth, stdout)`, create `runner.New(RunTypeShort, ...)`, and call `r.Start(ctx)` which blocks.
 
 ## Exit Behavior
 
-- The first component to exit (UI or Run) determines the exit reason.
-- If the UI exits before a short run completes, that is an error.
-- If `-ui=tui` was explicitly set, the TUI stays open after the run completes so the user can inspect output.
-- Context cancellation triggers exit code 0 with "Canceled" message.
+- Context cancellation (via signal) triggers exit code 0 with "Canceled" message.
 - Errors trigger exit code 1.
+- In TUI mode, the runner uses `RunTypeLong` (keepalive), so it stays alive until the user quits the TUI. This means `-ui=tui` with a short task shows the task completing and keeps the TUI open for output inspection.
 
 ## Task List Output
 
