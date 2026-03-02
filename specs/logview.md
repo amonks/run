@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `logview` package (`pkg/logview`) provides a standalone BubbleTea model for viewing and searching logs. It is used by the TUI's task log panes and by the `scroll` command.
+The `logview` package (`logview/`) provides a standalone BubbleTea model for viewing and searching logs. It is used by the TUI's task log panes and by the `scroll` command.
 
 ## Construction
 

@@ -7,7 +7,7 @@ The interactive TUI provides a split-pane terminal interface for viewing task ou
 ## Construction
 
 ```go
-func NewTUI(run *Run) UI
+func New(run *runner.Run) runner.UI
 ```
 
 Returns a `UI` that renders an interactive terminal interface.

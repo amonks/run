@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/amonks/run/pkg/run"
+	"github.com/amonks/run/task"
 )
 
-// Task is a controllable mock implementation of run.Task for testing.
+// Task is a controllable mock implementation of task.Task for testing.
 type Task struct {
 	id           string
 	taskType     string
@@ -87,8 +87,8 @@ func (t *Task) WithImmediateFailure(err error) *Task {
 	return &cp
 }
 
-func (t *Task) Metadata() run.TaskMetadata {
-	return run.TaskMetadata{
+func (t *Task) Metadata() task.TaskMetadata {
+	return task.TaskMetadata{
 		ID:           t.id,
 		Type:         t.taskType,
 		Watch:        t.watch,
@@ -156,5 +156,5 @@ func (t *Task) Start(ctx context.Context, onReady chan<- struct{}, stdout io.Wri
 	return nil
 }
 
-// Verify Task implements run.Task.
-var _ run.Task = (*Task)(nil)
+// Verify Task implements task.Task.
+var _ task.Task = (*Task)(nil)

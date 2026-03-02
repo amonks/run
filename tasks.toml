@@ -105,7 +105,7 @@
   id = "reset-snapshot-failures"
   type = "short"
   cmd = """
-    cd pkg/run/testdata/snapshots
+    cd runner/testdata/snapshots
     for d in * ; do
       if test -f $d/fail.log ; then
         echo removing $d
@@ -118,7 +118,7 @@
   id = "overwrite-snapshots"
   type = "short"
   cmd = """
-    cd pkg/run/testdata/snapshots
+    cd runner/testdata/snapshots
     for d in * ; do
       if test -f $d/fail.log ; then
         echo overwriting $d
@@ -153,18 +153,18 @@
 
     for (( ; ; )); do
       sleep 0.5
-      if [[ $(curl -so /dev/null -w '%{http_code}' "http://localhost:3335/pkg/github.com/amonks/run/pkg/run/") -eq 200 ]]; then
+      if [[ $(curl -so /dev/null -w '%{http_code}' "http://localhost:3335/pkg/github.com/amonks/run/runner/") -eq 200 ]]; then
         break
       fi
     done
 
-    wget --quiet --mirror --page-requisites --no-parent http://localhost:3335/pkg/github.com/amonks/run/pkg/run
+    wget --quiet --mirror --page-requisites --no-parent http://localhost:3335/pkg/github.com/amonks/run/runner
 
     kill_godoc
     trap - SIGINT
 
     cd localhost:3335
-    mv pkg/github.com/amonks/run/pkg/run index.html
+    mv pkg/github.com/amonks/run/runner index.html
     rm -r pkg
 
     # Make links outside the module use pkg.go.dev.

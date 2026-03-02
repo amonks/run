@@ -2,7 +2,7 @@
 
 ## Overview
 
-The task engine is the core of Run. It loads task definitions, validates them, resolves dependencies, schedules execution, manages file watchers, and coordinates task lifecycles. The public API lives in `pkg/run`.
+The task engine is the core of Run. It loads task definitions, validates them, resolves dependencies, schedules execution, manages file watchers, and coordinates task lifecycles. The public API lives in `task/` and `runner/`.
 
 ## Core Types
 
@@ -90,7 +90,7 @@ func FuncTask(fn func(ctx context.Context, onReady chan<- struct{}, w io.Writer)
 A `Run` represents the execution of a task and all its transitive dependencies, triggers, and watches.
 
 ```go
-func RunTask(dir string, allTasks Library, taskID string) (*Run, error)
+func New(dir string, allTasks task.Library, taskID string) (*Run, error)
 ```
 
 - Validates the task set before proceeding.
