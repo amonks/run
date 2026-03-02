@@ -131,79 +131,8 @@
   id = "generate-docs"
   type = "short"
   cmd = """
-    if ! which wget >/dev/null ; then
-      echo "wget must be installed to generate docs"
-      exit 1
-    fi
-    if ! which sd >/dev/null ; then
-      echo "sd must be installed to generate docs"
-      exit 1
-    fi
-
-    godoc -http=0.0.0.0:3335 &
-    godocpid=$!
-
-    function kill_godoc() {
-      kill $godocpid
-    }
-
-    trap kill_godoc SIGINT
-
-    sha=$(git rev-parse --short HEAD)
-
-    for (( ; ; )); do
-      sleep 0.5
-      if [[ $(curl -so /dev/null -w '%{http_code}' "http://localhost:3335/pkg/github.com/amonks/run/runner/") -eq 200 ]]; then
-        break
-      fi
-    done
-
-    wget --quiet --mirror --page-requisites --no-parent http://localhost:3335/pkg/github.com/amonks/run/runner
-
-    kill_godoc
-    trap - SIGINT
-
-    cd localhost:3335
-    mv pkg/github.com/amonks/run/runner index.html
-    rm -r pkg
-
-    # Make links outside the module use pkg.go.dev.
-    sd '"/pkg' '"https://pkg.go.dev/pkg' index.html
-
-    # Correct for putting run at the server root.
-    sd '"/lib' '"/run/lib' index.html
-
-    # Make source code links point to github.
-    sd '"/src/github.com/amonks/run/' '"https://github.com/amonks/run/blob/main/' index.html
-
-    # Try to convert the selection anchors on github links. Puzzlingly, godoc's
-    # line anchors are 10 less than you'd expect: eg #L100 highlights line 110.
-    grep '?s=\\d\\+:\\d\\+#L' index.html | while read -r old_line ; do
-      old_lineno="$(echo $old_line | sd '^.*\\?s=\\d+:\\d+#L(\\d+).*$' '$1')"
-      new_lineno="$(($old_lineno + 10))"
-      new_line="$(echo $old_line | sd '\\?s=\\d+:\\d+#L'$old_lineno '#L'$new_lineno)"
-      sd -s "$old_line" "$new_line" index.html
-    done
-
-    # Remove the topbar and footer entirely.
-    sed -i -e '/topbar/,+11d' index.html
-    sed -i -e '/footer/,+8d' index.html
-
-    # Remove the link to the subdirectories section.
-    sed -i -e '/#pkg-subdirectories/,+1d' index.html
-
-    # Remove the subdirectories section. This is insanely brittle. The
-    # subdirectories section is only 51 lines because we have exactly three
-    # subdirectories.
-    sed -i -e '/"pkg-subdirectories/,+51d' index.html
-
-    rm index.html-e
-    cd ..
-
-    if test -d docs ; then
-      rm -r docs
-    fi
-    mv localhost:3335 docs
+    rm -rf docs
+    go tool doc2go -out docs -home github.com/amonks/run ./...
   """
 
 [[task]]

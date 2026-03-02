@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="doc2go">
+    <link href="../../_/css/main.css" rel="stylesheet" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../../_/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../_/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../_/icons/favicon-16x16.png">
+    <link rel="shortcut icon" href="../../_/icons/favicon.ico"><title>script</title>
+</head>
+  <body>
+    <nav>
+        <a href="../..">github.com/amonks/run</a>/<a href="..">internal</a>/script<span class="navbar-right">
+          <a href="../..">Root</a> | <a href="#pkg-index">Index</a></span>
+      </nav>
+    <main><h2 id="pkg-overview">package script</h2>
+<pre class="chroma"><span class="kn">import</span><span class="w"> </span><span class="s">&#34;github.com/amonks/run/internal/script&#34;</span></pre>
+<p>Package script provides an immutable, reentrant wrapper around exec.Cmd for
+running bash scripts with robust cancellation.
+<p>A Script is a value type describing what to run. Each call to Start creates
+a fresh process; multiple Starts can run concurrently on the same Script.
+<p>On context cancellation, Start sends SIGINT to the process group, waits up
+to 2 seconds for a graceful exit, then sends SIGKILL.
+<h3 id="pkg-index">Index</h3>
+<ul>
+  <li>
+      <a href="#Script">type Script</a>
+      <ul>
+          <li><a href="#Script.Start">func (s Script) Start(ctx context.Context, stdout, stderr io.Writer) error</a></li>
+          </ul>
+      </li>
+  </ul><h3 id="pkg-types">Types</h3>
+  <h3 id="Script">type Script</h3>
+    <pre class="chroma"><span class="kd">type</span><span class="w"> </span><span class="nx">Script</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">	</span><span id="Script.Dir"><span class="nx">Dir</span></span><span class="w">  </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="w">
+</span><span class="w">	</span><span id="Script.Env"><span class="nx">Env</span></span><span class="w">  </span><span class="p">[]</span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="w">
+</span><span class="w">	</span><span id="Script.Text"><span class="nx">Text</span></span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="w">
+</span><span class="w"></span><span class="p">}</span></pre>
+    <p>Script describes a bash script to execute. It is an immutable value type:
+safe to copy, compare, and start multiple times concurrently.
+<h4 id="Script.Start">func (Script) Start</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><a href="#Script"><span class="nx">Script</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Start</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><a href="https://pkg.go.dev/context"><span class="nx">context</span></a><span class="p">.</span><a href="https://pkg.go.dev/context#Context"><span class="nx">Context</span></a><span class="p">,</span><span class="w"> </span><span class="nx">stdout</span><span class="p">,</span><span class="w"> </span><span class="nx">stderr</span><span class="w"> </span><a href="https://pkg.go.dev/io"><span class="nx">io</span></a><span class="p">.</span><a href="https://pkg.go.dev/io#Writer"><span class="nx">Writer</span></a><span class="p">)</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
+  <p>Start executes the script in a new bash process and blocks until it
+completes or the context is canceled. It is safe to call Start multiple
+times, including concurrently.
+<p>stdout and stderr receive the script&apos;s respective output streams.
+<p>On context cancellation, Start sends SIGINT to the process group, waits up
+to 2 seconds, then sends SIGKILL. The returned error always includes
+context.Canceled when the context is canceled before the script completes.
+</main>
+    <hr>
+    <footer>
+      <small id="generated-by-footer">
+        Generated with <a href="https://abhinav.github.io/doc2go/">doc2go</a>
+      </small>
+    </footer>
+    <script src="../../_/js/permalink.js"></script></body>
+</html>

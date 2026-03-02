@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="doc2go">
+    <link href="../../_/css/main.css" rel="stylesheet" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../../_/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../_/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../_/icons/favicon-16x16.png">
+    <link rel="shortcut icon" href="../../_/icons/favicon.ico"><title>executor</title>
+</head>
+  <body>
+    <nav>
+        <a href="../..">github.com/amonks/run</a>/<a href="..">internal</a>/executor<span class="navbar-right">
+          <a href="../..">Root</a> | <a href="#pkg-index">Index</a></span>
+      </nav>
+    <main><h2 id="pkg-overview">package executor</h2>
+<pre class="chroma"><span class="kn">import</span><span class="w"> </span><span class="s">&#34;github.com/amonks/run/internal/executor&#34;</span></pre>
+<p>Package executor encapsulates running a cancelable function, canceling it,
+and waiting for it to finish.
+<h3 id="pkg-index">Index</h3>
+<ul>
+  <li>
+      <a href="#Executor">type Executor</a>
+      <ul>
+          <li><a href="#New">func New() *Executor</a></li>
+          <li><a href="#Executor.Cancel">func (e *Executor) Cancel() error</a></li>
+          <li><a href="#Executor.Done">func (e *Executor) Done() &lt;-chan struct{}</a></li>
+          <li><a href="#Executor.Err">func (e *Executor) Err() error</a></li>
+          <li><a href="#Executor.Execute">func (e *Executor) Execute(ctx context.Context, fn func(context.Context) error)</a></li>
+          <li><a href="#Executor.Is">func (e *Executor) Is(other *Executor) bool</a></li>
+          </ul>
+      </li>
+  </ul><h3 id="pkg-types">Types</h3>
+  <h3 id="Executor">type Executor</h3>
+    <pre class="chroma"><span class="kd">type</span><span class="w"> </span><span class="nx">Executor</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">	</span><span class="c1">// contains filtered or unexported fields</span><span class="w">
+</span><span class="w"></span><span class="p">}</span></pre>
+    <p>Executor manages the lifecycle of a single cancelable function execution.
+It supports executing a function, canceling it synchronously, and waiting
+for it to complete. Each Executor has a unique token for identity comparison,
+enabling stale-goroutine detection.
+<h4 id="New">func New</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="nf">New</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><a href="#Executor"><span class="nx">Executor</span></a></pre>
+  <p>New creates a new Executor. The Executor is inert until Execute is called.
+<h4 id="Executor.Cancel">func (*Executor) Cancel</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="w"> </span><span class="o">*</span><a href="#Executor"><span class="nx">Executor</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Cancel</span><span class="p">()</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
+  <p>Cancel cancels the executor&apos;s context and blocks until the function exits.
+It returns the function&apos;s error. Cancel is safe to call multiple times;
+subsequent calls block until the function exits and return the same error.
+<h4 id="Executor.Done">func (*Executor) Done</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="w"> </span><span class="o">*</span><a href="#Executor"><span class="nx">Executor</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Done</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;-</span><span class="kd">chan</span><span class="w"> </span><span class="kd">struct</span><span class="p">{}</span></pre>
+  <p>Done returns a channel that is closed when the executed function exits.
+Multiple goroutines can select on this channel simultaneously.
+<h4 id="Executor.Err">func (*Executor) Err</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="w"> </span><span class="o">*</span><a href="#Executor"><span class="nx">Executor</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Err</span><span class="p">()</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a></pre>
+  <p>Err returns the error from the executed function. It is only valid to call
+Err after Done is closed.
+<h4 id="Executor.Execute">func (*Executor) Execute</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="w"> </span><span class="o">*</span><a href="#Executor"><span class="nx">Executor</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Execute</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><a href="https://pkg.go.dev/context"><span class="nx">context</span></a><span class="p">.</span><a href="https://pkg.go.dev/context#Context"><span class="nx">Context</span></a><span class="p">,</span><span class="w"> </span><span class="nx">fn</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><a href="https://pkg.go.dev/context"><span class="nx">context</span></a><span class="p">.</span><a href="https://pkg.go.dev/context#Context"><span class="nx">Context</span></a><span class="p">)</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a><span class="p">)</span></pre>
+  <p>Execute runs fn in a goroutine with a cancelable context derived from ctx.
+When fn returns, its error is stored and the Done channel is closed.
+Execute must be called exactly once per Executor.
+<h4 id="Executor.Is">func (*Executor) Is</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="w"> </span><span class="o">*</span><a href="#Executor"><span class="nx">Executor</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Is</span><span class="p">(</span><span class="nx">other</span><span class="w"> </span><span class="o">*</span><a href="#Executor"><span class="nx">Executor</span></a><span class="p">)</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a></pre>
+  <p>Is returns true if other is the same Executor (by token comparison).
+This is used for stale-goroutine detection: when a task exit message
+arrives, the caller can check whether the executor that exited is still
+the current one for that task.
+</main>
+    <hr>
+    <footer>
+      <small id="generated-by-footer">
+        Generated with <a href="https://abhinav.github.io/doc2go/">doc2go</a>
+      </small>
+    </footer>
+    <script src="../../_/js/permalink.js"></script></body>
+</html>

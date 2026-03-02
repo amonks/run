@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="doc2go">
+    <link href="../_/css/main.css" rel="stylesheet" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../_/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../_/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../_/icons/favicon-16x16.png">
+    <link rel="shortcut icon" href="../_/icons/favicon.ico"><title>logview</title>
+</head>
+  <body>
+    <nav>
+        <a href="..">github.com/amonks/run</a>/logview<span class="navbar-right">
+          <a href="..">Root</a> | <a href="#pkg-index">Index</a></span>
+      </nav>
+    <main><h2 id="pkg-overview">package logview</h2>
+<pre class="chroma"><span class="kn">import</span><span class="w"> </span><span class="s">&#34;github.com/amonks/run/logview&#34;</span></pre>
+<p>Logview is a [bubbletea.Model] optimized for displaying logs.
+<h3 id="pkg-index">Index</h3>
+<ul>
+  <li><a href="#WithHardWrap">func WithHardWrap(m *Model)</a></li>
+  <li><a href="#WithStartAtHead">func WithStartAtHead(m *Model)</a></li>
+  <li><a href="#WithoutStatusbar">func WithoutStatusbar(m *Model)</a></li>
+  <li>
+      <a href="#FocusArea">type FocusArea</a>
+      </li>
+  <li>
+      <a href="#Model">type Model</a>
+      <ul>
+          <li><a href="#New">func New(mods ...func(*Model)) *Model</a></li>
+          <li><a href="#Model.Focus">func (m *Model) Focus() FocusArea</a></li>
+          <li><a href="#Model.Init">func (m *Model) Init() tea.Cmd</a></li>
+          <li><a href="#Model.MoveResultIndex">func (m *Model) MoveResultIndex(by int)</a></li>
+          <li><a href="#Model.Query">func (m *Model) Query() string</a></li>
+          <li><a href="#Model.Render">func (m *Model) Render(styles *Styles, width, height int) string</a></li>
+          <li><a href="#Model.RenderLineStatus">func (m *Model) RenderLineStatus() string</a></li>
+          <li><a href="#Model.RenderLog">func (m *Model) RenderLog(width, height int) string</a></li>
+          <li><a href="#Model.RenderSearchStatus">func (m *Model) RenderSearchStatus() string</a></li>
+          <li><a href="#Model.ResultIndex">func (m *Model) ResultIndex() int</a></li>
+          <li><a href="#Model.Results">func (m *Model) Results() []searchResult</a></li>
+          <li><a href="#Model.ScrollBy">func (m *Model) ScrollBy(lines int)</a></li>
+          <li><a href="#Model.ScrollTo">func (m *Model) ScrollTo(line int)</a></li>
+          <li><a href="#Model.SetDimensions">func (m *Model) SetDimensions(width, height int)</a></li>
+          <li><a href="#Model.SetFocus">func (m *Model) SetFocus(focus FocusArea)</a></li>
+          <li><a href="#Model.SetQuery">func (m *Model) SetQuery(query string)</a></li>
+          <li><a href="#Model.SetResultIndex">func (m *Model) SetResultIndex(index int)</a></li>
+          <li><a href="#Model.SetWrapMode">func (m *Model) SetWrapMode(hardwrap bool)</a></li>
+          <li><a href="#Model.ShowStatusbar">func (m *Model) ShowStatusbar(show bool)</a></li>
+          <li><a href="#Model.String">func (m *Model) String() string</a></li>
+          <li><a href="#Model.ToggleWrapMode">func (m *Model) ToggleWrapMode()</a></li>
+          <li><a href="#Model.Update">func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd)</a></li>
+          <li><a href="#Model.View">func (m *Model) View() tea.View</a></li>
+          <li><a href="#Model.ViewString">func (m *Model) ViewString() string</a></li>
+          <li><a href="#Model.Write">func (m *Model) Write(content string)</a></li>
+          </ul>
+      </li>
+  <li>
+      <a href="#Styles">type Styles</a>
+      </li>
+  </ul><h3 id="pkg-functions">Functions</h3>
+  <h3 id="WithHardWrap">func WithHardWrap</h3>
+    <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="nf">WithHardWrap</span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span></pre>
+    <h3 id="WithStartAtHead">func WithStartAtHead</h3>
+    <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="nf">WithStartAtHead</span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span></pre>
+    <h3 id="WithoutStatusbar">func WithoutStatusbar</h3>
+    <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="nf">WithoutStatusbar</span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span></pre>
+    <h3 id="pkg-types">Types</h3>
+  <h3 id="FocusArea">type FocusArea</h3>
+    <pre class="chroma"><span class="kd">type</span><span class="w"> </span><span class="nx">FocusArea</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#int"><span class="kt">int</span></a></pre>
+    <pre class="chroma"><span class="kd">const</span><span class="w"> </span><span class="p">(</span><span class="w">
+</span><span class="w">	</span><span id="FocusSearchBar"><span class="nx">FocusSearchBar</span></span><span class="w"> </span><a href="#FocusArea"><span class="nx">FocusArea</span></a><span class="w">
+</span><span class="w">	</span><span id="FocusLogPane"><span class="nx">FocusLogPane</span></span><span class="w">
+</span><span class="w">	</span><span id="FocusHelp"><span class="nx">FocusHelp</span></span><span class="w">
+</span><span class="w"></span><span class="p">)</span></pre>
+  <h3 id="Model">type Model</h3>
+    <pre class="chroma"><span class="kd">type</span><span class="w"> </span><span class="nx">Model</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">	</span><span class="c1">// contains filtered or unexported fields</span><span class="w">
+</span><span class="w"></span><span class="p">}</span></pre>
+    <h4 id="New">func New</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="nf">New</span><span class="p">(</span><span class="nx">mods</span><span class="w"> </span><span class="o">...</span><span class="kd">func</span><span class="p">(</span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">))</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a></pre>
+  <h4 id="Model.Focus">func (*Model) Focus</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Focus</span><span class="p">()</span><span class="w"> </span><a href="#FocusArea"><span class="nx">FocusArea</span></a></pre>
+  <h4 id="Model.Init">func (*Model) Init</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Init</span><span class="p">()</span><span class="w"> </span><a href="https://pkg.go.dev/charm.land/bubbletea/v2@v2.0.0"><span class="nx">tea</span></a><span class="p">.</span><a href="https://pkg.go.dev/charm.land/bubbletea/v2@v2.0.0#Cmd"><span class="nx">Cmd</span></a></pre>
+  <h4 id="Model.MoveResultIndex">func (*Model) MoveResultIndex</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">MoveResultIndex</span><span class="p">(</span><span class="nx">by</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#int"><span class="kt">int</span></a><span class="p">)</span></pre>
+  <h4 id="Model.Query">func (*Model) Query</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Query</span><span class="p">()</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
+  <h4 id="Model.Render">func (*Model) Render</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Render</span><span class="p">(</span><span class="nx">styles</span><span class="w"> </span><span class="o">*</span><a href="#Styles"><span class="nx">Styles</span></a><span class="p">,</span><span class="w"> </span><span class="nx">width</span><span class="p">,</span><span class="w"> </span><span class="nx">height</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#int"><span class="kt">int</span></a><span class="p">)</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
+  <h4 id="Model.RenderLineStatus">func (*Model) RenderLineStatus</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">RenderLineStatus</span><span class="p">()</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
+  <h4 id="Model.RenderLog">func (*Model) RenderLog</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">RenderLog</span><span class="p">(</span><span class="nx">width</span><span class="p">,</span><span class="w"> </span><span class="nx">height</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#int"><span class="kt">int</span></a><span class="p">)</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
+  <h4 id="Model.RenderSearchStatus">func (*Model) RenderSearchStatus</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">RenderSearchStatus</span><span class="p">()</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
+  <h4 id="Model.ResultIndex">func (*Model) ResultIndex</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">ResultIndex</span><span class="p">()</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#int"><span class="kt">int</span></a></pre>
+  <h4 id="Model.Results">func (*Model) Results</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Results</span><span class="p">()</span><span class="w"> </span><span class="p">[]</span><span class="nx">searchResult</span></pre>
+  <h4 id="Model.ScrollBy">func (*Model) ScrollBy</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">ScrollBy</span><span class="p">(</span><span class="nx">lines</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#int"><span class="kt">int</span></a><span class="p">)</span></pre>
+  <h4 id="Model.ScrollTo">func (*Model) ScrollTo</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">ScrollTo</span><span class="p">(</span><span class="nx">line</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#int"><span class="kt">int</span></a><span class="p">)</span></pre>
+  <h4 id="Model.SetDimensions">func (*Model) SetDimensions</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">SetDimensions</span><span class="p">(</span><span class="nx">width</span><span class="p">,</span><span class="w"> </span><span class="nx">height</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#int"><span class="kt">int</span></a><span class="p">)</span></pre>
+  <h4 id="Model.SetFocus">func (*Model) SetFocus</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">SetFocus</span><span class="p">(</span><span class="nx">focus</span><span class="w"> </span><a href="#FocusArea"><span class="nx">FocusArea</span></a><span class="p">)</span></pre>
+  <h4 id="Model.SetQuery">func (*Model) SetQuery</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">SetQuery</span><span class="p">(</span><span class="nx">query</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span></pre>
+  <h4 id="Model.SetResultIndex">func (*Model) SetResultIndex</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">SetResultIndex</span><span class="p">(</span><span class="nx">index</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#int"><span class="kt">int</span></a><span class="p">)</span></pre>
+  <h4 id="Model.SetWrapMode">func (*Model) SetWrapMode</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">SetWrapMode</span><span class="p">(</span><span class="nx">hardwrap</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a><span class="p">)</span></pre>
+  <h4 id="Model.ShowStatusbar">func (*Model) ShowStatusbar</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">ShowStatusbar</span><span class="p">(</span><span class="nx">show</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a><span class="p">)</span></pre>
+  <h4 id="Model.String">func (*Model) String</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">String</span><span class="p">()</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
+  <h4 id="Model.ToggleWrapMode">func (*Model) ToggleWrapMode</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">ToggleWrapMode</span><span class="p">()</span></pre>
+  <h4 id="Model.Update">func (*Model) Update</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Update</span><span class="p">(</span><span class="nx">msg</span><span class="w"> </span><a href="https://pkg.go.dev/charm.land/bubbletea/v2@v2.0.0"><span class="nx">tea</span></a><span class="p">.</span><a href="https://pkg.go.dev/charm.land/bubbletea/v2@v2.0.0#Msg"><span class="nx">Msg</span></a><span class="p">)</span><span class="w"> </span><span class="p">(</span><a href="https://pkg.go.dev/charm.land/bubbletea/v2@v2.0.0"><span class="nx">tea</span></a><span class="p">.</span><a href="https://pkg.go.dev/charm.land/bubbletea/v2@v2.0.0#Model"><span class="nx">Model</span></a><span class="p">,</span><span class="w"> </span><a href="https://pkg.go.dev/charm.land/bubbletea/v2@v2.0.0"><span class="nx">tea</span></a><span class="p">.</span><a href="https://pkg.go.dev/charm.land/bubbletea/v2@v2.0.0#Cmd"><span class="nx">Cmd</span></a><span class="p">)</span></pre>
+  <h4 id="Model.View">func (*Model) View</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">View</span><span class="p">()</span><span class="w"> </span><a href="https://pkg.go.dev/charm.land/bubbletea/v2@v2.0.0"><span class="nx">tea</span></a><span class="p">.</span><a href="https://pkg.go.dev/charm.land/bubbletea/v2@v2.0.0#View"><span class="nx">View</span></a></pre>
+  <h4 id="Model.ViewString">func (*Model) ViewString</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">ViewString</span><span class="p">()</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a></pre>
+  <h4 id="Model.Write">func (*Model) Write</h4>
+  <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">m</span><span class="w"> </span><span class="o">*</span><a href="#Model"><span class="nx">Model</span></a><span class="p">)</span><span class="w"> </span><span class="nf">Write</span><span class="p">(</span><span class="nx">content</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span></pre>
+  <h3 id="Styles">type Styles</h3>
+    <pre class="chroma"><span class="kd">type</span><span class="w"> </span><span class="nx">Styles</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">	</span><span id="Styles.Log"><span class="nx">Log</span></span><span class="w">       </span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0"><span class="nx">lipgloss</span></a><span class="p">.</span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0#Style"><span class="nx">Style</span></a><span class="w">
+</span><span class="w">	</span><span id="Styles.Statusbar"><span class="nx">Statusbar</span></span><span class="w"> </span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0"><span class="nx">lipgloss</span></a><span class="p">.</span><a href="https://pkg.go.dev/charm.land/lipgloss/v2@v2.0.0#Style"><span class="nx">Style</span></a><span class="w">
+</span><span class="w"></span><span class="p">}</span></pre>
+    </main>
+    <hr>
+    <footer>
+      <small id="generated-by-footer">
+        Generated with <a href="https://abhinav.github.io/doc2go/">doc2go</a>
+      </small>
+    </footer>
+    <script src="../_/js/permalink.js"></script></body>
+</html>

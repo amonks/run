@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="doc2go">
+    <link href="../../_/css/main.css" rel="stylesheet" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../../_/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../_/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../_/icons/favicon-16x16.png">
+    <link rel="shortcut icon" href="../../_/icons/favicon.ico"><title>watcher</title>
+</head>
+  <body>
+    <nav>
+        <a href="../..">github.com/amonks/run</a>/<a href="..">internal</a>/watcher<span class="navbar-right">
+          <a href="../..">Root</a> | <a href="#pkg-index">Index</a></span>
+      </nav>
+    <main><h2 id="pkg-overview">package watcher</h2>
+<pre class="chroma"><span class="kn">import</span><span class="w"> </span><span class="s">&#34;github.com/amonks/run/internal/watcher&#34;</span></pre>
+<p>Package watcher provides file system watching with debouncing and glob
+matching. It also provides mock support for testing.
+<h3 id="pkg-index">Index</h3>
+<ul>
+  <li><a href="#pkg-variables">Variables</a></li><li><a href="#Debounce">func Debounce(dur time.Duration, c &lt;-chan EventInfo) &lt;-chan []EventInfo</a></li>
+  <li><a href="#Dispatch">func Dispatch(path string, evs ...EventInfo)</a></li>
+  <li><a href="#Mock">func Mock() func()</a></li>
+  <li><a href="#Split">func Split(input string) (string, glob.Glob)</a></li>
+  <li>
+      <a href="#EventInfo">type EventInfo</a>
+      </li>
+  </ul><h3 id="pkg-variables">Variables</h3>
+  <pre class="chroma"><span class="kd">var</span><span class="w"> </span><span id="Watch"><span class="nx">Watch</span></span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">inputPath</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">&lt;-</span><span class="kd">chan</span><span class="w"> </span><span class="p">[]</span><a href="#EventInfo"><span class="nx">EventInfo</span></a><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">(),</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#error"><span class="kt">error</span></a><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">	</span><span class="kd">var</span><span class="w"> </span><span id="stopped"><span class="nx">stopped</span></span><span class="w"> </span><a href="https://pkg.go.dev/builtin#bool"><span class="kt">bool</span></a><span class="w">
+</span><span class="w">
+</span><span class="w">	</span><span class="nx">cwd</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">os</span><span class="p">.</span><span class="nf">Getwd</span><span class="p">()</span><span class="w">
+</span><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#nil"><span class="kc">nil</span></a><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">		</span><span class="k">return</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#nil"><span class="kc">nil</span></a><span class="p">,</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#nil"><span class="kc">nil</span></a><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w">
+</span><span class="w">	</span><span class="p">}</span><span class="w">
+</span><span class="w">
+</span><span class="w">	</span><span class="nx">watchPath</span><span class="p">,</span><span class="w"> </span><span class="nx">globToMatch</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><a href="#Split"><span class="nf">Split</span></a><span class="p">(</span><span class="nx">inputPath</span><span class="p">)</span><span class="w">
+</span><span class="w">
+</span><span class="w">	</span><span class="nx">c</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#make"><span class="nb">make</span></a><span class="p">(</span><span class="kd">chan</span><span class="w"> </span><span class="nx">notify</span><span class="p">.</span><span class="nx">EventInfo</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w">
+</span><span class="w">	</span><span class="nx">out</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#make"><span class="nb">make</span></a><span class="p">(</span><span class="kd">chan</span><span class="w"> </span><a href="#EventInfo"><span class="nx">EventInfo</span></a><span class="p">)</span><span class="w">
+</span><span class="w">
+</span><span class="w">	</span><span class="k">go</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">		</span><span class="k">for</span><span class="w"> </span><span class="nx">ev</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nx">c</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">			</span><span class="nx">p</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">strings</span><span class="p">.</span><span class="nf">TrimPrefix</span><span class="p">(</span><span class="nx">ev</span><span class="p">.</span><span class="nf">Path</span><span class="p">(),</span><span class="w"> </span><span class="nx">cwd</span><span class="o">+</span><span class="s">&#34;/&#34;</span><span class="p">)</span><span class="w">
+</span><span class="w">			</span><span class="k">if</span><span class="w"> </span><span class="nx">globToMatch</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#nil"><span class="kc">nil</span></a><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">globToMatch</span><span class="p">.</span><span class="nf">Match</span><span class="p">(</span><span class="nx">p</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">				</span><span class="nx">out</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><a href="#EventInfo"><span class="nx">EventInfo</span></a><span class="p">{</span><span class="w">
+</span><span class="w">					</span><span class="nx">Path</span><span class="p">:</span><span class="w">  </span><span class="nx">p</span><span class="p">,</span><span class="w">
+</span><span class="w">					</span><span class="nx">Event</span><span class="p">:</span><span class="w"> </span><span class="nx">strings</span><span class="p">.</span><span class="nf">TrimPrefix</span><span class="p">(</span><span class="nx">ev</span><span class="p">.</span><span class="nf">Event</span><span class="p">().</span><span class="nf">String</span><span class="p">(),</span><span class="w"> </span><span class="s">&#34;notify.&#34;</span><span class="p">),</span><span class="w">
+</span><span class="w">				</span><span class="p">}</span><span class="w">
+</span><span class="w">			</span><span class="p">}</span><span class="w">
+</span><span class="w">		</span><span class="p">}</span><span class="w">
+</span><span class="w">		</span><a href="https://pkg.go.dev/builtin#close"><span class="nb">close</span></a><span class="p">(</span><span class="nx">out</span><span class="p">)</span><span class="w">
+</span><span class="w">	</span><span class="p">}()</span><span class="w">
+</span><span class="w">
+</span><span class="w">	</span><span class="nx">stop</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">		</span><span class="k">if</span><span class="w"> </span><span class="nx">stopped</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">			</span><span class="k">return</span><span class="w">
+</span><span class="w">		</span><span class="p">}</span><span class="w">
+</span><span class="w">		</span><span class="nx">stopped</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#true"><span class="kc">true</span></a><span class="w">
+</span><span class="w">		</span><span class="nx">notify</span><span class="p">.</span><span class="nf">Stop</span><span class="p">(</span><span class="nx">c</span><span class="p">)</span><span class="w">
+</span><span class="w">		</span><a href="https://pkg.go.dev/builtin#close"><span class="nb">close</span></a><span class="p">(</span><span class="nx">c</span><span class="p">)</span><span class="w">
+</span><span class="w">	</span><span class="p">}</span><span class="w">
+</span><span class="w">
+</span><span class="w">	</span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">notify</span><span class="p">.</span><span class="nf">Watch</span><span class="p">(</span><span class="nx">watchPath</span><span class="p">,</span><span class="w"> </span><span class="nx">c</span><span class="p">,</span><span class="w"> </span><span class="nx">notify</span><span class="p">.</span><span class="nx">All</span><span class="p">);</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#nil"><span class="kc">nil</span></a><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">		</span><span class="nf">stop</span><span class="p">()</span><span class="w">
+</span><span class="w">	</span><span class="p">}</span><span class="w">
+</span><span class="w">
+</span><span class="w">	</span><span class="k">return</span><span class="w"> </span><a href="#Debounce"><span class="nf">Debounce</span></a><span class="p">(</span><span class="mi">500</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span><span class="p">,</span><span class="w"> </span><span class="nx">out</span><span class="p">),</span><span class="w"> </span><span class="nx">stop</span><span class="p">,</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#nil"><span class="kc">nil</span></a><span class="w">
+</span><span class="w"></span><span class="p">}</span></pre>
+  <p>Watch observes the file system at inputPath and returns a channel of
+debounced events, a stop function, and any error. The inputPath may contain
+glob patterns (e.g., &quot;src/website/**/*.js&quot;).
+<p>Watch is a package-level function variable to allow replacement for testing
+via Mock.
+<h3 id="pkg-functions">Functions</h3>
+  <h3 id="Debounce">func Debounce</h3>
+    <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="nf">Debounce</span><span class="p">(</span><span class="nx">dur</span><span class="w"> </span><a href="https://pkg.go.dev/time"><span class="nx">time</span></a><span class="p">.</span><a href="https://pkg.go.dev/time#Duration"><span class="nx">Duration</span></a><span class="p">,</span><span class="w"> </span><span class="nx">c</span><span class="w"> </span><span class="o">&lt;-</span><span class="kd">chan</span><span class="w"> </span><a href="#EventInfo"><span class="nx">EventInfo</span></a><span class="p">)</span><span class="w"> </span><span class="o">&lt;-</span><span class="kd">chan</span><span class="w"> </span><span class="p">[]</span><a href="#EventInfo"><span class="nx">EventInfo</span></a></pre>
+    <p>Debounce collects events from c and emits them as batches after dur of
+inactivity.
+<h3 id="Dispatch">func Dispatch</h3>
+    <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="nf">Dispatch</span><span class="p">(</span><span class="nx">path</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">,</span><span class="w"> </span><span class="nx">evs</span><span class="w"> </span><span class="o">...</span><a href="#EventInfo"><span class="nx">EventInfo</span></a><span class="p">)</span></pre>
+    <p>Dispatch sends synthetic events to the mock watcher for the given path.
+The path must match the inputPath previously passed to Watch.
+<h3 id="Mock">func Mock</h3>
+    <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="nf">Mock</span><span class="p">()</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span></pre>
+    <p>Mock replaces Watch with an implementation that captures calls and allows
+synthetic events via Dispatch. It returns a restore function that must be
+called to reinstate the real Watch.
+<h3 id="Split">func Split</h3>
+    <pre class="chroma"><span class="kd">func</span><span class="w"> </span><span class="nf">Split</span><span class="p">(</span><span class="nx">input</span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">)</span><span class="w"> </span><span class="p">(</span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="p">,</span><span class="w"> </span><a href="https://pkg.go.dev/github.com/gobwas/glob@v0.2.3"><span class="nx">glob</span></a><span class="p">.</span><a href="https://pkg.go.dev/github.com/gobwas/glob@v0.2.3#Glob"><span class="nx">Glob</span></a><span class="p">)</span></pre>
+    <p>Split breaks a given input path (which may contain a glob) into two parts:
+a watch path suitable for the file system watcher and an optional glob for
+filtering events.
+<p>For example, given the input &quot;src/website/**/*.js&quot;,
+<ul>
+<li>we will set up a recursive watch at src/website
+<li>we will match events against the glob &quot;src/website/**/*.js&quot;
+</ul>
+<p>so the values returned are (&quot;src/website/...&quot;, Glob[&quot;src/website/**/*.js&quot;]).
+<h3 id="pkg-types">Types</h3>
+  <h3 id="EventInfo">type EventInfo</h3>
+    <pre class="chroma"><span class="kd">type</span><span class="w"> </span><span class="nx">EventInfo</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">	</span><span id="EventInfo.Path"><span class="nx">Path</span></span><span class="w">  </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="w">
+</span><span class="w">	</span><span id="EventInfo.Event"><span class="nx">Event</span></span><span class="w"> </span><a href="https://pkg.go.dev/builtin#string"><span class="kt">string</span></a><span class="w">
+</span><span class="w"></span><span class="p">}</span></pre>
+    <p>EventInfo describes a single file system event.
+</main>
+    <hr>
+    <footer>
+      <small id="generated-by-footer">
+        Generated with <a href="https://abhinav.github.io/doc2go/">doc2go</a>
+      </small>
+    </footer>
+    <script src="../../_/js/permalink.js"></script></body>
+</html>
