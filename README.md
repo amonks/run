@@ -404,6 +404,9 @@ FLAGS
         Display the task list and exit. If run is invoked
         with both -list and a task ID, that task's
         dependencies are displayed.
+  -skip=task-id
+        Skip a task, replacing it with a no-op stub. Can
+        be passed more than once.
   -ui=string
         Force a particular ui. Legal values are 'tui' and
         'printer'.
