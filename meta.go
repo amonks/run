@@ -19,6 +19,9 @@ func init() {
 	if !ok {
 		return
 	}
+	if Version == "devel" && info.Main.Version != "" && info.Main.Version != "(devel)" {
+		Version = info.Main.Version
+	}
 	for _, kv := range info.Settings {
 		switch kv.Key {
 		case "vcs.revision":
