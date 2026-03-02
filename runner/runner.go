@@ -331,6 +331,10 @@ func (r *Run) handleRunTask(ctx context.Context, id string) {
 			r.input <- msgTaskReady(id)
 		case <-exec.Done():
 			// Task exited before signaling readiness.
+			// If it succeeded, signal readiness so dependents can start.
+			if exec.Err() == nil {
+				r.input <- msgTaskReady(id)
+			}
 		}
 	}()
 
@@ -476,9 +480,6 @@ func (r *Run) handleTaskExit(msg msgTaskExit) error {
 		r.mu.Unlock()
 		r.input <- msgRunTask(msg.id)
 	}
-
-	// If the task succeeded, signal readiness to start dependents.
-	r.input <- msgTaskReady(msg.id)
 
 	return nil
 }
