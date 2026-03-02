@@ -129,22 +129,23 @@ func (x *execution) startCmd() error {
 }
 
 func (x *execution) wait() <-chan error {
-	exit := make(chan error)
+	exit := make(chan error, 1)
 	go func() {
-		process := x.getProcess()
-		if process == nil {
+		cmd := x.getCmd()
+		if cmd == nil {
 			exit <- nil
 			return
 		}
-		state, err := process.Wait()
-		if err != nil && strings.Contains(err.Error(), "no child processes") {
+		// Use cmd.Wait() rather than process.Wait() so that we block
+		// until the I/O copying goroutines for stdout/stderr have
+		// finished, not just until the process exits.
+		err := cmd.Wait()
+		if err == nil {
 			exit <- nil
-		} else if err != nil {
-			exit <- fmt.Errorf("wait err: %w", err)
-		} else if code := state.ExitCode(); code != 0 {
-			exit <- fmt.Errorf("exit %d", code)
+		} else if strings.Contains(err.Error(), "no child processes") {
+			exit <- nil
 		} else {
-			exit <- nil
+			exit <- fmt.Errorf("exit %d", cmd.ProcessState.ExitCode())
 		}
 	}()
 	return exit
@@ -177,12 +178,9 @@ func (x *execution) cleanup() {
 	x.cmd = nil
 }
 
-func (x *execution) getProcess() *os.Process {
-	defer x.mu.Lock("getProcess").Unlock()
-	if x.cmd == nil {
-		return nil
-	}
-	return x.cmd.Process
+func (x *execution) getCmd() *exec.Cmd {
+	defer x.mu.Lock("getCmd").Unlock()
+	return x.cmd
 }
 
 func (x *execution) isRunning() bool {
