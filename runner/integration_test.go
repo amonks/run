@@ -62,27 +62,28 @@ func testExample(t *testing.T, name string) error {
 	}
 	defer os.Remove(changedFilePath)
 
-	tasks, err := taskfile.Load(filepath.Join("testdata", "snapshots", name))
+	dir := filepath.Join("testdata", "snapshots", name)
+	tasks, err := taskfile.Load(dir)
 	if err != nil {
 		return fmt.Errorf("Error loading tasks: %s", err)
 	}
 
-	r, err := runner.New(filepath.Join("testdata", "snapshots", name), tasks, "test")
+	runType := runTypeFor(tasks, "test")
+
+	var b strings.Builder
+	prn := printer.New(tasks.Subtree("test").LongestID(), &b)
+
+	r, err := runner.New(runType, dir, tasks, "test", prn)
 	if err != nil {
 		return fmt.Errorf("Error running tasks: %s", err)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	ui := printer.New(r)
 
 	exit := make(chan error)
 
 	// Start the run.
-	uiReady := make(chan struct{})
-	var b strings.Builder
-	go ui.Start(ctx, uiReady, nil, &b)
-	<-uiReady
-	go func() { exit <- r.Start(ctx, ui) }()
+	go func() { exit <- r.Start(ctx) }()
 	// 1 second into the test, change a file so that tests can exercise
 	// file-watching.
 	go func() {

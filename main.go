@@ -9,7 +9,6 @@ import (
 	"os/signal"
 	"reflect"
 	"strings"
-	"sync"
 	"syscall"
 
 	"github.com/amonks/run/internal/color"
@@ -103,105 +102,59 @@ func main() {
 		os.Exit(0)
 	}
 
-	r, err := runner.New(*fDir, allTasks, taskID)
-	if err != nil {
-		fmt.Println(err)
+	if !allTasks.Has(taskID) {
+		fmt.Printf("Task %q not found.\n", taskID)
+		fmt.Println("Run `run -list` for more information about the available tasks.")
 		os.Exit(1)
-		return
 	}
 
 	if *fList {
-		fmt.Println(tasklistText(r.Tasks()))
+		fmt.Println(tasklistText(allTasks.Subtree(taskID)))
 		os.Exit(0)
 	}
 
-	var ui runner.UI
+	// Determine UI mode.
+	useTUI := false
 	switch *fUI {
 	case "tui":
-		ui = tui.New(r)
+		useTUI = true
 	case "printer":
-		ui = printer.New(r)
+		useTUI = false
 	case "":
-		if !term.IsTerminal(int(os.Stdout.Fd())) {
-			ui = printer.New(r)
-		} else if r.Type() == runner.RunTypeShort {
-			ui = printer.New(r)
-		} else {
-			ui = tui.New(r)
+		if term.IsTerminal(int(os.Stdout.Fd())) {
+			if allTasks.Get(taskID).Metadata().Type == "long" {
+				useTUI = true
+			}
 		}
 	default:
 		fmt.Println("Invalid value for flag -ui. Legal values are 'tui' and 'printer'.")
 		os.Exit(1)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	var wg sync.WaitGroup
-	wg.Add(2)
+	ctx, stop := signal.NotifyContext(context.Background(),
+		syscall.SIGHUP, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+	defer stop()
 
-	uiReady := make(chan struct{})
-
-	// Whether the UI or the Run exits first, that first exit is the cause
-	// of program exit, so we want to capture its error and base the exit
-	// code on it. The second exit is just a side effect of the first thing
-	// dying, so we don't need it.
-	exitReason := &first[error]{}
-
-	go func() {
-		defer wg.Done()
-		err := ui.Start(ctx, uiReady, os.Stdin, os.Stdout)
-		if !exitReason.isSet() {
-			if err != nil {
-				exitReason.set(err)
-			} else if r.Type() == runner.RunTypeShort {
-				// If the UI exits before the run, and the run
-				// is short, that itself is an error even if the
-				// ui returns nil.
-				exitReason.set(errors.New("UI exited before run was complete"))
-			} else {
-				// exit ok
-				exitReason.set(context.Canceled)
-			}
+	var runErr error
+	if useTUI {
+		runErr = tui.Start(ctx, os.Stdin, os.Stdout, *fDir, allTasks, taskID)
+	} else {
+		subtree := allTasks.Subtree(taskID)
+		prn := printer.New(subtree.LongestID(), os.Stdout)
+		r, err := runner.New(runner.RunTypeShort, *fDir, allTasks, taskID, prn)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
 		}
-		if err != context.Canceled {
-			cancel()
-		}
-	}()
-
-	<-uiReady
-
-	go func() {
-		defer wg.Done()
-		err := r.Start(ctx, ui)
-		exitReason.set(err)
-
-		// Don't close the UI if '-tui' was explicitly set--the user
-		// indicated that they want to look carefully at output.
-		if *fUI != "tui" && err != context.Canceled {
-			cancel()
-		}
-	}()
-
-	allDone := make(chan struct{})
-	go func() { wg.Wait(); allDone <- struct{}{} }()
-
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGHUP, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
-
-	select {
-	case <-sigs:
-		cancel()
-		<-allDone
-	case <-allDone:
+		runErr = r.Start(ctx)
 	}
 
-	if err := exitReason.get(); err != nil && errors.Is(err, context.Canceled) {
+	if runErr != nil && errors.Is(runErr, context.Canceled) {
 		fmt.Printf("Canceled\n")
 		os.Exit(0)
-	} else if err != nil {
-		fmt.Printf("Error: %s\n", err)
+	} else if runErr != nil {
+		fmt.Printf("Error: %s\n", runErr)
 		os.Exit(1)
-	} else {
-		os.Exit(0)
 	}
 }
 

@@ -17,12 +17,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// runTypeFor returns the RunType for a task library and root ID, matching
+// the heuristic previously built into runner.New: long root → RunTypeLong.
+func runTypeFor(tasks task.Library, rootID string) runner.RunType {
+	if t := tasks.Get(rootID); t != nil && t.Metadata().Type == "long" {
+		return runner.RunTypeLong
+	}
+	return runner.RunTypeShort
+}
+
 // startRun is a helper that creates and starts a run, returning the error on
 // a channel. It also returns a cancel function to stop the run.
 func startRun(t *testing.T, tasks []task.Task, rootID string, mw runner.MultiWriter) (context.CancelFunc, <-chan error) {
 	t.Helper()
 
-	r, err := runner.New(".", task.NewLibrary(tasks...), rootID)
+	lib := task.NewLibrary(tasks...)
+	r, err := runner.New(runTypeFor(lib, rootID), ".", lib, rootID, mw)
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
@@ -30,7 +40,7 @@ func startRun(t *testing.T, tasks []task.Task, rootID string, mw runner.MultiWri
 	ctx, cancel := context.WithCancel(context.Background())
 	errs := make(chan error, 1)
 	go func() {
-		errs <- r.Start(ctx, mw)
+		errs <- r.Start(ctx)
 	}()
 	return cancel, errs
 }
@@ -40,7 +50,8 @@ func startRun(t *testing.T, tasks []task.Task, rootID string, mw runner.MultiWri
 func startRunWithHandle(t *testing.T, tasks []task.Task, rootID string, mw runner.MultiWriter) (*runner.Run, context.CancelFunc, <-chan error) {
 	t.Helper()
 
-	r, err := runner.New(".", task.NewLibrary(tasks...), rootID)
+	lib := task.NewLibrary(tasks...)
+	r, err := runner.New(runTypeFor(lib, rootID), ".", lib, rootID, mw)
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
@@ -48,7 +59,7 @@ func startRunWithHandle(t *testing.T, tasks []task.Task, rootID string, mw runne
 	ctx, cancel := context.WithCancel(context.Background())
 	errs := make(chan error, 1)
 	go func() {
-		errs <- r.Start(ctx, mw)
+		errs <- r.Start(ctx)
 	}()
 	return r, cancel, errs
 }

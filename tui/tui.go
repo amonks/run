@@ -12,22 +12,76 @@ import (
 	"github.com/amonks/run/logview"
 	"github.com/amonks/run/printer"
 	"github.com/amonks/run/runner"
+	"github.com/amonks/run/task"
 	"charm.land/bubbles/v2/spinner"
 	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	zone "github.com/lrstanley/bubblezone/v2"
 )
 
-// New produces an interactive terminal UI for displaying multiplexed
-// streams. The UI shows a list of the streams, and allows keyboard and mouse
-// navigation for selecting a particular stream to inspect.
+// Start creates an interactive terminal UI and a [runner.Run], wires them
+// together, and blocks until the user quits or the context is canceled.
 //
-// The UI can be passed into [runner.Run.Start] to display a run's execution.
-//
-// The UI is safe to access concurrently from multiple goroutines.
-func New(run *runner.Run) runner.UI {
+// The run uses [runner.RunTypeLong], so it keeps running and restarts
+// failed tasks until the user exits the TUI.
+func Start(ctx context.Context, stdin io.Reader, stdout io.Writer, dir string, allTasks task.Library, taskID string) error {
 	zone.NewGlobal()
-	return &tui{mu: mutex.New("tui"), run: run}
+
+	t := &tui{mu: mutex.New("tui")}
+
+	r, err := runner.New(runner.RunTypeLong, dir, allTasks, taskID, t)
+	if err != nil {
+		return err
+	}
+	t.run = r
+
+	ids := append([]string{runner.InternalTaskInterleaved}, r.IDs()...)
+
+	runCtx, runCancel := context.WithCancel(ctx)
+	defer runCancel()
+
+	runDone := make(chan error, 1)
+
+	program := tea.NewProgram(
+		&tuiModel{
+			tui: t,
+			ids: ids,
+			onInit: func() {
+				go func() {
+					runDone <- r.Start(runCtx)
+				}()
+			},
+		},
+		tea.WithContext(ctx),
+		tea.WithFPS(120),
+	)
+	t.p = program
+
+	// Compute gutter width for the interleaved printer.
+	gutterWidth := 0
+	for _, id := range ids {
+		if len(id) > gutterWidth {
+			gutterWidth = len(id)
+		}
+	}
+
+	interleavedWriter := t.Writer(runner.InternalTaskInterleaved)
+	t.interleaved = printer.New(gutterWidth, interleavedWriter)
+
+	// Run the BubbleTea program (blocking). The runner starts from the
+	// onInit callback once the program's event loop is active.
+	_, programErr := program.Run()
+
+	// Program exited (user quit). Cancel the runner.
+	runCancel()
+
+	// Wait for the runner to finish.
+	runErr := <-runDone
+
+	if programErr != nil && programErr != tea.ErrProgramKilled {
+		return programErr
+	}
+	return runErr
 }
 
 type tui struct {
@@ -38,7 +92,7 @@ type tui struct {
 	// nil until started
 	p *tea.Program
 
-	interleaved runner.UI
+	interleaved runner.MultiWriter
 }
 
 // *tui implements MultiWriter
@@ -83,42 +137,6 @@ func (w tuiWriter) Write(bs []byte) (int, error) {
 	}
 	w.send(writeMsg{key: w.id, content: string(bs)})
 	return len(bs), nil
-}
-
-// *tui implements UI
-var _ runner.UI = &tui{}
-
-func (a *tui) Start(ctx context.Context, ready chan<- struct{}, stdin io.Reader, stdout io.Writer) error {
-	program := tea.NewProgram(
-		&tuiModel{
-			tui:    a,
-			ids:    append([]string{runner.InternalTaskInterleaved}, a.run.IDs()...),
-			onInit: func() { ready <- struct{}{} },
-		},
-		tea.WithContext(ctx),
-		tea.WithFPS(120))
-	a.p = program
-
-	interleavedWriter := a.Writer(runner.InternalTaskInterleaved)
-	p := printer.New(a.run)
-	go p.Start(ctx, nil, nil, interleavedWriter)
-	a.interleaved = p
-
-	exit := make(chan error)
-
-	go func() {
-		// run the bubbletea Program
-		if _, err := program.Run(); err != nil && err != tea.ErrProgramKilled {
-			exit <- err
-			return
-		}
-
-		// When it exits, notify Waiters that the UI is done.
-		exit <- nil
-	}()
-
-	err := <-exit
-	return err
 }
 
 type tuiModel struct {

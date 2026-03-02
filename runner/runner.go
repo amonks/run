@@ -41,11 +41,16 @@ const InternalTaskInterleaved = "@interleaved"
 // InternalTaskWatch is the ID used for file-watcher messaging.
 const InternalTaskWatch = "@watch"
 
-// New creates an executable Run from a taskList and a taskID.
+// New creates an executable Run from a task library, a root task ID, and a
+// display [MultiWriter].
 //
-// The run will handle task dependencies, watches, and triggers as documented
-// in the README.
-func New(dir string, allTasks task.Library, taskID string) (*Run, error) {
+// The runType parameter controls the run's lifecycle: [RunTypeShort] exits
+// once the root task succeeds or any task fails; [RunTypeLong] keeps running
+// until the context is canceled, restarting failed tasks with backoff.
+//
+// The out [MultiWriter] receives per-task output writers. Its Writer method
+// is not called until [Run.Start].
+func New(runType RunType, dir string, allTasks task.Library, taskID string, out MultiWriter) (*Run, error) {
 	if err := allTasks.Validate(); err != nil {
 		return nil, err
 	}
@@ -66,11 +71,6 @@ func New(dir string, allTasks task.Library, taskID string) (*Run, error) {
 		taskStatus[id] = TaskStatusNotStarted
 	}
 
-	runType := RunTypeShort
-	if tasks.Get(taskID).Metadata().Type == "long" {
-		runType = RunTypeLong
-	}
-
 	run := Run{
 		mu: mutex.New("run"),
 
@@ -83,6 +83,7 @@ func New(dir string, allTasks task.Library, taskID string) (*Run, error) {
 
 		input: make(chan any, 256),
 
+		out:      out,
 		allTasks: allTasks,
 		dir:      dir,
 		runType:  runType,
@@ -116,15 +117,12 @@ type Run struct {
 	// Single message channel for the event loop.
 	input chan any
 
-	// Set once in Start, used for creating writers for dynamically
-	// added tasks.
-	out MultiWriter
-
 	// Read-only after construction:
-	allTasks  task.Library // full task universe
-	runType   RunType
-	rootID    string
-	dir       string
+	out      MultiWriter
+	allTasks task.Library // full task universe
+	runType  RunType
+	rootID   string
+	dir      string
 }
 
 //go:generate go run golang.org/x/tools/cmd/stringer -type TaskStatus
@@ -139,11 +137,11 @@ const (
 	TaskStatusDone
 )
 
-// MultiWriter is the interface Runs use to display UI. To start a Run, you
-// must pass a MultiWriter into [Run.Start].
+// MultiWriter is the interface Runs use to display UI. A MultiWriter must
+// be passed to [New] when creating a Run.
 //
-// MultiWriter is a subset of [UI], so the UIs produced by [tui.New] and
-// [printer.New] implement MultiWriter.
+// MultiWriter is a subset of [UI], so the UIs produced by [printer.New]
+// implement MultiWriter.
 type MultiWriter interface {
 	Writer(id string) io.Writer
 }
@@ -181,27 +179,20 @@ func (r *Run) Invalidate(id string) {
 	r.input <- msgInvalidate(id)
 }
 
-// Type returns the RunType of a run. It is RunTypeLong if any task is "long",
-// otherwise it is RunTypeShort.
-//
-// If a run is RunTypeShort, it will exit once all of its tasks have succeeded.
-// If a run is RunTypeLong, it will continue running until it is interrupted.
-// File watches are only used if a run is RunTypeLong.
+// Type returns the RunType passed to [New].
 func (r *Run) Type() RunType {
 	return r.runType
 }
 
 // Start starts the Run, waits for it to complete, and returns an error.
 // Remember that "long" runs will never complete until canceled.
-func (r *Run) Start(ctx context.Context, out MultiWriter) error {
-	r.out = out
-
+func (r *Run) Start(ctx context.Context) error {
 	// Set up writers. Use a snapshot of IDs to avoid holding mu while
 	// calling IDs() (which also takes mu).
 	ids := r.IDs()
 	r.mu.Lock("Start:writers")
 	for _, id := range ids {
-		r.writers[id] = newOutputWriter(out.Writer(id))
+		r.writers[id] = newOutputWriter(r.out.Writer(id))
 	}
 	r.mu.Unlock()
 
@@ -727,12 +718,11 @@ func (e *runExitError) Unwrap() error {
 	return e.err
 }
 
-// A Run's RunType is RunTypeLong if any task is "long", otherwise it is
-// RunTypeShort.
+// RunType controls the run's lifecycle behavior.
 //
-// If a run is RunTypeShort, it will exit once all of its tasks have succeeded.
-// If a run is RunTypeLong, it will continue running until it is interrupted.
-// File watches are only used if a run is RunTypeLong.
+// If a run is RunTypeShort, it will exit once the root task succeeds or any
+// task fails. If a run is RunTypeLong, it will continue running until it is
+// interrupted, restarting failed tasks with exponential backoff.
 type RunType int
 
 //go:generate go run golang.org/x/tools/cmd/stringer -type RunType
