@@ -489,7 +489,9 @@ func (r *Run) handleFSEvent(msg msgFSEvent) {
 
 	invalidations := map[string]struct{}{}
 	for _, id := range r.tasks.WithWatch(msg.path) {
-		invalidations[id] = struct{}{}
+		if r.hasAllDeps(id) {
+			invalidations[id] = struct{}{}
+		}
 	}
 	if len(invalidations) > 0 {
 		var ids []string

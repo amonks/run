@@ -3,6 +3,7 @@ package runner_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 	"sync/atomic"
@@ -509,4 +510,71 @@ func TestWatchRestartShortDepInLongRun(t *testing.T) {
 
 	// Compile should have run at least twice.
 	assert.GreaterOrEqual(t, strings.Count(mw.String("compile"), "! compile: execute"), 2)
+}
+
+// --- Test 16: Watch event does not bypass dependency check ---
+
+func TestWatchEventRespectsUnmetDependencies(t *testing.T) {
+	restore := watcher.Mock()
+	defer restore()
+
+	mw := fixtures.NewWriter()
+
+	// install is a short task that takes a while to complete.
+	// We use a channel to control when it finishes.
+	installDone := make(chan struct{})
+	install := task.FuncTask(func(ctx context.Context, onReady chan<- struct{}, w io.Writer) error {
+		fmt.Fprintf(w, "! install: execute\n")
+		select {
+		case <-installDone:
+			close(onReady)
+			return nil
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}, task.TaskMetadata{
+		ID:   "install",
+		Type: "short",
+	})
+
+	// build depends on install and watches a path.
+	var buildCount atomic.Int32
+	build := task.FuncTask(func(ctx context.Context, onReady chan<- struct{}, w io.Writer) error {
+		buildCount.Add(1)
+		fmt.Fprintf(w, "! build: execute\n")
+		close(onReady)
+		return nil
+	}, task.TaskMetadata{
+		ID:           "build",
+		Type:         "short",
+		Dependencies: []string{"install"},
+		Watch:        []string{"css"},
+	})
+
+	_, cancel, errs := startRunWithHandle(t, []task.Task{install, build}, "build", mw)
+	defer cancel()
+
+	// Wait for install to start.
+	time.Sleep(100 * time.Millisecond)
+	assert.Contains(t, mw.String("install"), "! install: execute")
+
+	// Dispatch a watch event matching build's watch pattern while
+	// install is still running (has not exited).
+	watcher.Dispatch("css", watcher.EventInfo{Path: "css/index.css", Event: "write"})
+
+	// build should NOT start because install hasn't completed.
+	time.Sleep(200 * time.Millisecond)
+	assert.Equal(t, int32(0), buildCount.Load(),
+		"build must not start while its dependency (install) is still running")
+
+	// Now let install complete.
+	close(installDone)
+
+	// build should run.
+	time.Sleep(200 * time.Millisecond)
+	assert.GreaterOrEqual(t, buildCount.Load(), int32(1),
+		"build should run after install completes")
+
+	cancel()
+	waitFor(t, errs, 5*time.Second)
 }
