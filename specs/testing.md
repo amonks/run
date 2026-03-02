@@ -6,9 +6,9 @@ Run's tests are organized into unit tests, example tests, and snapshot-based int
 
 ## Test Files
 
-- `pkg/run/*_test.go`: unit and integration tests for the core package.
-- `pkg/run/run_task_test.go`: event loop tests exercising the runner's message dispatch, dependency resolution, triggers, file watching, dynamic Add/Remove, and Invalidate.
-- `pkg/logview/*_test.go`: tests for the log viewer.
+- `task/*_test.go`, `taskfile/*_test.go`, `runner/*_test.go`: unit and integration tests for the core packages.
+- `runner/runner_test.go`: event loop tests exercising the runner's message dispatch, dependency resolution, triggers, file watching, dynamic Add/Remove, and Invalidate.
+- `logview/*_test.go`: tests for the log viewer.
 - `internal/color/hash_test.go`: tests for color hashing.
 - `internal/seq/seq_test.go`: tests for the sequence assertion helper.
 - `first_test.go`: tests for the synchronization helper.
@@ -23,7 +23,7 @@ Three example tests demonstrate public API usage:
 
 ## Snapshot Integration Tests
 
-Located in `pkg/run/testdata/snapshots/`. Each snapshot is a directory containing:
+Located in `runner/testdata/snapshots/`. Each snapshot is a directory containing:
 
 - `tasks.toml`: task definitions for the test scenario.
 - `out.log`: expected printer output.
@@ -64,7 +64,7 @@ Located in `internal/seq/`:
 
 ## Event Loop Tests
 
-`pkg/run/run_task_test.go` exercises the runner's single-channel event loop (the `handleMessage` dispatch in `run_task.go`) through 15 black-box tests:
+`runner/runner_test.go` exercises the runner's single-channel event loop (the `handleMessage` dispatch in `runner.go`) through 15 black-box tests:
 
 1. Short run, no deps, succeeds
 2. Short run, no deps, fails (error propagation)

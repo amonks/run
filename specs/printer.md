@@ -7,7 +7,7 @@ The non-interactive printer UI interleaves output from all tasks into a single s
 ## Construction
 
 ```go
-func NewPrinter(run *Run) UI
+func New(run *runner.Run) runner.UI
 ```
 
 Returns a `UI` that writes interleaved task output.

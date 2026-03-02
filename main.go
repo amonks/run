@@ -13,7 +13,11 @@ import (
 	"syscall"
 
 	"github.com/amonks/run/internal/color"
-	"github.com/amonks/run/pkg/run"
+	"github.com/amonks/run/printer"
+	"github.com/amonks/run/runner"
+	"github.com/amonks/run/task"
+	"github.com/amonks/run/taskfile"
+	"github.com/amonks/run/tui"
 	"github.com/muesli/reflow/dedent"
 	"github.com/muesli/reflow/indent"
 	"github.com/muesli/reflow/wordwrap"
@@ -52,7 +56,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	allTasks, err := run.Load(*fDir)
+	allTasks, err := taskfile.Load(*fDir)
 	if err != nil {
 		fmt.Println("Error loading tasks:")
 		fmt.Println(err)
@@ -69,7 +73,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	r, err := run.RunTask(*fDir, allTasks, taskID)
+	r, err := runner.New(*fDir, allTasks, taskID)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -81,19 +85,19 @@ func main() {
 		os.Exit(0)
 	}
 
-	var ui run.UI
+	var ui runner.UI
 	switch *fUI {
 	case "tui":
-		ui = run.NewTUI(r)
+		ui = tui.New(r)
 	case "printer":
-		ui = run.NewPrinter(r)
+		ui = printer.New(r)
 	case "":
 		if !term.IsTerminal(int(os.Stdout.Fd())) {
-			ui = run.NewPrinter(r)
-		} else if r.Type() == run.RunTypeShort {
-			ui = run.NewPrinter(r)
+			ui = printer.New(r)
+		} else if r.Type() == runner.RunTypeShort {
+			ui = printer.New(r)
 		} else {
-			ui = run.NewTUI(r)
+			ui = tui.New(r)
 		}
 	default:
 		fmt.Println("Invalid value for flag -ui. Legal values are 'tui' and 'printer'.")
@@ -118,7 +122,7 @@ func main() {
 		if !exitReason.isSet() {
 			if err != nil {
 				exitReason.set(err)
-			} else if r.Type() == run.RunTypeShort {
+			} else if r.Type() == runner.RunTypeShort {
 				// If the UI exits before the run, and the run
 				// is short, that itself is an error even if the
 				// ui returns nil.
@@ -171,7 +175,7 @@ func main() {
 	}
 }
 
-func tasklistText(tasks run.Library) string {
+func tasklistText(tasks task.Library) string {
 	b := &strings.Builder{}
 	fmt.Fprintln(b, headerStyle.Render("TASKS"))
 	for i, id := range tasks.IDs() {

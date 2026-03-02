@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `internal/script` package provides an immutable, reentrant wrapper around `exec.Cmd` for running bash scripts with robust cancellation. It is used by `ScriptTask` in `pkg/run` to execute shell commands.
+The `internal/script` package provides an immutable, reentrant wrapper around `exec.Cmd` for running bash scripts with robust cancellation. It is used by `ScriptTask` in `task/` to execute shell commands.
 
 ## Core Type
 

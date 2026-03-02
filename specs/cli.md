@@ -34,10 +34,10 @@ When `-ui` is not specified:
 ## Execution Flow
 
 1. Parse flags. Handle info flags (`-version`, `-help`, etc.) and exit.
-2. Load tasks via `run.Load(dir)`.
+2. Load tasks via `taskfile.Load(dir)`.
 3. If no task ID and `-list`: print task list and exit.
 4. If no task ID: print help and exit.
-5. Create `Run` via `run.RunTask(dir, tasks, taskID)`.
+5. Create `Run` via `runner.New(dir, tasks, taskID)`.
 6. If `-list` with task ID: print that task's dependency tree and exit.
 7. Select and instantiate UI.
 8. Start UI in a goroutine; wait for readiness signal.
