@@ -106,7 +106,7 @@ function build() {
 
 	CGO_ENABLED=0 GOOS=$goos GOARCH=$goarch \
 		go build \
-		-ldflags="-s -w -X 'github.com/amonks/run.Version=${version_name}'" \
+		-ldflags="-s -w -X 'monks.co/run.Version=${version_name}'" \
 		-o "${bdir}/run_${goos}_${goarch}" \
 		.
 }

@@ -132,7 +132,7 @@
   type = "short"
   cmd = """
     rm -rf docs
-    go tool doc2go -out docs -home github.com/amonks/run ./...
+    go tool doc2go -out docs -home monks.co/run ./...
     touch docs/.nojekyll
   """
 

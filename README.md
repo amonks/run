@@ -49,7 +49,7 @@ curl -L https://raw.githubusercontent.com/amonks/run/main/install.bash | bash
 
 If you already use go, you can install Run with the go command line tool:
 
-    $ go install github.com/amonks/run@latest
+    $ go install monks.co/run@latest
 
 [releases]: https://github.com/amonks/run/releases
 
