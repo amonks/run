@@ -15,8 +15,14 @@
   cmd = "go install ."
 
 [[task]]
+  id = "tidy"
+  type = "short"
+  cmd = "go mod tidy -e"
+
+[[task]]
   id = "generate"
   type = "short"
+  dependencies = ["tidy"]
   cmd = "go generate ./..."
 
 [[task]]
