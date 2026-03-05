@@ -22,13 +22,14 @@ Run is configured with `tasks.toml` files using TOML syntax. Each file defines a
 
 ## Loading
 
-`Load(cwd string) (Tasks, error)` loads and validates tasks from a directory:
+`Load(cwd string, targetTaskIDs ...string) (Tasks, error)` loads and validates tasks from a directory:
 
 1. Reads `tasks.toml` in the given directory.
 2. For each task, resolves its directory relative to `cwd`.
 3. If dependencies or triggers reference child directories (contain `/`), recursively loads those task files.
-4. Validates the combined task set.
-5. Returns an error if the file is missing, malformed, or invalid.
+4. If any `targetTaskIDs` contain `/`, eagerly loads the taskfile in the target's directory (if it exists), even if no existing task references it. Missing directories are silently ignored.
+5. Validates the combined task set.
+6. Returns an error if the root file is missing, malformed, or invalid.
 
 ## Task Types
 

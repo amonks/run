@@ -1,0 +1,4 @@
+[[task]]
+  id="root"
+  type="short"
+  cmd="echo root"

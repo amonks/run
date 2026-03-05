@@ -63,7 +63,9 @@ func main() {
 		os.Exit(0)
 	}
 
-	allTasks, err := taskfile.Load(*fDir)
+	taskID := flag.Arg(0)
+
+	allTasks, err := taskfile.Load(*fDir, taskID)
 	if err != nil {
 		fmt.Println("Error loading tasks:")
 		fmt.Println(err)
@@ -92,7 +94,6 @@ func main() {
 		allTasks = task.NewLibrary(tasks...)
 	}
 
-	taskID := flag.Arg(0)
 	if taskID == "" {
 		if *fList {
 			fmt.Println(tasklistText(allTasks))

@@ -58,6 +58,38 @@ func TestTaskfileNestingWithDot(t *testing.T) {
 		ts.Get("child/grandchild/test").(dirGetter).Dir())
 }
 
+func TestLoadUnreferencedTarget(t *testing.T) {
+	ts, err := Load("./testdata/unreferenced", "orphan/build")
+	assert.NoError(t, err)
+
+	assert.True(t, ts.Has("root"))
+	assert.True(t, ts.Has("orphan/build"))
+
+	assert.Equal(t, task.TaskMetadata{
+		ID:          "orphan/build",
+		Description: `"echo orphan-build"`,
+		Type:        "short",
+	}, ts.Get("orphan/build").Metadata())
+}
+
+func TestLoadUnreferencedTargetWithoutSlash(t *testing.T) {
+	// A target without "/" doesn't imply a nested dir, so it
+	// should not change behavior.
+	ts, err := Load("./testdata/unreferenced", "root")
+	assert.NoError(t, err)
+	assert.True(t, ts.Has("root"))
+	assert.False(t, ts.Has("orphan/build"))
+}
+
+func TestLoadUnreferencedTargetMissingDir(t *testing.T) {
+	// A target pointing to a nonexistent dir should not cause an error;
+	// the caller will report "task not found" later.
+	ts, err := Load("./testdata/unreferenced", "nonexistent/task")
+	assert.NoError(t, err)
+	assert.True(t, ts.Has("root"))
+	assert.False(t, ts.Has("nonexistent/task"))
+}
+
 func testNesting(t *testing.T, ts task.Library) {
 	metas := map[string]task.TaskMetadata{}
 	for _, id := range ts.IDs() {

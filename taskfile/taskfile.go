@@ -12,7 +12,11 @@ import (
 )
 
 // Load loads a task file from the specified directory, producing a Library.
-func Load(cwd string) (task.Library, error) {
+// Optional targetTaskIDs cause Load to eagerly load the taskfile for any
+// target whose path contains a "/", even if no existing task references it.
+// This allows running tasks in nested directories that aren't referenced by
+// the root taskfile.
+func Load(cwd string, targetTaskIDs ...string) (task.Library, error) {
 	var allTasks []task.Task
 
 	seenDirs := map[string]struct{}{}
@@ -70,6 +74,19 @@ func Load(cwd string) (task.Library, error) {
 
 	if err := ingestTaskMap("."); err != nil {
 		return task.Library{}, err
+	}
+
+	for _, id := range targetTaskIDs {
+		if !strings.Contains(id, "/") {
+			continue
+		}
+		dir := filepath.Dir(id)
+		if err := ingestTaskMap(dir); err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
+			return task.Library{}, err
+		}
 	}
 
 	tf := task.NewLibrary(allTasks...)
