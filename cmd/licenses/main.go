@@ -24,9 +24,13 @@ func main() {
 		panic(err)
 	}
 
-	gopath := os.Getenv("GOPATH")
-	if gopath == "" {
-		gopath = build.Default.GOPATH
+	modcache := os.Getenv("GOMODCACHE")
+	if modcache == "" {
+		gopath := os.Getenv("GOPATH")
+		if gopath == "" {
+			gopath = build.Default.GOPATH
+		}
+		modcache = filepath.Join(gopath, "pkg", "mod")
 	}
 
 	var out []string
@@ -40,7 +44,7 @@ func main() {
 			continue
 		}
 		fmt.Fprintln(os.Stderr, "used:", dep)
-		dir := filepath.Join(gopath, "pkg", "mod", depPathname)
+		dir := filepath.Join(modcache, depPathname)
 
 		fs, err := os.ReadDir(dir)
 		if err != nil {
