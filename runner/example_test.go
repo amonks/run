@@ -4,8 +4,8 @@ import (
 	"context"
 	"os"
 
-	"github.com/amonks/run/taskfile"
-	"github.com/amonks/run/tui"
+	"monks.co/run/taskfile"
+	"monks.co/run/tui"
 )
 
 // In this example, we use components from Run to build our own version of

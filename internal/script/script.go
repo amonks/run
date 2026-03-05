@@ -21,7 +21,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/amonks/run/internal/mutex"
+	"monks.co/run/internal/mutex"
 )
 
 // Script describes a bash script to execute. It is an immutable value type:

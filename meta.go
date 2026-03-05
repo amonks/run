@@ -40,7 +40,7 @@ func init() {
 	}
 }
 
-//go:generate go run github.com/amonks/run/cmd/licenses CREDITS.txt
+//go:generate go run monks.co/run/cmd/licenses CREDITS.txt
 //go:embed CREDITS.txt
 var Credits string
 
@@ -53,7 +53,7 @@ var Contributors string
 
 func init() {
 	var b strings.Builder
-	for _, line := range strings.Split(contributors, "\n") {
+	for line := range strings.SplitSeq(contributors, "\n") {
 		if strings.HasPrefix(line, "- ") {
 			b.WriteString(line + "\n")
 		}

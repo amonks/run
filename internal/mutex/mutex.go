@@ -58,7 +58,7 @@ func (mu *Mutex) setHolder(name string) {
 	mu.holder = name
 }
 
-func (mu *Mutex) printf(s string, args ...interface{}) {
+func (mu *Mutex) printf(s string, args ...any) {
 	if debug {
 		mu.internal.Lock()
 		defer mu.internal.Unlock()

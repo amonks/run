@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/amonks/run/runner"
-	"github.com/amonks/run/taskfile"
+	"monks.co/run/runner"
+	"monks.co/run/taskfile"
 )
 
 // ui implements MultiWriter

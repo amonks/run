@@ -11,10 +11,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/amonks/run/printer"
-	"github.com/amonks/run/runner"
-	"github.com/amonks/run/taskfile"
 	"github.com/sergi/go-diff/diffmatchpatch"
+	"monks.co/run/printer"
+	"monks.co/run/runner"
+	"monks.co/run/taskfile"
 )
 
 func TestIntegrationSnapshots(t *testing.T) {
@@ -167,13 +167,14 @@ func deinterleave(interleaved string) string {
 	}
 	sort.Strings(ids)
 
-	out := lines[0] + "\n"
+	var out strings.Builder
+	out.WriteString(lines[0] + "\n")
 	for _, id := range ids {
-		out += id
+		out.WriteString(id)
 		for _, line := range streams[id] {
-			out += "  " + line + "\n"
+			out.WriteString("  " + line + "\n")
 		}
-		out += "\n"
+		out.WriteString("\n")
 	}
-	return out
+	return out.String()
 }

@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	help "github.com/amonks/run/internal/help"
+	help "monks.co/run/internal/help"
 	tea "charm.land/bubbletea/v2"
 )
 

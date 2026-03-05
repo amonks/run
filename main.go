@@ -11,12 +11,12 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/amonks/run/internal/color"
-	"github.com/amonks/run/printer"
-	"github.com/amonks/run/runner"
-	"github.com/amonks/run/task"
-	"github.com/amonks/run/taskfile"
-	"github.com/amonks/run/tui"
+	"monks.co/run/internal/color"
+	"monks.co/run/printer"
+	"monks.co/run/runner"
+	"monks.co/run/task"
+	"monks.co/run/taskfile"
+	"monks.co/run/tui"
 	"github.com/muesli/reflow/dedent"
 	"github.com/muesli/reflow/indent"
 	"github.com/muesli/reflow/wordwrap"
@@ -212,7 +212,7 @@ func helpText() string {
 	b.WriteString("Run executes collections of tasks defined in tasks.toml files.\n")
 	b.WriteString("For documentation and the latest version, please visit GitHub:\n")
 	b.WriteString("\n")
-	b.WriteString("  https://github.com/amonks/run\n")
+	b.WriteString("  https://monks.co/run\n")
 	b.WriteString("\n")
 	b.WriteString(usageText())
 	b.WriteString("\n")

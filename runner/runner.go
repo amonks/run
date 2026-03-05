@@ -9,19 +9,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/amonks/run/internal/executor"
-	"github.com/amonks/run/internal/mutex"
-	"github.com/amonks/run/internal/watcher"
-	"github.com/amonks/run/task"
 	"charm.land/lipgloss/v2"
+	"monks.co/run/internal/executor"
+	"monks.co/run/internal/mutex"
+	"monks.co/run/internal/watcher"
+	"monks.co/run/task"
 )
 
 // --- Message types for the single-channel event loop ---
 
 type (
-	msgRunTask    string
-	msgTaskReady  string
-	msgTaskExit   struct {
+	msgRunTask   string
+	msgTaskReady string
+	msgTaskExit  struct {
 		id   string
 		err  error
 		exec *executor.Executor
@@ -30,9 +30,9 @@ type (
 		path string
 		evs  []watcher.EventInfo
 	}
-	msgInvalidate  string
-	msgAddTasks    []string
-	msgRemoveTask  string
+	msgInvalidate string
+	msgAddTasks   []string
+	msgRemoveTask string
 )
 
 // InternalTaskInterleaved is the ID used for the interleaved output stream.
@@ -442,10 +442,7 @@ func (r *Run) handleTaskExit(msg msgTaskExit) error {
 		attempts := r.restartAttempts[msg.id]
 		r.mu.Unlock()
 
-		delay := time.Second * (1 << (attempts - 1))
-		if delay > 30*time.Second {
-			delay = 30 * time.Second
-		}
+		delay := min(time.Second*(1<<(attempts-1)), 30*time.Second)
 		delaySec := int(delay.Seconds())
 		if delaySec == 1 {
 			r.printf(msg.id, logStyle, "retrying in 1 second")
@@ -680,7 +677,7 @@ func (r *Run) hasAllDeps(id string) bool {
 	return true
 }
 
-func (r *Run) printf(id string, style lipgloss.Style, f string, args ...interface{}) {
+func (r *Run) printf(id string, style lipgloss.Style, f string, args ...any) {
 	r.mu.Lock("printf")
 	w := r.writers[id]
 	r.mu.Unlock()

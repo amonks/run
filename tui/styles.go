@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/amonks/run/internal/color"
-	"github.com/amonks/run/internal/help"
-	"github.com/amonks/run/logview"
+	"monks.co/run/internal/color"
+	"monks.co/run/internal/help"
+	"monks.co/run/logview"
 	"charm.land/lipgloss/v2"
 )
 

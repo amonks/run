@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/amonks/run/task"
+	"monks.co/run/task"
 	"github.com/stretchr/testify/assert"
 )
 

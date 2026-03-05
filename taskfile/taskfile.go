@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	"github.com/amonks/run/task"
+	"monks.co/run/task"
 )
 
 // Load loads a task file from the specified directory, producing a Library.

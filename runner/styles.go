@@ -1,7 +1,7 @@
 package runner
 
 import (
-	"github.com/amonks/run/internal/color"
+	"monks.co/run/internal/color"
 	"charm.land/lipgloss/v2"
 )
 

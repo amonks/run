@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/amonks/run/task"
+	"monks.co/run/task"
 )
 
 // In this example, we generate our own Task and run it.

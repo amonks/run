@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	help "github.com/amonks/run/internal/help"
+	help "monks.co/run/internal/help"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/muesli/reflow/truncate"

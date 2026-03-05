@@ -31,7 +31,7 @@ func main() {
 
 	var out []string
 
-	for _, dep := range strings.Split(w.String(), "\n") {
+	for dep := range strings.SplitSeq(w.String(), "\n") {
 		depPathname, err := EncodePath(strings.TrimSpace(dep))
 		if err != nil {
 			panic(err)

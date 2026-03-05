@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/amonks/run/task"
+	"monks.co/run/task"
 )
 
 func TestFuncTask(t *testing.T) {
@@ -16,7 +16,7 @@ func TestFuncTask(t *testing.T) {
 	tk := task.FuncTask(f, task.TaskMetadata{})
 	ctx := context.Background()
 
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		b := strings.Builder{}
 
 		errs := make(chan error)

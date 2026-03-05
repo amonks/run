@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/amonks/run/logview"
+	"monks.co/run/logview"
 	tea "charm.land/bubbletea/v2"
 )
 

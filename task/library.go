@@ -1,5 +1,7 @@
 package task
 
+import "slices"
+
 import "sort"
 
 // Library is an opaque data structure representing an immutable, ordered
@@ -135,36 +137,21 @@ func (lib Library) Subtree(ids ...string) Library {
 // WithWatch returns the IDs of tasks that watch the given path.
 func (lib Library) WithWatch(path string) []string {
 	return lib.matches(func(t Task) bool {
-		for _, w := range t.Metadata().Watch {
-			if w == path {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(t.Metadata().Watch, path)
 	})
 }
 
 // WithDependency returns the IDs of tasks that list dep as a dependency.
 func (lib Library) WithDependency(dep string) []string {
 	return lib.matches(func(t Task) bool {
-		for _, d := range t.Metadata().Dependencies {
-			if d == dep {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(t.Metadata().Dependencies, dep)
 	})
 }
 
 // WithTrigger returns the IDs of tasks that list trigger as a trigger.
 func (lib Library) WithTrigger(trigger string) []string {
 	return lib.matches(func(t Task) bool {
-		for _, d := range t.Metadata().Triggers {
-			if d == trigger {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(t.Metadata().Triggers, trigger)
 	})
 }
 

@@ -9,10 +9,10 @@ import (
 	"io"
 	"strings"
 
-	"github.com/amonks/run/internal/color"
-	"github.com/amonks/run/internal/mutex"
-	"github.com/amonks/run/runner"
 	"charm.land/lipgloss/v2"
+	"monks.co/run/internal/color"
+	"monks.co/run/internal/mutex"
+	"monks.co/run/runner"
 )
 
 // New produces a non-interactive UI for displaying interleaved
@@ -79,8 +79,8 @@ func (p *Printer) write(key, message string) {
 		panic("nil stdout in printer")
 	}
 
-	lines := strings.Split(message, "\n")
-	for _, l := range lines {
+	lines := strings.SplitSeq(message, "\n")
+	for l := range lines {
 		if l == "" {
 			continue
 		}

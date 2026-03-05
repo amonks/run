@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/amonks/run/internal/watcher"
+	"monks.co/run/internal/watcher"
 )
 
 func TestSplitNoGlob(t *testing.T) {

@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/amonks/run/internal/help"
-	"github.com/amonks/run/logview"
-	"github.com/amonks/run/runner"
+	"monks.co/run/internal/help"
+	"monks.co/run/logview"
+	"monks.co/run/runner"
 	"charm.land/bubbles/v2/spinner"
 	tea "charm.land/bubbletea/v2"
 	zone "github.com/lrstanley/bubblezone/v2"

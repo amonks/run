@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/amonks/run/internal/color"
-	"github.com/amonks/run/internal/help"
+	"monks.co/run/internal/color"
+	"monks.co/run/internal/help"
 	"charm.land/lipgloss/v2"
 )
 

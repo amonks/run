@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/amonks/run/internal/color"
-	"github.com/amonks/run/runner"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	zone "github.com/lrstanley/bubblezone/v2"
+	"monks.co/run/internal/color"
+	"monks.co/run/runner"
 )
 
 type uiZone = string
@@ -73,10 +73,7 @@ func (m *tuiModel) renderMenu(styles *styles) string {
 
 	// Not enough room for indicators; just window around the selection.
 	if height < 3 {
-		start := selected - height/2
-		if start < 0 {
-			start = 0
-		}
+		start := max(selected-height/2, 0)
 		end := start + height
 		if end > total {
 			end = total
@@ -90,17 +87,14 @@ func (m *tuiModel) renderMenu(styles *styles) string {
 	}
 
 	// Scrolling with indicators.
-	offset := m.menuScrollOffset
-	if offset < 0 {
-		offset = 0
-	}
+	offset := max(m.menuScrollOffset, 0)
 	if offset >= total {
 		offset = total - 1
 	}
 
 	// Iteratively adjust offset so the selected task is visible,
 	// accounting for indicator lines consuming menu height.
-	for iter := 0; iter < 3; iter++ {
+	for range 3 {
 		showUp := offset > 0
 		taskSlots := height
 		if showUp {

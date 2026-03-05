@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/amonks/run/internal/mutex"
+	"monks.co/run/internal/mutex"
 )
 
 func newOutputWriter(stdout io.Writer) io.Writer {

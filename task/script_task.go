@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/amonks/run/internal/script"
+	"monks.co/run/internal/script"
 )
 
 // ScriptTask produces a runnable Task from a bash script and working

@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/amonks/run/internal/fixtures"
-	"github.com/amonks/run/internal/watcher"
-	"github.com/amonks/run/runner"
-	"github.com/amonks/run/task"
+	"monks.co/run/internal/fixtures"
+	"monks.co/run/internal/watcher"
+	"monks.co/run/runner"
+	"monks.co/run/task"
 	"github.com/stretchr/testify/assert"
 )
 

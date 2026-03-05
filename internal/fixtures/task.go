@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/amonks/run/task"
+	"monks.co/run/task"
 )
 
 // Task is a controllable mock implementation of task.Task for testing.

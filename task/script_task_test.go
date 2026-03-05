@@ -6,13 +6,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/amonks/run/task"
+	"monks.co/run/task"
 )
 
 func TestScriptTaskOK(t *testing.T) {
 	tk := task.ScriptTask("sleep 0.1; exit 0", ".", nil, task.TaskMetadata{})
 	ctx := context.Background()
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		b := strings.Builder{}
 
 		exit := make(chan error)
@@ -32,7 +32,7 @@ func TestScriptTaskOK(t *testing.T) {
 func TestScriptTaskFail(t *testing.T) {
 	tk := task.ScriptTask("sleep 0.1; exit 1", ".", nil, task.TaskMetadata{})
 	ctx := context.Background()
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		b := strings.Builder{}
 
 		exit := make(chan error)

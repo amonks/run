@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/amonks/run/internal/script"
 	"github.com/stretchr/testify/assert"
+	"monks.co/run/internal/script"
 )
 
 // safeBuffer is a thread-safe bytes.Buffer for use in tests.
@@ -84,7 +84,7 @@ func TestExitCode(t *testing.T) {
 func TestReentrant(t *testing.T) {
 	s := script.Script{Dir: ".", Text: "echo hello"}
 
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		stdout, stderr := &safeBuffer{}, &safeBuffer{}
 		err := s.Start(context.Background(), stdout, stderr)
 		assert.NoError(t, err)

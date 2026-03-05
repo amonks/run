@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/amonks/run/internal/executor"
+	"monks.co/run/internal/executor"
 )
 
 func TestExecuteAndWait(t *testing.T) {
@@ -92,12 +92,10 @@ func TestCancelConcurrent(t *testing.T) {
 	})
 
 	var wg sync.WaitGroup
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 10 {
+		wg.Go(func() {
 			exec.Cancel()
-		}()
+		})
 	}
 	wg.Wait()
 
@@ -131,16 +129,14 @@ func TestDoneMultipleListeners(t *testing.T) {
 	})
 
 	var wg sync.WaitGroup
-	for i := 0; i < 5; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 5 {
+		wg.Go(func() {
 			select {
 			case <-exec.Done():
 			case <-time.After(time.Second):
 				t.Error("timed out waiting for Done")
 			}
-		}()
+		})
 	}
 	wg.Wait()
 }
