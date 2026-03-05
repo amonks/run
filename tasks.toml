@@ -133,6 +133,7 @@
   cmd = """
     rm -rf docs
     go tool doc2go -out docs -home github.com/amonks/run ./...
+    touch docs/.nojekyll
   """
 
 [[task]]
