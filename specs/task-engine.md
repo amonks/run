@@ -128,7 +128,8 @@ Tracks per-task state for UI rendering only; never affects control flow.
 - `TaskStatusNotStarted`
 - `TaskStatusRunning`
 - `TaskStatusRestarting`
-- `TaskStatusFailed`
+- `TaskStatusFailed` — the task's own execution returned an error
+- `TaskStatusCanceled` — killed because another task failed in a short run
 - `TaskStatusDone`
 
 ### Execution

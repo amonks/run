@@ -10,11 +10,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"monks.co/run/internal/fixtures"
 	"monks.co/run/internal/watcher"
 	"monks.co/run/runner"
 	"monks.co/run/task"
-	"github.com/stretchr/testify/assert"
 )
 
 // runTypeFor returns the RunType for a task library and root ID, matching
@@ -145,6 +145,33 @@ func TestFailingDependencyPreventsDependents(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "gen failed")
 	assert.NotContains(t, mw.String("build"), "! build:")
+}
+
+// --- Test 4b: Canceled sibling gets TaskStatusCanceled ---
+
+func TestShortRunCanceledStatus(t *testing.T) {
+	mw := fixtures.NewWriter()
+	// "root" depends on both "fast-fail" and "slow". They run in parallel.
+	// "fast-fail" fails immediately; "slow" should be canceled, not failed.
+	t1 := fixtures.NewTask("fast-fail", "short").
+		WithImmediateFailure(errors.New("boom"))
+	t2 := fixtures.NewTask("slow", "short").WithCancel(context.Canceled)
+	t3 := fixtures.NewTask("root", "short").WithDependencies("fast-fail", "slow")
+
+	lib := task.NewLibrary(t1, t2, t3)
+	r, err := runner.New(runner.RunTypeShort, ".", lib, "root", mw)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	ctx := t.Context()
+
+	_ = r.Start(ctx)
+
+	assert.Equal(t, runner.TaskStatusFailed, r.TaskStatus("fast-fail"),
+		"the task that actually failed should be TaskStatusFailed")
+	assert.Equal(t, runner.TaskStatusCanceled, r.TaskStatus("slow"),
+		"a running task killed by another's failure should be TaskStatusCanceled")
 }
 
 // --- Test 5: Context cancellation ---

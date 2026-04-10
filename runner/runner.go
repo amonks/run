@@ -134,6 +134,7 @@ const (
 	TaskStatusRunning
 	TaskStatusRestarting
 	TaskStatusFailed
+	TaskStatusCanceled
 	TaskStatusDone
 )
 
@@ -423,7 +424,7 @@ func (r *Run) handleTaskExit(msg msgTaskExit) error {
 			for k, s := range r.taskStatus {
 				switch s {
 				case TaskStatusRunning, TaskStatusRestarting:
-					r.taskStatus[k] = TaskStatusFailed
+					r.taskStatus[k] = TaskStatusCanceled
 				}
 			}
 			r.mu.Unlock()
@@ -505,7 +506,7 @@ func (r *Run) handleInvalidate(id string) {
 	r.mu.Unlock()
 
 	switch status {
-	case TaskStatusRunning, TaskStatusDone, TaskStatusFailed:
+	case TaskStatusRunning, TaskStatusDone, TaskStatusFailed, TaskStatusCanceled:
 		r.input <- msgRunTask(id)
 	}
 }

@@ -173,7 +173,7 @@ func (m *tuiModel) renderSpinner(id string) string {
 		}
 	case runner.TaskStatusRestarting:
 		return m.shortSpinner.View()
-	case runner.TaskStatusFailed:
+	case runner.TaskStatusFailed, runner.TaskStatusCanceled:
 		return "×"
 	case runner.TaskStatusDone:
 		return "✓"
