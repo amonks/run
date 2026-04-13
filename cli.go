@@ -14,9 +14,9 @@ import (
 type mode struct {
 	name        string
 	description string
-	usage       string       // e.g. "run [flags] <task>" — shown before flags
-	examples    []string     // e.g. "run -session=<name> -status" — shown before flags
-	inv         any          // struct with flag/pos tags; the invocation type
+	usage       string        // e.g. "run [flags] <task>" — shown before flags
+	examples    []string      // e.g. "run -session=<name> -status" — shown before flags
+	inv         any           // struct with flag/pos tags; the invocation type
 	after       func() string // if set, rendered after flags
 }
 
@@ -172,8 +172,8 @@ func matchesMode(m *mode, setFlags map[string]bool, posArg string) bool {
 	hasRequiredFlag := false
 	requiredFlagSet := false
 
-	for j := 0; j < rt.NumField(); j++ {
-		field := rt.Field(j)
+	for field := range rt.Fields() {
+		field := field
 		if flagName := field.Tag.Get("flag"); flagName != "" {
 			modeFlags[flagName] = true
 			if field.Tag.Get("required") == "true" {
@@ -269,8 +269,8 @@ func renderModeHelp(m mode) string {
 			rv = rv.Elem()
 		}
 		rt := rv.Type()
-		for j := 0; j < rt.NumField(); j++ {
-			field := rt.Field(j)
+		for field := range rt.Fields() {
+			field := field
 			flagName := field.Tag.Get("flag")
 			if flagName == "" {
 				continue
