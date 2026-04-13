@@ -1,6 +1,8 @@
+# monks.co/run
+ld: warning: duplicate -rpath '/usr/local/lib' ignored
 
        
-[1;4;4mL[m[1;4;4mI[m[1;4;4mC[m[1;4;4mE[m[1;4;4mN[m[1;4;4mS[m[1;4;4mE[m
+[1mLICENSE[m
        
   © Andrew Monks <a@monks.co>
 

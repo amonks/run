@@ -1,48 +1,86 @@
+# monks.co/run
+ld: warning: duplicate -rpath '/usr/local/lib' ignored
 
 Run executes collections of tasks defined in tasks.toml files.
 For documentation and the latest version, please visit GitHub:
 
-  https://github.com/amonks/run
+  https://monks.co/run
 
-     
-[1;4;4mU[m[1;4;4mS[m[1;4;4mA[m[1;4;4mG[m[1;4;4mE[m
-     
+             
+[1mRUNNING TASKS[m
+             
+  Execute a task and its dependencies.
+
   run [flags] <task>
 
-     
-[1;4;4mF[m[1;4;4mL[m[1;4;4mA[m[1;4;4mG[m[1;4;4mS[m
-     
-  -contributors
-        Display the contributors list and exit.
-  -credits
-        Display the open source credits and exit.
   -dir=string (default ".")
         Look for a root taskfile in the given directory.
-  -help
-        Display the help text and exit.
-  -license
-        Display the license info and exit.
-  -list
-        Display the task list and exit. If run is invoked
-        with both -list and a task ID, that task's
-        dependencies are displayed.
   -skip=value
         Skip a task, replacing it with a no-op stub. Can be
         passed more than once.
   -ui=string
         Force a particular ui. Legal values are 'tui' and
         'printer'.
+
+                              
+[1mINTERACTING WITH RUNNING TASKS[m
+                              
+  In addition to the TUI, you can check on and control long-running
+  tasks from the command line. Use -session with the name of the task
+  you started (e.g. if you ran `run dev`, use -session=dev).
+
+  run -session=<name> -status
+  run -session=<name> -restart=<task>
+  run -session=<name> -log=<task>
+  run -session=<name> -nolog=<task>
+
+  -dir=string (default ".")
+        Look for a root taskfile in the given directory.
+  -session=string
+        The name of the task you started (e.g. dev).
+  -status
+        Show whether each task is running, failed, or done.
+  -restart=string
+        Restart a task. Useful after changing code.
+  -log=string
+        Write a task's output to a log file. The file path
+        is printed to stdout and is based on the task name
+        (e.g. ~/.local/share/run/.../logs/build.log). Read
+        it with cat, tail -f, or any other tool.
+  -nolog=string
+        Stop writing a task's output to its log file.
+
+                       
+[1mINSPECTING THE TASKFILE[m
+                       
+  Display information about the taskfile.
+
+  run -list
+  run -list <task>
+
+  -dir=string (default ".")
+        Look for a root taskfile in the given directory.
+  -list
+        Display the task list and exit. If run is invoked
+        with both -list and a task ID, that task's
+        dependencies are displayed.
+
+     
+[1mABOUT[m
+     
   -version
         Display the version and exit.
+  -help
+        Display the help text and exit.
+  -license
+        Display the license info and exit.
+  -credits
+        Display the open source credits and exit.
+  -contributors
+        Display the contributors list and exit.
 
-       
-[1;4;4mV[m[1;4;4mE[m[1;4;4mR[m[1;4;4mS[m[1;4;4mI[m[1;4;4mO[m[1;4;4mN[m
-       
   Version: devel
 
-       
-[1;4;4mL[m[1;4;4mI[m[1;4;4mC[m[1;4;4mE[m[1;4;4mN[m[1;4;4mS[m[1;4;4mE[m
-       
   Run is free for noncommercial and small-business use, with a
   guarantee that fair, reasonable, and nondiscriminatory paid-
   license terms will be available for everyone else. Ask about

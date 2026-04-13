@@ -151,7 +151,11 @@ func (m *tuiModel) renderMenuItem(styles *styles, index int, id string) string {
 	if index == m.selectedTaskIDIndex {
 		marker, isSelected = ">", true
 	}
-	return zone.Mark(id, styles.renderMenuItem(id, spinner, marker, index, isSelected))
+	item := styles.renderMenuItem(id, spinner, marker, index, isSelected)
+	if m.fileLogging[id] {
+		item += " L"
+	}
+	return zone.Mark(id, item)
 }
 
 func (m *tuiModel) renderSpinner(id string) string {

@@ -5,13 +5,17 @@ package tui
 
 import (
 	"context"
+	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"time"
 
 	"monks.co/run/internal/mutex"
 	"monks.co/run/logview"
 	"monks.co/run/printer"
 	"monks.co/run/runner"
+	"monks.co/run/session"
 	"monks.co/run/task"
 	"charm.land/bubbles/v2/spinner"
 	"charm.land/bubbles/v2/viewport"
@@ -27,7 +31,11 @@ import (
 func Start(ctx context.Context, stdin io.Reader, stdout io.Writer, dir string, allTasks task.Library, taskID string) error {
 	zone.NewGlobal()
 
-	t := &tui{mu: mutex.New("tui")}
+	t := &tui{
+		mu:          mutex.New("tui"),
+		sessionName: taskID,
+		dir:         dir,
+	}
 
 	r, err := runner.New(runner.RunTypeLong, dir, allTasks, taskID, t)
 	if err != nil {
@@ -57,6 +65,15 @@ func Start(ctx context.Context, stdin io.Reader, stdout io.Writer, dir string, a
 	)
 	t.p = program
 
+	// Create session for programmatic access.
+	absDir, _ := filepath.Abs(dir)
+	sess, sessErr := session.New(taskID, absDir, r, program.Send)
+	if sessErr != nil {
+		// Non-fatal: log the error but continue without session.
+		// This can happen if another instance is running.
+		fmt.Fprintf(stdout, "Warning: session not created: %s\n", sessErr)
+	}
+
 	// Compute gutter width for the interleaved printer.
 	gutterWidth := 0
 	for _, id := range ids {
@@ -72,7 +89,10 @@ func Start(ctx context.Context, stdin io.Reader, stdout io.Writer, dir string, a
 	// onInit callback once the program's event loop is active.
 	_, programErr := program.Run()
 
-	// Program exited (user quit). Cancel the runner.
+	// Program exited (user quit). Clean up session and cancel the runner.
+	if sess != nil {
+		sess.Close()
+	}
 	runCancel()
 
 	// Wait for the runner to finish.
@@ -93,6 +113,14 @@ type tui struct {
 	p *tea.Program
 
 	interleaved runner.MultiWriter
+
+	// Session context for log file paths.
+	sessionName string
+	dir         string
+}
+
+func (a *tui) logFilePath(taskID string) string {
+	return session.LogFilePath(a.sessionName, a.dir, taskID)
 }
 
 // *tui implements MultiWriter
@@ -160,6 +188,9 @@ type tuiModel struct {
 
 	tasks map[string]*logview.Model
 
+	fileLogging map[string]bool
+	logFiles    map[string]*os.File
+
 	shortSpinner spinner.Model
 	longSpinner  spinner.Model
 
@@ -185,6 +216,8 @@ func (m *tuiModel) activeTaskID() string {
 
 func (m *tuiModel) Init() tea.Cmd {
 	m.tasks = map[string]*logview.Model{}
+	m.fileLogging = map[string]bool{}
+	m.logFiles = map[string]*os.File{}
 	for _, id := range m.ids {
 		lv := logview.New(logview.WithoutStatusbar)
 		lv.SetWrapMode(true)
@@ -219,3 +252,4 @@ type (
 		content string
 	}
 )
+

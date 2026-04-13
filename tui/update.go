@@ -3,12 +3,13 @@ package tui
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
-	"strings"
 
 	"monks.co/run/internal/help"
 	"monks.co/run/logview"
 	"monks.co/run/runner"
+	"monks.co/run/session"
 	"charm.land/bubbles/v2/spinner"
 	tea "charm.land/bubbletea/v2"
 	zone "github.com/lrstanley/bubblezone/v2"
@@ -167,7 +168,7 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case "s":
-			m.writeFile()
+			m.toggleFileLog(m.activeTaskID())
 			return m, nil
 
 		case "g":
@@ -263,6 +264,40 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case writeMsg:
 		lv := m.tasks[msg.key]
 		lv.Write(msg.content)
+		if f := m.logFiles[msg.key]; f != nil {
+			f.WriteString(msg.content)
+		}
+		return m, nil
+
+	case session.EnableFileLogMsg:
+		if _, ok := m.tasks[msg.TaskID]; !ok {
+			if msg.Reply != nil {
+				msg.Reply <- false
+			}
+			return m, nil
+		}
+		if err := m.enableFileLog(msg.TaskID, msg.Path); err != nil {
+			if msg.Reply != nil {
+				msg.Reply <- false
+			}
+			return m, nil
+		}
+		if msg.Reply != nil {
+			msg.Reply <- true
+		}
+		return m, nil
+
+	case session.DisableFileLogMsg:
+		m.disableFileLog(msg.TaskID)
+		if msg.Reply != nil {
+			msg.Reply <- true
+		}
+		return m, nil
+
+	case session.QueryFileLogMsg:
+		if msg.Reply != nil {
+			msg.Reply <- m.fileLogging[msg.TaskID]
+		}
 		return m, nil
 
 	case tea.WindowSizeMsg:
@@ -314,7 +349,7 @@ var helpMenu = help.Menu{
 			{Keys: "n", Desc: "next search result"},
 
 			{Keys: "w", Desc: "toggle line wrapping"},
-			{Keys: "s", Desc: "save task log to file"},
+			{Keys: "s", Desc: "toggle file logging"},
 			{Keys: "r", Desc: "restart task"},
 		},
 	},
@@ -356,12 +391,51 @@ func (m *tuiModel) handleQuitAttempt(key string) (*tuiModel, tea.Cmd) {
 	return m, nil
 }
 
-func (m *tuiModel) writeFile() {
-	filename := m.activeTaskID() + ".log"
-	filename = strings.Replace(filename, string(os.PathSeparator), "-", -1)
-	content := runner.StripANSIEscapeCodes(m.tasks[m.activeTaskID()].String())
-	os.WriteFile(filename, []byte(content), 0644)
+func (m *tuiModel) toggleFileLog(taskID string) {
+	if m.fileLogging[taskID] {
+		m.disableFileLog(taskID)
+	} else {
+		path := m.tui.logFilePath(taskID)
+		m.enableFileLog(taskID, path)
+	}
+}
 
-	logMsg := fmt.Sprintf("wrote log to '%s'", filename)
-	go m.tui.p.Send(writeMsg{key: m.activeTaskID(), content: fmt.Sprintln(runner.LogStyle.Render(logMsg))})
+func (m *tuiModel) enableFileLog(taskID string, path string) error {
+	// Close existing file if any.
+	if f := m.logFiles[taskID]; f != nil {
+		f.Close()
+	}
+
+	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+		return err
+	}
+
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+
+	// Write existing logview content.
+	content := runner.StripANSIEscapeCodes(m.tasks[taskID].String())
+	if content != "" {
+		f.WriteString(content + "\n")
+	}
+
+	m.logFiles[taskID] = f
+	m.fileLogging[taskID] = true
+
+	logMsg := fmt.Sprintf("logging to %s", path)
+	go m.tui.p.Send(writeMsg{key: taskID, content: fmt.Sprintln(runner.LogStyle.Render(logMsg))})
+	return nil
+}
+
+func (m *tuiModel) disableFileLog(taskID string) {
+	if f := m.logFiles[taskID]; f != nil {
+		f.Close()
+		delete(m.logFiles, taskID)
+	}
+	m.fileLogging[taskID] = false
+
+	logMsg := "file logging disabled"
+	go m.tui.p.Send(writeMsg{key: taskID, content: fmt.Sprintln(runner.LogStyle.Render(logMsg))})
 }

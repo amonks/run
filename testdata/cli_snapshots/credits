@@ -1,3 +1,5 @@
+# monks.co/run
+ld: warning: duplicate -rpath '/usr/local/lib' ignored
        
 [1;4;4mC[m[1;4;4mR[m[1;4;4mE[m[1;4;4mD[m[1;4;4mI[m[1;4;4mT[m[1;4;4mS[m
        
@@ -82,8 +84,8 @@
   
   
   
-  github.com/BurntSushi/toml@v1.4.1-0.20240526193622-a339e1f7089c
-  ===============================================================
+  github.com/BurntSushi/toml@v1.6.0
+  =================================
   
   The MIT License (MIT)
   
@@ -598,7 +600,7 @@
   
   
   
-  golang.org/x/sync@v0.19.0
+  golang.org/x/sync@v0.20.0
   =========================
   
   Copyright 2009 The Go Authors.
@@ -631,7 +633,7 @@
   
   
   
-  golang.org/x/sys@v0.41.0
+  golang.org/x/sys@v0.43.0
   ========================
   
   Copyright 2009 The Go Authors.
@@ -664,7 +666,7 @@
   
   
   
-  golang.org/x/term@v0.37.0
+  golang.org/x/term@v0.42.0
   =========================
   
   Copyright 2009 The Go Authors.

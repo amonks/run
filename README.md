@@ -451,6 +451,35 @@ Run prints its output if either,
 2. no tasks are "long" (eg a one-shot "build" procedure, rather than an ongoing
    "dev server").
 
+# Sessions
+
+When you start a long task like `run dev`, Run creates a Unix domain socket so
+you can inspect and control it from another terminal or a script. The session
+name is the task name you started.
+
+### Checking status
+
+    $ run -session=dev -status
+    build                   done
+    dev                     running
+
+When stdout is not a TTY, status is printed as JSON.
+
+### File logging
+
+    $ run -session=dev -log=build
+    logging to ~/.local/share/run/.../logs/build.log
+
+This writes all existing and future output for the task to a log file. The file
+path is deterministic, so you can compute it without querying the session. Use
+`-nolog=task-id` to stop. File logging can also be toggled with the `s` key in
+the TUI.
+
+### Restarting a task
+
+    $ run -session=dev -restart=build
+    restarted build
+
 # Programmatic Use
 
 Run can be used and extended programmatically through its Go API. For more

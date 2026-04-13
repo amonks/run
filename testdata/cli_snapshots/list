@@ -1,3 +1,5 @@
+# monks.co/run
+ld: warning: duplicate -rpath '/usr/local/lib' ignored
      
 [1;4;4mT[m[1;4;4mA[m[1;4;4mS[m[1;4;4mK[m[1;4;4mS[m
      
@@ -19,10 +21,17 @@
     Dependencies:
       - generate
 
+  [38;2;101;255;187mtidy[m
+    Type: [3mshort[m
+    Description:
+[3m[0m      [3m"go mod tidy -e"[m
+
   [38;2;226;101;255mgenerate[m
     Type: [3mshort[m
     Description:
 [3m[0m      [3m"go generate ./..."[m
+    Dependencies:
+      - tidy
 
   [38;2;101;151;255mvalidate[m
     Type: [3mshort[m
