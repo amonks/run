@@ -417,13 +417,3 @@ func licenseText() string {
 	return b.String()
 }
 
-func shortLicenseText() string {
-	b := &strings.Builder{}
-	fmt.Fprintln(b, headerStyle.Render("LICENSE"))
-	b.WriteString(indent.String(wordwrap.String(statement, 60), 2) + "\n")
-	b.WriteString("\n")
-	b.WriteString("  Run `run -license` for more info.\n")
-	b.WriteString("\n")
-	b.WriteString("  © Andrew Monks <a@monks.co>\n")
-	return b.String()
-}

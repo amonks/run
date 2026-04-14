@@ -20,21 +20,6 @@ type mode struct {
 	after       func() string // if set, rendered after flags
 }
 
-// flagInfo holds the parsed metadata for a single struct field with a flag tag.
-type flagInfo struct {
-	name     string
-	usage    string
-	defValue string
-	kind     string // "string", "bool", "multi"
-}
-
-// posInfo holds the parsed metadata for a positional argument field.
-type posInfo struct {
-	name     string
-	usage    string
-	required bool
-}
-
 // registerFlags walks all modes, reflects over their inv structs, and
 // registers each flag with the stdlib flag package. When the same flag
 // name appears in multiple modes, it is registered once and all struct
@@ -173,7 +158,6 @@ func matchesMode(m *mode, setFlags map[string]bool, posArg string) bool {
 	requiredFlagSet := false
 
 	for field := range rt.Fields() {
-		field := field
 		if flagName := field.Tag.Get("flag"); flagName != "" {
 			modeFlags[flagName] = true
 			if field.Tag.Get("required") == "true" {
@@ -270,7 +254,6 @@ func renderModeHelp(m mode) string {
 		}
 		rt := rv.Type()
 		for field := range rt.Fields() {
-			field := field
 			flagName := field.Tag.Get("flag")
 			if flagName == "" {
 				continue
