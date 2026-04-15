@@ -125,7 +125,11 @@ func TestSessionRestart(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	send := func(msg tea.Msg) {}
+	send := func(msg tea.Msg) {
+		if m, ok := msg.(QueryFileLogMsg); ok {
+			m.Reply <- false
+		}
+	}
 
 	sess, err := newSession("test-session", t.TempDir(), sock, r, send)
 	if err != nil {
@@ -140,7 +144,7 @@ func TestSessionRestart(t *testing.T) {
 		Timeout: 2 * time.Second,
 	}
 
-	resp, err := client.Post("http://localhost/tasks/root/restart", "", nil)
+	resp, err := client.Post("http://localhost/restart/root", "", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,6 +158,78 @@ func TestSessionRestart(t *testing.T) {
 	json.NewDecoder(resp.Body).Decode(&body)
 	if body["ok"] != true {
 		t.Errorf("expected ok=true, got %v", body)
+	}
+}
+
+func TestSessionRestartSlashID(t *testing.T) {
+	sock := tempSock(t)
+	taskDir := t.TempDir()
+
+	lib := task.NewLibrary(
+		task.FuncTask(nil, task.TaskMetadata{ID: "apps/air/build", Type: "short"}),
+		task.FuncTask(nil, task.TaskMetadata{ID: "root", Type: "long", Dependencies: []string{"apps/air/build"}}),
+	)
+
+	r, err := runner.New(runner.RunTypeLong, taskDir, lib, "root", &noopMultiWriter{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	send := func(msg tea.Msg) {
+		if m, ok := msg.(QueryFileLogMsg); ok {
+			m.Reply <- false
+		}
+	}
+
+	sess, err := newSession("test-session", t.TempDir(), sock, r, send)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer sess.Close()
+
+	c, err := connectTo(sock)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := c.Restart("apps/air/build"); err != nil {
+		t.Fatalf("Restart: %v", err)
+	}
+}
+
+func TestSessionRestartNotFound(t *testing.T) {
+	sock := tempSock(t)
+	taskDir := t.TempDir()
+
+	lib := task.NewLibrary(
+		task.FuncTask(nil, task.TaskMetadata{ID: "root", Type: "long"}),
+	)
+
+	r, err := runner.New(runner.RunTypeLong, taskDir, lib, "root", &noopMultiWriter{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	send := func(msg tea.Msg) {
+		if m, ok := msg.(QueryFileLogMsg); ok {
+			m.Reply <- false
+		}
+	}
+
+	sess, err := newSession("test-session", t.TempDir(), sock, r, send)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer sess.Close()
+
+	c, err := connectTo(sock)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = c.Restart("does/not/exist")
+	if err == nil {
+		t.Fatal("expected error for unknown task, got nil")
 	}
 }
 
@@ -198,7 +274,7 @@ func TestSessionEnableDisableLog(t *testing.T) {
 	}
 
 	// Enable log.
-	resp, err := client.Post("http://localhost/tasks/root/log", "", nil)
+	resp, err := client.Post("http://localhost/log/root", "", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -212,7 +288,7 @@ func TestSessionEnableDisableLog(t *testing.T) {
 	}
 
 	// Disable log.
-	req, _ := http.NewRequest("DELETE", "http://localhost/tasks/root/log", nil)
+	req, _ := http.NewRequest("DELETE", "http://localhost/log/root", nil)
 	resp, err = client.Do(req)
 	if err != nil {
 		t.Fatal(err)
@@ -224,6 +300,50 @@ func TestSessionEnableDisableLog(t *testing.T) {
 	}
 	if _, ok := lastMsg.(DisableFileLogMsg); !ok {
 		t.Errorf("expected DisableFileLogMsg, got %T", lastMsg)
+	}
+}
+
+func TestSessionLogSlashID(t *testing.T) {
+	sock := tempSock(t)
+	taskDir := t.TempDir()
+
+	lib := task.NewLibrary(
+		task.FuncTask(nil, task.TaskMetadata{ID: "apps/air/build", Type: "short"}),
+		task.FuncTask(nil, task.TaskMetadata{ID: "root", Type: "long", Dependencies: []string{"apps/air/build"}}),
+	)
+
+	r, err := runner.New(runner.RunTypeLong, taskDir, lib, "root", &noopMultiWriter{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	send := func(msg tea.Msg) {
+		switch m := msg.(type) {
+		case EnableFileLogMsg:
+			m.Reply <- true
+		case DisableFileLogMsg:
+			m.Reply <- true
+		case QueryFileLogMsg:
+			m.Reply <- false
+		}
+	}
+
+	sess, err := newSession("test-session", t.TempDir(), sock, r, send)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer sess.Close()
+
+	c, err := connectTo(sock)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := c.EnableLog("apps/air/build"); err != nil {
+		t.Fatalf("EnableLog: %v", err)
+	}
+	if err := c.DisableLog("apps/air/build"); err != nil {
+		t.Fatalf("DisableLog: %v", err)
 	}
 }
 

@@ -61,11 +61,14 @@ func newSession(name string, dir string, sock string, run *runner.Run, send func
 		send: send,
 	}
 
+	// Task IDs contain slashes (e.g. "apps/air/build"), so action-first
+	// routes with a trailing {id...} wildcard are used rather than
+	// "/tasks/{id}/action" — Go's ServeMux {id} matches a single segment.
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /tasks", s.handleGetTasks)
-	mux.HandleFunc("POST /tasks/{id}/log", s.handleEnableLog)
-	mux.HandleFunc("DELETE /tasks/{id}/log", s.handleDisableLog)
-	mux.HandleFunc("POST /tasks/{id}/restart", s.handleRestart)
+	mux.HandleFunc("POST /log/{id...}", s.handleEnableLog)
+	mux.HandleFunc("DELETE /log/{id...}", s.handleDisableLog)
+	mux.HandleFunc("POST /restart/{id...}", s.handleRestart)
 
 	s.server = &http.Server{Handler: mux}
 	go s.server.Serve(ln)
@@ -129,6 +132,10 @@ func (s *Session) handleDisableLog(w http.ResponseWriter, r *http.Request) {
 
 func (s *Session) handleRestart(w http.ResponseWriter, r *http.Request) {
 	id := decodeTaskID(r.PathValue("id"))
+	if !s.run.Tasks().Has(id) {
+		http.Error(w, fmt.Sprintf("task %q not found", id), http.StatusNotFound)
+		return
+	}
 	s.run.Invalidate(id)
 	writeJSON(w, map[string]any{"ok": true, "id": id})
 }

@@ -76,7 +76,7 @@ func (c *Client) Status() (*StatusResponse, error) {
 
 // EnableLog enables file logging for a task. Returns the log file path.
 func (c *Client) EnableLog(taskID string) (string, error) {
-	resp, err := c.http.Post("http://localhost/tasks/"+taskID+"/log", "", nil)
+	resp, err := c.http.Post("http://localhost/log/"+taskID, "", nil)
 	if err != nil {
 		return "", err
 	}
@@ -95,7 +95,7 @@ func (c *Client) EnableLog(taskID string) (string, error) {
 
 // DisableLog disables file logging for a task.
 func (c *Client) DisableLog(taskID string) error {
-	req, err := http.NewRequest("DELETE", "http://localhost/tasks/"+taskID+"/log", nil)
+	req, err := http.NewRequest("DELETE", "http://localhost/log/"+taskID, nil)
 	if err != nil {
 		return err
 	}
@@ -109,10 +109,14 @@ func (c *Client) DisableLog(taskID string) error {
 
 // Restart restarts a task.
 func (c *Client) Restart(taskID string) error {
-	resp, err := c.http.Post("http://localhost/tasks/"+taskID+"/restart", "", nil)
+	resp, err := c.http.Post("http://localhost/restart/"+taskID, "", nil)
 	if err != nil {
 		return err
 	}
-	resp.Body.Close()
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return fmt.Errorf("task %q not found", taskID)
+	}
 	return nil
 }
