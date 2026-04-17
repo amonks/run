@@ -28,9 +28,17 @@ type EventInfo struct {
 var Watch = func(inputPath string) (<-chan []EventInfo, func(), error) {
 	var stopped bool
 
-	cwd, err := os.Getwd()
+	cwdRaw, err := os.Getwd()
 	if err != nil {
 		return nil, nil, err
+	}
+	// kqueue (FreeBSD, NetBSD, OpenBSD) and FSEvents report event paths
+	// with symlinks resolved. If the cwd is reached through a symlink
+	// (e.g. FreeBSD's /home -> /usr/home), the raw cwd will not be a
+	// prefix of the event path, so also keep the resolved form.
+	cwdResolved, rerr := filepath.EvalSymlinks(cwdRaw)
+	if rerr != nil {
+		cwdResolved = ""
 	}
 
 	watchPath, globToMatch := Split(inputPath)
@@ -41,7 +49,7 @@ var Watch = func(inputPath string) (<-chan []EventInfo, func(), error) {
 
 	go func() {
 		for ev := range c {
-			p := strings.TrimPrefix(ev.Path(), cwd+"/")
+			p := StripCwd(ev.Path(), cwdRaw, cwdResolved)
 			if globToMatch == nil || globToMatch.Match(p) {
 				out <- EventInfo{
 					Path:  p,
@@ -64,9 +72,27 @@ var Watch = func(inputPath string) (<-chan []EventInfo, func(), error) {
 	// Start the watcher.
 	if err := notify.Watch(watchPath, c, notify.All); err != nil {
 		stop()
+		return nil, nil, err
 	}
 
 	return Debounce(500*time.Millisecond, out), stop, nil
+}
+
+// StripCwd returns eventPath made relative to the current working directory.
+// It tries the raw Getwd value first, then the symlink-resolved form, to
+// handle OSes where the watcher reports realpaths (kqueue, FSEvents) and
+// the cwd is reached through a symlink. Unmatched paths are returned
+// unchanged.
+func StripCwd(eventPath, cwdRaw, cwdResolved string) string {
+	if s := strings.TrimPrefix(eventPath, cwdRaw+"/"); s != eventPath {
+		return s
+	}
+	if cwdResolved != "" && cwdResolved != cwdRaw {
+		if s := strings.TrimPrefix(eventPath, cwdResolved+"/"); s != eventPath {
+			return s
+		}
+	}
+	return eventPath
 }
 
 type debounced[T any] struct {

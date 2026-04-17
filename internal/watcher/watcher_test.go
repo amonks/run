@@ -1,6 +1,7 @@
 package watcher_test
 
 import (
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -101,4 +102,47 @@ func TestMockRestore(t *testing.T) {
 
 	// Dispatch should be a no-op (no panic).
 	watcher.Dispatch("nonexistent", watcher.EventInfo{})
+}
+
+func TestWatchReturnsErrorForNonexistentPath(t *testing.T) {
+	// notify.Watch should reject a path that does not exist. The previous
+	// implementation swallowed that error and returned a silent no-op
+	// watcher, which made failures on kqueue systems impossible to diagnose.
+	_, stop, err := watcher.Watch(filepath.Join(t.TempDir(), "does-not-exist"))
+	if err == nil {
+		if stop != nil {
+			stop()
+		}
+		t.Fatal("expected error for nonexistent path, got nil")
+	}
+}
+
+func TestStripCwdRawMatch(t *testing.T) {
+	got := watcher.StripCwd("/home/user/repo/file.go", "/home/user/repo", "/home/user/repo")
+	if got != "file.go" {
+		t.Errorf("expected 'file.go', got %q", got)
+	}
+}
+
+func TestStripCwdResolvedMatch(t *testing.T) {
+	// Simulates FreeBSD /home -> /usr/home: Getwd returns /home/user/repo
+	// but kqueue reports events with the realpath /usr/home/user/repo.
+	got := watcher.StripCwd("/usr/home/user/repo/file.go", "/home/user/repo", "/usr/home/user/repo")
+	if got != "file.go" {
+		t.Errorf("expected 'file.go', got %q", got)
+	}
+}
+
+func TestStripCwdNoMatchLeavesPathAlone(t *testing.T) {
+	got := watcher.StripCwd("/tmp/other/file.go", "/home/user/repo", "/usr/home/user/repo")
+	if got != "/tmp/other/file.go" {
+		t.Errorf("expected original path, got %q", got)
+	}
+}
+
+func TestStripCwdEmptyResolved(t *testing.T) {
+	got := watcher.StripCwd("/home/user/repo/file.go", "/home/user/repo", "")
+	if got != "file.go" {
+		t.Errorf("expected 'file.go', got %q", got)
+	}
 }
