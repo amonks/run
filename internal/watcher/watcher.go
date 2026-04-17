@@ -84,11 +84,11 @@ var Watch = func(inputPath string) (<-chan []EventInfo, func(), error) {
 // the cwd is reached through a symlink. Unmatched paths are returned
 // unchanged.
 func StripCwd(eventPath, cwdRaw, cwdResolved string) string {
-	if s := strings.TrimPrefix(eventPath, cwdRaw+"/"); s != eventPath {
+	if s, ok := strings.CutPrefix(eventPath, cwdRaw+"/"); ok {
 		return s
 	}
 	if cwdResolved != "" && cwdResolved != cwdRaw {
-		if s := strings.TrimPrefix(eventPath, cwdResolved+"/"); s != eventPath {
+		if s, ok := strings.CutPrefix(eventPath, cwdResolved+"/"); ok {
 			return s
 		}
 	}
