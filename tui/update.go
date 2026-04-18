@@ -53,6 +53,20 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.passthroughToLogview(msg)
 		}
 
+		if zone.Get(uiZoneMenu).InBounds(msg) {
+			switch msg.Button {
+			case tea.MouseWheelUp:
+				if m.selectedTaskIDIndex > 0 {
+					m.selectedTaskIDIndex--
+				}
+			case tea.MouseWheelDown:
+				if m.selectedTaskIDIndex < len(m.ids)-1 {
+					m.selectedTaskIDIndex++
+				}
+			}
+			return m, nil
+		}
+
 		return m, nil
 
 	case tea.KeyPressMsg:

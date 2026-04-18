@@ -15,6 +15,7 @@ type uiZone = string
 
 const (
 	uiZoneLogs uiZone = "logs"
+	uiZoneMenu uiZone = "menu"
 )
 
 func (m *tuiModel) View() tea.View {
@@ -31,7 +32,7 @@ func (m *tuiModel) View() tea.View {
 			sections = append(sections, m.renderHeader(styles))
 		}
 		sections = append(sections, lipgloss.JoinHorizontal(lipgloss.Top,
-			m.renderMenu(styles),
+			zone.Mark(uiZoneMenu, m.renderMenu(styles)),
 			zone.Mark(uiZoneLogs, m.renderLog(styles)),
 		))
 		if styles.includeFooter {
