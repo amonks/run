@@ -54,15 +54,19 @@ func (m *tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if zone.Get(uiZoneMenu).InBounds(msg) {
+			delta := 0
 			switch msg.Button {
 			case tea.MouseWheelUp:
-				if m.selectedTaskIDIndex > 0 {
-					m.selectedTaskIDIndex--
-				}
+				delta = -1
 			case tea.MouseWheelDown:
-				if m.selectedTaskIDIndex < len(m.ids)-1 {
-					m.selectedTaskIDIndex++
-				}
+				delta = 1
+			}
+			if delta != 0 {
+				styles := m.styles(m.width, m.height, m.focus)
+				m.menuScrollOffset, m.selectedTaskIDIndex = scrollMenu(
+					m.menuScrollOffset, m.selectedTaskIDIndex,
+					len(m.ids), styles.menuHeight, delta,
+				)
 			}
 			return m, nil
 		}
@@ -382,6 +386,58 @@ var helpMenu = help.Menu{
 			{Keys: "crtl+c", Desc: "quit"},
 		},
 	},
+}
+
+// scrollMenu advances the menu's scroll offset by delta (typically ±1 for one
+// wheel tick), clamped so the view doesn't scroll past its natural bounds. The
+// selected-task pointer is only moved when the scroll would otherwise push it
+// out of the visible window. When the whole list already fits — or the menu
+// is too short to render scroll indicators — there's nothing to scroll and
+// the wheel is a no-op.
+//
+// The visible-window math mirrors renderMenu: when offset>0 one row is spent
+// on the ▲ indicator, and when end<total another row goes to the ▼ indicator.
+// offset=1 is skipped as a resting state: it shows a strict subset of what
+// offset=0 shows (the same bottom, minus the top task that's been swapped
+// for the ▲ indicator), so stopping there is never useful — the wheel
+// snaps over it in whichever direction it's traveling.
+func scrollMenu(offset, selected, total, height, delta int) (int, int) {
+	if total <= height || height < 3 {
+		return offset, selected
+	}
+
+	maxOffset := max(0, total-height+1)
+	newOffset := max(0, min(offset+delta, maxOffset))
+	if newOffset == 1 {
+		if delta >= 0 {
+			newOffset = min(2, maxOffset)
+		} else {
+			newOffset = 0
+		}
+	}
+
+	_, end := menuVisibleRange(newOffset, total, height)
+	if selected < newOffset {
+		selected = newOffset
+	} else if selected >= end {
+		selected = end - 1
+	}
+	return newOffset, selected
+}
+
+// menuVisibleRange returns the [start, end) range of task indices rendered
+// for a given scroll offset, mirroring the windowing logic in renderMenu.
+func menuVisibleRange(offset, total, height int) (int, int) {
+	taskSlots := height
+	if offset > 0 {
+		taskSlots--
+	}
+	end := min(offset+taskSlots, total)
+	if end < total {
+		taskSlots--
+		end = min(offset+taskSlots, total)
+	}
+	return offset, end
 }
 
 func (m *tuiModel) passthroughToLogview(msg tea.Msg) (*tuiModel, tea.Cmd) {

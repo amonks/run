@@ -116,6 +116,18 @@ func (m *tuiModel) renderMenu(styles *styles) string {
 		break
 	}
 
+	// offset=1 is strictly dominated by offset=0 (same bottom, just hides
+	// the top task behind the ▲ indicator), so we refuse to settle there.
+	// Prefer 0 when the selection still fits; otherwise advance past it.
+	if offset == 1 {
+		_, end0 := menuVisibleRange(0, total, height)
+		if selected < end0 {
+			offset = 0
+		} else {
+			offset = 2
+		}
+	}
+
 	// Final visible window computation.
 	showUp := offset > 0
 	taskSlots := height
