@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"slices"
+	"sort"
 	"strings"
 	"time"
 
@@ -229,15 +231,24 @@ func (r *Run) Start(ctx context.Context) error {
 		}
 	}
 
-	// Cleanup: stop watchers, cancel all executors.
-	r.mu.Lock("Start:cleanup")
+	// Cleanup: stop watchers first (so a watch event mid-shutdown cannot
+	// race a restart against our cancels), then cancel executors in
+	// reverse-dependency order. Each Cancel blocks until the task exits,
+	// so a dependency stays running while its dependents drain.
+	r.mu.Lock("Start:cleanup:watches")
 	for _, stop := range r.watches {
 		stop()
 	}
-	for _, exec := range r.executors {
-		exec.Cancel()
-	}
 	r.mu.Unlock()
+
+	for _, id := range r.shutdownOrder() {
+		r.mu.Lock("Start:cleanup:exec")
+		exec := r.executors[id]
+		r.mu.Unlock()
+		if exec != nil {
+			exec.Cancel()
+		}
+	}
 
 	// Unwrap the sentinel.
 	var exitErr *runExitError
@@ -245,6 +256,54 @@ func (r *Run) Start(ctx context.Context) error {
 		return exitErr.err
 	}
 	return loopErr
+}
+
+// shutdownOrder returns the IDs of currently-running executors in
+// reverse-dependency order: tasks with no remaining dependents in the
+// running set first, then their dependencies, and so on. Triggers do
+// not participate. Dependencies that aren't currently running (already
+// exited, never started) are skipped.
+func (r *Run) shutdownOrder() []string {
+	defer r.mu.Lock("shutdownOrder").Unlock()
+	inSet := make(map[string]bool, len(r.executors))
+	for id := range r.executors {
+		inSet[id] = true
+	}
+	visited := make(map[string]bool, len(inSet))
+	var post []string
+	var visit func(string)
+	visit = func(id string) {
+		if visited[id] || !inSet[id] {
+			return
+		}
+		visited[id] = true
+		if t := r.tasks.Get(id); t != nil {
+			for _, dep := range t.Metadata().Dependencies {
+				visit(dep)
+			}
+		}
+		post = append(post, id)
+	}
+	// Iterate in canonical Library order so within-level ordering is
+	// deterministic and matches the order tasks were declared.
+	for _, id := range r.tasks.IDs() {
+		visit(id)
+	}
+	// Pick up any executors not in r.tasks (defensive; shouldn't normally
+	// happen because handleRemoveTask deletes them in lockstep).
+	leftover := make([]string, 0)
+	for id := range inSet {
+		if !visited[id] {
+			leftover = append(leftover, id)
+		}
+	}
+	sort.Strings(leftover)
+	for _, id := range leftover {
+		visit(id)
+	}
+	// post is dependencies-first; reverse for dependents-first.
+	slices.Reverse(post)
+	return post
 }
 
 // Add dynamically adds tasks (by ID) to the active run. The task IDs must
@@ -308,9 +367,12 @@ func (r *Run) handleRunTask(ctx context.Context, id string) {
 	}
 	r.mu.Unlock()
 
-	// Execute the task with an onReady channel.
+	// Execute the task with an onReady channel. The executor uses a
+	// detached context (not the caller's ctx) so that on shutdown each
+	// task is only canceled when the cleanup loop calls exec.Cancel(),
+	// allowing reverse-dependency shutdown ordering.
 	onReady := make(chan struct{})
-	exec.Execute(ctx, func(ctx context.Context) error {
+	exec.Execute(context.Background(), func(ctx context.Context) error {
 		return t.Start(ctx, onReady, w)
 	})
 

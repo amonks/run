@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -190,6 +191,55 @@ func TestContextCancellation(t *testing.T) {
 	// Long run cancellation should return nil (clean shutdown).
 	assert.NoError(t, err)
 	assert.Contains(t, mw.String("server"), "! server: start")
+}
+
+// --- Test 5b: Shutdown cancels tasks in reverse-dependency order ---
+
+func TestShutdownReverseDependencyOrder(t *testing.T) {
+	var (
+		mu    sync.Mutex
+		order []string
+	)
+	makeTask := func(id string, deps ...string) task.Task {
+		return task.FuncTask(func(ctx context.Context, onReady chan<- struct{}, w io.Writer) error {
+			close(onReady)
+			<-ctx.Done()
+			mu.Lock()
+			order = append(order, id)
+			mu.Unlock()
+			return ctx.Err()
+		}, task.TaskMetadata{
+			ID:           id,
+			Type:         "long",
+			Dependencies: deps,
+		})
+	}
+
+	// Chain: a ← b ← c (c depends on b, b depends on a).
+	a := makeTask("a")
+	b := makeTask("b", "a")
+	c := makeTask("c", "b")
+
+	mw := fixtures.NewWriter()
+	cancel, errs := startRun(t, []task.Task{a, b, c}, "c", mw)
+
+	// Wait until all three tasks are running before cancelling, so each
+	// one is sitting on ctx.Done() rather than still being started.
+	assert.Eventually(t, func() bool {
+		mu.Lock()
+		defer mu.Unlock()
+		return len(order) == 0
+	}, time.Second, 10*time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
+
+	cancel()
+	err := waitFor(t, errs, 5*time.Second)
+	assert.NoError(t, err)
+
+	mu.Lock()
+	defer mu.Unlock()
+	assert.Equal(t, []string{"c", "b", "a"}, order,
+		"shutdown should cancel tasks dependents-first, dependencies-last")
 }
 
 // --- Test 6: Watch-triggered restart (long task) ---
