@@ -1,6 +1,6 @@
 module monks.co/run
 
-go 1.26.4
+go 1.26.5
 
 require (
 	charm.land/bubbles/v2 v2.0.0
