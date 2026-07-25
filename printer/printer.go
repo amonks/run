@@ -23,12 +23,17 @@ import (
 // (typically the length of the longest task ID). The stdout parameter
 // receives the formatted output.
 //
+// When color is true the gutter task ID is rendered in a deterministic
+// hash-based color. Pass false for non-interactive output — piped to a file or
+// shipped to syslog by a supervisor — so the stream carries no ANSI escapes.
+//
 // The Printer is safe to access concurrently from multiple goroutines.
-func New(gutterWidth int, stdout io.Writer) *Printer {
+func New(gutterWidth int, stdout io.Writer, color bool) *Printer {
 	return &Printer{
 		mu:        mutex.New("printer"),
 		stdout:    stdout,
 		keyLength: gutterWidth,
+		color:     color,
 	}
 }
 
@@ -39,6 +44,7 @@ type Printer struct {
 	stdout    io.Writer
 	keyLength int
 	lastKey   string
+	color     bool
 }
 
 // *Printer implements MultiWriter
@@ -93,7 +99,9 @@ func (p *Printer) write(key, message string) {
 			k, p.lastKey = key, key
 		}
 		keyStyle := keyStyle
-		keyStyle = keyStyle.Foreground(color.Hash(key))
+		if p.color {
+			keyStyle = keyStyle.Foreground(color.Hash(key))
+		}
 		if p.stdout == nil {
 			panic("nil stdout")
 		}

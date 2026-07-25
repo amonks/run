@@ -52,7 +52,9 @@ const InternalTaskWatch = "@watch"
 //
 // The out [MultiWriter] receives per-task output writers. Its Writer method
 // is not called until [Run.Start].
-func New(runType RunType, dir string, allTasks task.Library, taskID string, out MultiWriter) (*Run, error) {
+//
+// Optional [Option] values tune presentation; see [WithInteractive].
+func New(runType RunType, dir string, allTasks task.Library, taskID string, out MultiWriter, opts ...Option) (*Run, error) {
 	if err := allTasks.Validate(); err != nil {
 		return nil, err
 	}
@@ -93,9 +95,27 @@ func New(runType RunType, dir string, allTasks task.Library, taskID string, out 
 
 		tasks:          tasks,
 		requestedTasks: map[string]struct{}{taskID: {}},
+
+		interactive: true,
+	}
+
+	for _, opt := range opts {
+		opt(&run)
 	}
 
 	return &run, nil
+}
+
+// An Option tunes a [Run]'s presentation behavior at construction.
+type Option func(*Run)
+
+// WithInteractive controls human-oriented output formatting. It defaults to
+// true. Pass false for non-interactive output — piped to a file or captured by
+// a supervisor into syslog — which leaves JSON output un-indented (one compact
+// log event stays a single greppable line) and prints run status lines
+// ("starting", "exit ok", ...) as plain text with no ANSI color.
+func WithInteractive(interactive bool) Option {
+	return func(r *Run) { r.interactive = interactive }
 }
 
 // A Run represents an execution of a task, including,
@@ -122,9 +142,10 @@ type Run struct {
 	// Read-only after construction:
 	out      MultiWriter
 	allTasks task.Library // full task universe
-	runType  RunType
-	rootID   string
-	dir      string
+	runType     RunType
+	rootID      string
+	dir         string
+	interactive bool // apply human-oriented formatting: JSON indenting and colored status lines
 }
 
 //go:generate go run golang.org/x/tools/cmd/stringer -type TaskStatus
@@ -195,7 +216,7 @@ func (r *Run) Start(ctx context.Context) error {
 	ids := r.IDs()
 	r.mu.Lock("Start:writers")
 	for _, id := range ids {
-		r.writers[id] = newOutputWriter(r.out.Writer(id))
+		r.writers[id] = newOutputWriter(r.out.Writer(id), r.interactive)
 	}
 	r.mu.Unlock()
 
@@ -603,7 +624,7 @@ func (r *Run) handleAddTasks(ctx context.Context, ids []string) {
 	for _, id := range newlyAdded {
 		r.taskStatus[id] = TaskStatusNotStarted
 		if r.out != nil {
-			r.writers[id] = newOutputWriter(r.out.Writer(id))
+			r.writers[id] = newOutputWriter(r.out.Writer(id), r.interactive)
 		}
 	}
 	r.mu.Unlock()
@@ -625,7 +646,7 @@ func (r *Run) handleAddTasks(ctx context.Context, ids []string) {
 	r.mu.Lock("handleAddTasks:watchWriter")
 	if len(newTasks.Watches()) > 0 {
 		if _, ok := r.writers[InternalTaskWatch]; !ok && r.out != nil {
-			r.writers[InternalTaskWatch] = newOutputWriter(r.out.Writer(InternalTaskWatch))
+			r.writers[InternalTaskWatch] = newOutputWriter(r.out.Writer(InternalTaskWatch), r.interactive)
 		}
 	}
 	r.mu.Unlock()
@@ -748,7 +769,10 @@ func (r *Run) printf(id string, style lipgloss.Style, f string, args ...any) {
 		return
 	}
 	s := fmt.Sprintf(f, args...)
-	w.Write([]byte(style.Render(s) + "\n"))
+	if r.interactive {
+		s = style.Render(s)
+	}
+	w.Write([]byte(s + "\n"))
 }
 
 func printFSEvent(e msgFSEvent) string {

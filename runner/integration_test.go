@@ -71,7 +71,7 @@ func testExample(t *testing.T, name string) error {
 	runType := runTypeFor(tasks, "test")
 
 	var b strings.Builder
-	prn := printer.New(tasks.Subtree("test").LongestID(), &b)
+	prn := printer.New(tasks.Subtree("test").LongestID(), &b, false)
 
 	r, err := runner.New(runType, dir, tasks, "test", prn)
 	if err != nil {

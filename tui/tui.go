@@ -83,7 +83,7 @@ func Start(ctx context.Context, stdin io.Reader, stdout io.Writer, dir string, a
 	}
 
 	interleavedWriter := t.Writer(runner.InternalTaskInterleaved)
-	t.interleaved = printer.New(gutterWidth, interleavedWriter)
+	t.interleaved = printer.New(gutterWidth, interleavedWriter, true)
 
 	// Run the BubbleTea program (blocking). The runner starts from the
 	// onInit callback once the program's event loop is active.

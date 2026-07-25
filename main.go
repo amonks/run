@@ -263,6 +263,8 @@ func handleRun() {
 		os.Exit(1)
 	}
 
+	stdoutIsTTY := term.IsTerminal(int(os.Stdout.Fd()))
+
 	useTUI := false
 	switch runInv.UI {
 	case "tui":
@@ -270,7 +272,7 @@ func handleRun() {
 	case "printer":
 		useTUI = false
 	case "":
-		if term.IsTerminal(int(os.Stdout.Fd())) {
+		if stdoutIsTTY {
 			if allTasks.Get(taskID).Metadata().Type == "long" {
 				useTUI = true
 			}
@@ -289,8 +291,8 @@ func handleRun() {
 		runErr = tui.Start(ctx, os.Stdin, os.Stdout, runInv.Dir, allTasks, taskID)
 	} else {
 		subtree := allTasks.Subtree(taskID)
-		prn := printer.New(subtree.LongestID(), os.Stdout)
-		r, err := runner.New(runner.RunTypeShort, runInv.Dir, allTasks, taskID, prn)
+		prn := printer.New(subtree.LongestID(), os.Stdout, stdoutIsTTY)
+		r, err := runner.New(runner.RunTypeShort, runInv.Dir, allTasks, taskID, prn, runner.WithInteractive(stdoutIsTTY))
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)

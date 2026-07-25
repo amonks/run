@@ -9,9 +9,16 @@ import (
 	"monks.co/run/internal/mutex"
 )
 
-func newOutputWriter(stdout io.Writer) io.Writer {
-	jsonW := &jsonWriter{w: stdout}
-	bufW := &lineBufferedWriter{buf: bufio.NewWriter(jsonW)}
+// newOutputWriter wraps stdout with line buffering. When pretty is true, whole
+// JSON lines are re-indented for human reading (the interactive default). When
+// pretty is false — non-interactive output piped to a file or shipped to syslog
+// by a supervisor — lines pass through verbatim so one log event stays one line.
+func newOutputWriter(stdout io.Writer, pretty bool) io.Writer {
+	dst := stdout
+	if pretty {
+		dst = &jsonWriter{w: stdout}
+	}
+	bufW := &lineBufferedWriter{buf: bufio.NewWriter(dst)}
 	bufW.mu = mutex.New("linebuffered")
 	return bufW
 }
