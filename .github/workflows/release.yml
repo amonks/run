@@ -32,3 +32,10 @@ jobs:
           APPLE_DEVELOPER_TEAM: ${{ secrets.APPLE_DEVELOPER_TEAM }}
           CERTIFICATE_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
           CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+
+      - name: "Bust module proxy cache"
+        run: |
+          go mod init temp
+          go get github.com/amonks/run@${{ github.ref_name }}
+        env:
+          GONOSUMDB: "*"
