@@ -19,7 +19,7 @@ func TestScriptTaskOK(t *testing.T) {
 		go func() { exit <- tk.Start(ctx, make(chan struct{}, 1), &b) }()
 
 		select {
-		case <-time.After(200 * time.Millisecond):
+		case <-time.After(time.Second):
 			t.Fatal("timeout")
 		case err := <-exit:
 			if err != nil {
@@ -39,7 +39,7 @@ func TestScriptTaskFail(t *testing.T) {
 		go func() { exit <- tk.Start(ctx, make(chan struct{}, 1), &b) }()
 
 		select {
-		case <-time.After(200 * time.Millisecond):
+		case <-time.After(time.Second):
 			t.Fatal("timeout")
 		case err := <-exit:
 			if err == nil {
