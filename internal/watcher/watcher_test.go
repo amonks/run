@@ -3,6 +3,7 @@ package watcher_test
 import (
 	"path/filepath"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"monks.co/run/internal/watcher"
@@ -45,53 +46,61 @@ func TestSplitDot(t *testing.T) {
 }
 
 func TestDebounce(t *testing.T) {
-	in := make(chan watcher.EventInfo, 10)
+	synctest.Test(t, func(t *testing.T) {
+		in := make(chan watcher.EventInfo, 10)
 
-	out := watcher.Debounce(50*time.Millisecond, in)
+		out := watcher.Debounce(50*time.Millisecond, in)
 
-	// Send several events quickly.
-	in <- watcher.EventInfo{Path: "a.txt", Event: "Write"}
-	in <- watcher.EventInfo{Path: "b.txt", Event: "Write"}
-	in <- watcher.EventInfo{Path: "c.txt", Event: "Create"}
+		// Send several events quickly.
+		in <- watcher.EventInfo{Path: "a.txt", Event: "Write"}
+		in <- watcher.EventInfo{Path: "b.txt", Event: "Write"}
+		in <- watcher.EventInfo{Path: "c.txt", Event: "Create"}
 
-	select {
-	case batch := <-out:
-		if len(batch) != 3 {
-			t.Errorf("expected 3 events, got %d", len(batch))
+		select {
+		case batch := <-out:
+			if len(batch) != 3 {
+				t.Errorf("expected 3 events, got %d", len(batch))
+			}
+		case <-time.After(time.Second):
+			t.Fatal("timed out waiting for debounced events")
 		}
-	case <-time.After(time.Second):
-		t.Fatal("timed out waiting for debounced events")
-	}
+
+		// Close the input so Debounce's collector goroutine exits
+		// before the bubble ends.
+		close(in)
+	})
 }
 
 func TestMockAndDispatch(t *testing.T) {
-	restore := watcher.Mock()
-	defer restore()
+	synctest.Test(t, func(t *testing.T) {
+		restore := watcher.Mock()
+		defer restore()
 
-	ch, stop, err := watcher.Watch("src/**/*.go")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer stop()
-
-	go func() {
-		watcher.Dispatch("src/**/*.go",
-			watcher.EventInfo{Path: "src/main.go", Event: "Write"},
-			watcher.EventInfo{Path: "src/util.go", Event: "Write"},
-		)
-	}()
-
-	select {
-	case evs := <-ch:
-		if len(evs) != 2 {
-			t.Errorf("expected 2 events, got %d", len(evs))
+		ch, stop, err := watcher.Watch("src/**/*.go")
+		if err != nil {
+			t.Fatal(err)
 		}
-		if evs[0].Path != "src/main.go" {
-			t.Errorf("expected path 'src/main.go', got %q", evs[0].Path)
+		defer stop()
+
+		go func() {
+			watcher.Dispatch("src/**/*.go",
+				watcher.EventInfo{Path: "src/main.go", Event: "Write"},
+				watcher.EventInfo{Path: "src/util.go", Event: "Write"},
+			)
+		}()
+
+		select {
+		case evs := <-ch:
+			if len(evs) != 2 {
+				t.Errorf("expected 2 events, got %d", len(evs))
+			}
+			if evs[0].Path != "src/main.go" {
+				t.Errorf("expected path 'src/main.go', got %q", evs[0].Path)
+			}
+		case <-time.After(time.Second):
+			t.Fatal("timed out waiting for mock events")
 		}
-	case <-time.After(time.Second):
-		t.Fatal("timed out waiting for mock events")
-	}
+	})
 }
 
 func TestMockRestore(t *testing.T) {

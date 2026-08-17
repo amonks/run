@@ -5,6 +5,7 @@ import (
 	"errors"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"monks.co/run/internal/executor"
@@ -40,30 +41,32 @@ func TestExecuteNilError(t *testing.T) {
 }
 
 func TestCancelBlocksUntilExit(t *testing.T) {
-	exec := executor.New()
-	started := make(chan struct{})
+	synctest.Test(t, func(t *testing.T) {
+		exec := executor.New()
+		started := make(chan struct{})
 
-	exec.Execute(context.Background(), func(ctx context.Context) error {
-		close(started)
-		<-ctx.Done()
-		// Simulate cleanup work.
-		time.Sleep(50 * time.Millisecond)
-		return ctx.Err()
+		exec.Execute(context.Background(), func(ctx context.Context) error {
+			close(started)
+			<-ctx.Done()
+			// Simulate cleanup work.
+			time.Sleep(50 * time.Millisecond)
+			return ctx.Err()
+		})
+
+		<-started
+
+		err := exec.Cancel()
+		// After Cancel returns, Done must be closed.
+		select {
+		case <-exec.Done():
+		default:
+			t.Fatal("Done channel not closed after Cancel returned")
+		}
+
+		if !errors.Is(err, context.Canceled) {
+			t.Errorf("expected context.Canceled, got %v", err)
+		}
 	})
-
-	<-started
-
-	err := exec.Cancel()
-	// After Cancel returns, Done must be closed.
-	select {
-	case <-exec.Done():
-	default:
-		t.Fatal("Done channel not closed after Cancel returned")
-	}
-
-	if !errors.Is(err, context.Canceled) {
-		t.Errorf("expected context.Canceled, got %v", err)
-	}
 }
 
 func TestCancelIsIdempotent(t *testing.T) {
@@ -83,27 +86,29 @@ func TestCancelIsIdempotent(t *testing.T) {
 }
 
 func TestCancelConcurrent(t *testing.T) {
-	exec := executor.New()
+	synctest.Test(t, func(t *testing.T) {
+		exec := executor.New()
 
-	exec.Execute(context.Background(), func(ctx context.Context) error {
-		<-ctx.Done()
-		time.Sleep(50 * time.Millisecond)
-		return ctx.Err()
-	})
-
-	var wg sync.WaitGroup
-	for range 10 {
-		wg.Go(func() {
-			exec.Cancel()
+		exec.Execute(context.Background(), func(ctx context.Context) error {
+			<-ctx.Done()
+			time.Sleep(50 * time.Millisecond)
+			return ctx.Err()
 		})
-	}
-	wg.Wait()
 
-	select {
-	case <-exec.Done():
-	default:
-		t.Fatal("Done channel not closed after concurrent Cancels")
-	}
+		var wg sync.WaitGroup
+		for range 10 {
+			wg.Go(func() {
+				exec.Cancel()
+			})
+		}
+		wg.Wait()
+
+		select {
+		case <-exec.Done():
+		default:
+			t.Fatal("Done channel not closed after concurrent Cancels")
+		}
+	})
 }
 
 func TestIsIdentity(t *testing.T) {
@@ -122,23 +127,25 @@ func TestIsIdentity(t *testing.T) {
 }
 
 func TestDoneMultipleListeners(t *testing.T) {
-	exec := executor.New()
+	synctest.Test(t, func(t *testing.T) {
+		exec := executor.New()
 
-	exec.Execute(context.Background(), func(ctx context.Context) error {
-		return nil
-	})
-
-	var wg sync.WaitGroup
-	for range 5 {
-		wg.Go(func() {
-			select {
-			case <-exec.Done():
-			case <-time.After(time.Second):
-				t.Error("timed out waiting for Done")
-			}
+		exec.Execute(context.Background(), func(ctx context.Context) error {
+			return nil
 		})
-	}
-	wg.Wait()
+
+		var wg sync.WaitGroup
+		for range 5 {
+			wg.Go(func() {
+				select {
+				case <-exec.Done():
+				case <-time.After(time.Second):
+					t.Error("timed out waiting for Done")
+				}
+			})
+		}
+		wg.Wait()
+	})
 }
 
 func TestParentContextCancellation(t *testing.T) {

@@ -9,6 +9,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -80,72 +81,80 @@ func waitFor(t *testing.T, errs <-chan error, timeout time.Duration) error {
 // --- Test 1: Short run, no deps, succeeds ---
 
 func TestShortRunNoDepsSucceeds(t *testing.T) {
-	mw := fixtures.NewWriter()
-	tk := fixtures.NewTask("build", "short")
+	synctest.Test(t, func(t *testing.T) {
+		mw := fixtures.NewWriter()
+		tk := fixtures.NewTask("build", "short")
 
-	cancel, errs := startRun(t, []task.Task{tk}, "build", mw)
-	defer cancel()
+		cancel, errs := startRun(t, []task.Task{tk}, "build", mw)
+		defer cancel()
 
-	err := waitFor(t, errs, 5*time.Second)
-	assert.NoError(t, err)
-	assert.Contains(t, mw.String("build"), "! build: execute")
+		err := waitFor(t, errs, 5*time.Second)
+		assert.NoError(t, err)
+		assert.Contains(t, mw.String("build"), "! build: execute")
+	})
 }
 
 // --- Test 2: Short run, no deps, fails ---
 
 func TestShortRunNoDepsFails(t *testing.T) {
-	mw := fixtures.NewWriter()
-	tk := fixtures.NewTask("build", "short").
-		WithImmediateFailure(errors.New("compile error"))
+	synctest.Test(t, func(t *testing.T) {
+		mw := fixtures.NewWriter()
+		tk := fixtures.NewTask("build", "short").
+			WithImmediateFailure(errors.New("compile error"))
 
-	cancel, errs := startRun(t, []task.Task{tk}, "build", mw)
-	defer cancel()
+		cancel, errs := startRun(t, []task.Task{tk}, "build", mw)
+		defer cancel()
 
-	err := waitFor(t, errs, 5*time.Second)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "compile error")
+		err := waitFor(t, errs, 5*time.Second)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "compile error")
+	})
 }
 
 // --- Test 3: Short run with dependency chain ---
 
 func TestShortRunDependencyChain(t *testing.T) {
-	mw := fixtures.NewWriter()
-	t1 := fixtures.NewTask("gen", "short")
-	t2 := fixtures.NewTask("compile", "short").WithDependencies("gen")
-	t3 := fixtures.NewTask("link", "short").WithDependencies("compile")
+	synctest.Test(t, func(t *testing.T) {
+		mw := fixtures.NewWriter()
+		t1 := fixtures.NewTask("gen", "short")
+		t2 := fixtures.NewTask("compile", "short").WithDependencies("gen")
+		t3 := fixtures.NewTask("link", "short").WithDependencies("compile")
 
-	cancel, errs := startRun(t, []task.Task{t1, t2, t3}, "link", mw)
-	defer cancel()
+		cancel, errs := startRun(t, []task.Task{t1, t2, t3}, "link", mw)
+		defer cancel()
 
-	err := waitFor(t, errs, 5*time.Second)
-	assert.NoError(t, err)
+		err := waitFor(t, errs, 5*time.Second)
+		assert.NoError(t, err)
 
-	combined := mw.CombinedString()
-	genIdx := strings.Index(combined, "[gen] ! gen: execute")
-	compileIdx := strings.Index(combined, "[compile] ! compile: execute")
-	linkIdx := strings.Index(combined, "[link] ! link: execute")
-	assert.Greater(t, genIdx, -1, "gen should have executed")
-	assert.Greater(t, compileIdx, -1, "compile should have executed")
-	assert.Greater(t, linkIdx, -1, "link should have executed")
-	assert.Less(t, genIdx, compileIdx, "gen should execute before compile")
-	assert.Less(t, compileIdx, linkIdx, "compile should execute before link")
+		combined := mw.CombinedString()
+		genIdx := strings.Index(combined, "[gen] ! gen: execute")
+		compileIdx := strings.Index(combined, "[compile] ! compile: execute")
+		linkIdx := strings.Index(combined, "[link] ! link: execute")
+		assert.Greater(t, genIdx, -1, "gen should have executed")
+		assert.Greater(t, compileIdx, -1, "compile should have executed")
+		assert.Greater(t, linkIdx, -1, "link should have executed")
+		assert.Less(t, genIdx, compileIdx, "gen should execute before compile")
+		assert.Less(t, compileIdx, linkIdx, "compile should execute before link")
+	})
 }
 
 // --- Test 4: Failing dependency prevents dependent ---
 
 func TestFailingDependencyPreventsDependents(t *testing.T) {
-	mw := fixtures.NewWriter()
-	t1 := fixtures.NewTask("gen", "short").
-		WithImmediateFailure(errors.New("gen failed"))
-	t2 := fixtures.NewTask("build", "short").WithDependencies("gen")
+	synctest.Test(t, func(t *testing.T) {
+		mw := fixtures.NewWriter()
+		t1 := fixtures.NewTask("gen", "short").
+			WithImmediateFailure(errors.New("gen failed"))
+		t2 := fixtures.NewTask("build", "short").WithDependencies("gen")
 
-	cancel, errs := startRun(t, []task.Task{t1, t2}, "build", mw)
-	defer cancel()
+		cancel, errs := startRun(t, []task.Task{t1, t2}, "build", mw)
+		defer cancel()
 
-	err := waitFor(t, errs, 5*time.Second)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "gen failed")
-	assert.NotContains(t, mw.String("build"), "! build:")
+		err := waitFor(t, errs, 5*time.Second)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "gen failed")
+		assert.NotContains(t, mw.String("build"), "! build:")
+	})
 }
 
 // --- Test 4b: Canceled sibling gets TaskStatusCanceled ---
@@ -178,68 +187,68 @@ func TestShortRunCanceledStatus(t *testing.T) {
 // --- Test 5: Context cancellation ---
 
 func TestContextCancellation(t *testing.T) {
-	mw := fixtures.NewWriter()
-	tk := fixtures.NewTask("server", "long").WithCancel(context.Canceled)
+	synctest.Test(t, func(t *testing.T) {
+		mw := fixtures.NewWriter()
+		tk := fixtures.NewTask("server", "long").WithCancel(context.Canceled)
 
-	cancel, errs := startRun(t, []task.Task{tk}, "server", mw)
+		cancel, errs := startRun(t, []task.Task{tk}, "server", mw)
 
-	// Give the task time to start.
-	time.Sleep(50 * time.Millisecond)
-	cancel()
+		// Wait for the task to start.
+		synctest.Wait()
+		cancel()
 
-	err := waitFor(t, errs, 5*time.Second)
-	// Long run cancellation should return nil (clean shutdown).
-	assert.NoError(t, err)
-	assert.Contains(t, mw.String("server"), "! server: start")
+		err := waitFor(t, errs, 5*time.Second)
+		// Long run cancellation should return nil (clean shutdown).
+		assert.NoError(t, err)
+		assert.Contains(t, mw.String("server"), "! server: start")
+	})
 }
 
 // --- Test 5b: Shutdown cancels tasks in reverse-dependency order ---
 
 func TestShutdownReverseDependencyOrder(t *testing.T) {
-	var (
-		mu    sync.Mutex
-		order []string
-	)
-	makeTask := func(id string, deps ...string) task.Task {
-		return task.FuncTask(func(ctx context.Context, onReady chan<- struct{}, w io.Writer) error {
-			close(onReady)
-			<-ctx.Done()
-			mu.Lock()
-			order = append(order, id)
-			mu.Unlock()
-			return ctx.Err()
-		}, task.TaskMetadata{
-			ID:           id,
-			Type:         "long",
-			Dependencies: deps,
-		})
-	}
+	synctest.Test(t, func(t *testing.T) {
+		var (
+			mu    sync.Mutex
+			order []string
+		)
+		makeTask := func(id string, deps ...string) task.Task {
+			return task.FuncTask(func(ctx context.Context, onReady chan<- struct{}, w io.Writer) error {
+				close(onReady)
+				<-ctx.Done()
+				mu.Lock()
+				order = append(order, id)
+				mu.Unlock()
+				return ctx.Err()
+			}, task.TaskMetadata{
+				ID:           id,
+				Type:         "long",
+				Dependencies: deps,
+			})
+		}
 
-	// Chain: a ← b ← c (c depends on b, b depends on a).
-	a := makeTask("a")
-	b := makeTask("b", "a")
-	c := makeTask("c", "b")
+		// Chain: a ← b ← c (c depends on b, b depends on a).
+		a := makeTask("a")
+		b := makeTask("b", "a")
+		c := makeTask("c", "b")
 
-	mw := fixtures.NewWriter()
-	cancel, errs := startRun(t, []task.Task{a, b, c}, "c", mw)
+		mw := fixtures.NewWriter()
+		cancel, errs := startRun(t, []task.Task{a, b, c}, "c", mw)
 
-	// Wait until all three tasks are running before cancelling, so each
-	// one is sitting on ctx.Done() rather than still being started.
-	assert.Eventually(t, func() bool {
+		// Wait until all three tasks are running before cancelling, so
+		// each one is sitting on ctx.Done() rather than still being
+		// started.
+		synctest.Wait()
+
+		cancel()
+		err := waitFor(t, errs, 5*time.Second)
+		assert.NoError(t, err)
+
 		mu.Lock()
 		defer mu.Unlock()
-		return len(order) == 0
-	}, time.Second, 10*time.Millisecond)
-	time.Sleep(50 * time.Millisecond)
-
-	cancel()
-	err := waitFor(t, errs, 5*time.Second)
-	assert.NoError(t, err)
-
-	mu.Lock()
-	defer mu.Unlock()
-	assert.Equal(t, []string{"c", "b", "a"}, order,
-		"shutdown should cancel tasks dependents-first, dependencies-last")
+		assert.Equal(t, []string{"c", "b", "a"}, order,
+			"shutdown should cancel tasks dependents-first, dependencies-last")
+	})
 }
 
 // --- Test 6: Watch-triggered restart (long task) ---
@@ -284,40 +293,42 @@ func TestWatchTriggeredRestartLongTask(t *testing.T) {
 // --- Test 7: Trigger completion causes main task restart ---
 
 func TestTriggerCompletionCausesRestart(t *testing.T) {
-	restore := watcher.Mock()
-	defer restore()
+	synctest.Test(t, func(t *testing.T) {
+		restore := watcher.Mock()
+		defer restore()
 
-	mw := fixtures.NewWriter()
+		mw := fixtures.NewWriter()
 
-	// A short trigger with no watch: it runs once alongside the main
-	// task. When it completes, the main task should be restarted.
-	trigger := fixtures.NewTask("lint", "short")
+		// A short trigger with no watch: it runs once alongside the main
+		// task. When it completes, the main task should be restarted.
+		trigger := fixtures.NewTask("lint", "short")
 
-	var startCount atomic.Int32
-	main := task.FuncTask(func(ctx context.Context, onReady chan<- struct{}, w io.Writer) error {
-		startCount.Add(1)
-		w.Write([]byte("! server: start\n"))
-		close(onReady)
-		<-ctx.Done()
-		return ctx.Err()
-	}, task.TaskMetadata{
-		ID:       "server",
-		Type:     "long",
-		Triggers: []string{"lint"},
+		var startCount atomic.Int32
+		main := task.FuncTask(func(ctx context.Context, onReady chan<- struct{}, w io.Writer) error {
+			startCount.Add(1)
+			w.Write([]byte("! server: start\n"))
+			close(onReady)
+			<-ctx.Done()
+			return ctx.Err()
+		}, task.TaskMetadata{
+			ID:       "server",
+			Type:     "long",
+			Triggers: []string{"lint"},
+		})
+
+		_, cancel, errs := startRunWithHandle(t, []task.Task{trigger, main}, "server", mw)
+
+		// Let the run start and the trigger complete.
+		synctest.Wait()
+
+		// lint should have executed.
+		assert.Contains(t, mw.String("lint"), "! lint: execute")
+		// server should have been restarted by the trigger.
+		assert.GreaterOrEqual(t, startCount.Load(), int32(2), "main task should restart when trigger completes")
+
+		cancel()
+		waitFor(t, errs, 5*time.Second)
 	})
-
-	_, cancel, errs := startRunWithHandle(t, []task.Task{trigger, main}, "server", mw)
-
-	// Let the run start and the trigger complete.
-	time.Sleep(200 * time.Millisecond)
-
-	// lint should have executed.
-	assert.Contains(t, mw.String("lint"), "! lint: execute")
-	// server should have been restarted by the trigger.
-	assert.GreaterOrEqual(t, startCount.Load(), int32(2), "main task should restart when trigger completes")
-
-	cancel()
-	waitFor(t, errs, 5*time.Second)
 }
 
 // --- Test 8: Watch event on trigger causes cascade restart ---
@@ -415,156 +426,166 @@ func TestDepRerunDoesNotRestartLongTask(t *testing.T) {
 // --- Test 10: JSON output is prettified ---
 
 func TestJSONOutputPrettified(t *testing.T) {
-	mw := fixtures.NewWriter()
-	tk := fixtures.NewTask("json-task", "short").
-		WithOutput("{\"key\":\"value\",\"nested\":{\"a\":1}}\n")
+	synctest.Test(t, func(t *testing.T) {
+		mw := fixtures.NewWriter()
+		tk := fixtures.NewTask("json-task", "short").
+			WithOutput("{\"key\":\"value\",\"nested\":{\"a\":1}}\n")
 
-	cancel, errs := startRun(t, []task.Task{tk}, "json-task", mw)
-	defer cancel()
+		cancel, errs := startRun(t, []task.Task{tk}, "json-task", mw)
+		defer cancel()
 
-	err := waitFor(t, errs, 5*time.Second)
-	assert.NoError(t, err)
+		err := waitFor(t, errs, 5*time.Second)
+		assert.NoError(t, err)
 
-	out := mw.String("json-task")
-	// The output writer should have prettified the JSON.
-	assert.Contains(t, out, "\"key\": \"value\"")
-	assert.Contains(t, out, "  \"nested\"")
+		out := mw.String("json-task")
+		// The output writer should have prettified the JSON.
+		assert.Contains(t, out, "\"key\": \"value\"")
+		assert.Contains(t, out, "  \"nested\"")
+	})
 }
 
 // --- Test 11: Long task onReady enables dependent ---
 
 func TestLongTaskOnReadyEnablesDependent(t *testing.T) {
-	mw := fixtures.NewWriter()
+	synctest.Test(t, func(t *testing.T) {
+		mw := fixtures.NewWriter()
 
-	ready := make(chan struct{})
-	depExit := make(chan error, 1)
+		ready := make(chan struct{})
+		depExit := make(chan error, 1)
 
-	dep := fixtures.NewTask("database", "long").
-		WithReady(ready).
-		WithExit(depExit)
+		dep := fixtures.NewTask("database", "long").
+			WithReady(ready).
+			WithExit(depExit)
 
-	main := fixtures.NewTask("api", "short").WithDependencies("database")
+		main := fixtures.NewTask("api", "short").WithDependencies("database")
 
-	_, cancel, errs := startRunWithHandle(t, []task.Task{dep, main}, "api", mw)
-	defer cancel()
+		_, cancel, errs := startRunWithHandle(t, []task.Task{dep, main}, "api", mw)
+		defer cancel()
 
-	// api should not start until database signals ready.
-	time.Sleep(100 * time.Millisecond)
-	assert.NotContains(t, mw.String("api"), "! api:")
+		// api should not start until database signals ready.
+		synctest.Wait()
+		assert.NotContains(t, mw.String("api"), "! api:")
 
-	// Signal readiness.
-	close(ready)
+		// Signal readiness.
+		close(ready)
 
-	// api should now start.
-	time.Sleep(100 * time.Millisecond)
-	assert.Contains(t, mw.String("api"), "! api: execute")
+		// api should now start.
+		synctest.Wait()
+		assert.Contains(t, mw.String("api"), "! api: execute")
 
-	// Clean up: exit the database and cancel.
-	depExit <- nil
-	cancel()
-	waitFor(t, errs, 5*time.Second)
+		// Clean up: exit the database and cancel.
+		depExit <- nil
+		cancel()
+		waitFor(t, errs, 5*time.Second)
+	})
 }
 
 // --- Test 12: Dynamic Add ---
 
 func TestDynamicAdd(t *testing.T) {
-	restore := watcher.Mock()
-	defer restore()
+	synctest.Test(t, func(t *testing.T) {
+		restore := watcher.Mock()
+		defer restore()
 
-	mw := fixtures.NewWriter()
+		mw := fixtures.NewWriter()
 
-	main := fixtures.NewTask("server", "long").WithCancel(context.Canceled)
-	extra := fixtures.NewTask("logger", "short")
+		main := fixtures.NewTask("server", "long").WithCancel(context.Canceled)
+		extra := fixtures.NewTask("logger", "short")
 
-	r, cancel, errs := startRunWithHandle(t, []task.Task{main, extra}, "server", mw)
-	defer cancel()
+		r, cancel, errs := startRunWithHandle(t, []task.Task{main, extra}, "server", mw)
+		defer cancel()
 
-	// Wait for run to start.
-	time.Sleep(100 * time.Millisecond)
+		// Wait for run to start.
+		synctest.Wait()
 
-	// logger should not be running yet.
-	assert.NotContains(t, mw.String("logger"), "! logger:")
+		// logger should not be running yet.
+		assert.NotContains(t, mw.String("logger"), "! logger:")
 
-	// Dynamically add it.
-	r.Add("logger")
+		// Dynamically add it.
+		r.Add("logger")
 
-	time.Sleep(200 * time.Millisecond)
-	assert.Contains(t, mw.String("logger"), "! logger: execute")
+		synctest.Wait()
+		assert.Contains(t, mw.String("logger"), "! logger: execute")
 
-	cancel()
-	waitFor(t, errs, 5*time.Second)
+		cancel()
+		waitFor(t, errs, 5*time.Second)
+	})
 }
 
 // --- Test 13: Dynamic Remove ---
 
 func TestDynamicRemove(t *testing.T) {
-	restore := watcher.Mock()
-	defer restore()
+	synctest.Test(t, func(t *testing.T) {
+		restore := watcher.Mock()
+		defer restore()
 
-	mw := fixtures.NewWriter()
+		mw := fixtures.NewWriter()
 
-	dep := fixtures.NewTask("metrics", "long").WithCancel(context.Canceled)
-	main := fixtures.NewTask("server", "long").
-		WithCancel(context.Canceled).
-		WithDependencies("metrics")
+		dep := fixtures.NewTask("metrics", "long").WithCancel(context.Canceled)
+		main := fixtures.NewTask("server", "long").
+			WithCancel(context.Canceled).
+			WithDependencies("metrics")
 
-	r, cancel, errs := startRunWithHandle(t, []task.Task{dep, main}, "server", mw)
-	defer cancel()
+		r, cancel, errs := startRunWithHandle(t, []task.Task{dep, main}, "server", mw)
+		defer cancel()
 
-	// Wait for both to start.
-	time.Sleep(100 * time.Millisecond)
+		// Wait for both to start.
+		synctest.Wait()
 
-	// Both should be running.
-	assert.Contains(t, mw.String("metrics"), "! metrics: start")
-	assert.Contains(t, mw.String("server"), "! server: start")
+		// Both should be running.
+		assert.Contains(t, mw.String("metrics"), "! metrics: start")
+		assert.Contains(t, mw.String("server"), "! server: start")
 
-	// Remove metrics.
-	r.Remove("metrics")
+		// Remove metrics.
+		r.Remove("metrics")
 
-	time.Sleep(200 * time.Millisecond)
+		synctest.Wait()
 
-	// After removal, metrics should no longer be in the task list.
-	assert.False(t, r.Tasks().Has("metrics"))
+		// After removal, metrics should no longer be in the task list.
+		assert.False(t, r.Tasks().Has("metrics"))
 
-	cancel()
-	waitFor(t, errs, 5*time.Second)
+		cancel()
+		waitFor(t, errs, 5*time.Second)
+	})
 }
 
 // --- Test 14: Invalidate restarts running task ---
 
 func TestInvalidateRestartsRunningTask(t *testing.T) {
-	restore := watcher.Mock()
-	defer restore()
+	synctest.Test(t, func(t *testing.T) {
+		restore := watcher.Mock()
+		defer restore()
 
-	mw := fixtures.NewWriter()
+		mw := fixtures.NewWriter()
 
-	var startCount atomic.Int32
-	tk := task.FuncTask(func(ctx context.Context, onReady chan<- struct{}, w io.Writer) error {
-		startCount.Add(1)
-		w.Write([]byte("! worker: start\n"))
-		close(onReady)
-		<-ctx.Done()
-		return ctx.Err()
-	}, task.TaskMetadata{
-		ID:   "worker",
-		Type: "long",
+		var startCount atomic.Int32
+		tk := task.FuncTask(func(ctx context.Context, onReady chan<- struct{}, w io.Writer) error {
+			startCount.Add(1)
+			w.Write([]byte("! worker: start\n"))
+			close(onReady)
+			<-ctx.Done()
+			return ctx.Err()
+		}, task.TaskMetadata{
+			ID:   "worker",
+			Type: "long",
+		})
+
+		r, cancel, errs := startRunWithHandle(t, []task.Task{tk}, "worker", mw)
+		defer cancel()
+
+		// Wait for task to start.
+		synctest.Wait()
+		assert.Equal(t, int32(1), startCount.Load())
+
+		// Invalidate to trigger restart.
+		r.Invalidate("worker")
+
+		synctest.Wait()
+		assert.GreaterOrEqual(t, startCount.Load(), int32(2), "task should have restarted after invalidation")
+
+		cancel()
+		waitFor(t, errs, 5*time.Second)
 	})
-
-	r, cancel, errs := startRunWithHandle(t, []task.Task{tk}, "worker", mw)
-	defer cancel()
-
-	// Wait for task to start.
-	time.Sleep(100 * time.Millisecond)
-	assert.Equal(t, int32(1), startCount.Load())
-
-	// Invalidate to trigger restart.
-	r.Invalidate("worker")
-
-	time.Sleep(200 * time.Millisecond)
-	assert.GreaterOrEqual(t, startCount.Load(), int32(2), "task should have restarted after invalidation")
-
-	cancel()
-	waitFor(t, errs, 5*time.Second)
 }
 
 // --- Test 15: Watch-triggered restart (short dep in long run) ---
