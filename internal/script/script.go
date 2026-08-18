@@ -75,8 +75,13 @@ func (x *execution) run(ctx context.Context) error {
 	err := ctx.Err()
 	errs := []error{err}
 
-	if !x.isRunning() {
+	// The process may have exited between ctx.Done and here; checking the
+	// exit channel (rather than cmd.ProcessState, which the wait goroutine
+	// writes) keeps this synchronized with cmd.Wait.
+	select {
+	case <-exit:
 		return errors.Join(errs...)
+	default:
 	}
 
 	// Try SIGINT first.
@@ -156,7 +161,7 @@ func (x *execution) sigint() error {
 	if x.cmd == nil {
 		return nil
 	}
-	if err := syscall.Kill(-x.cmd.Process.Pid, syscall.SIGINT); err != nil {
+	if err := syscall.Kill(-x.cmd.Process.Pid, syscall.SIGINT); err != nil && !errors.Is(err, syscall.ESRCH) {
 		return fmt.Errorf("sigint error: %w", err)
 	}
 	return nil
@@ -167,7 +172,7 @@ func (x *execution) sigkill() error {
 	if x.cmd == nil {
 		return nil
 	}
-	if err := syscall.Kill(-x.cmd.Process.Pid, syscall.SIGKILL); err != nil && !strings.Contains(err.Error(), "no such process") {
+	if err := syscall.Kill(-x.cmd.Process.Pid, syscall.SIGKILL); err != nil && !errors.Is(err, syscall.ESRCH) {
 		return fmt.Errorf("sigkill error: %w", err)
 	}
 	return nil
@@ -181,9 +186,4 @@ func (x *execution) cleanup() {
 func (x *execution) getCmd() *exec.Cmd {
 	defer x.mu.Lock("getCmd").Unlock()
 	return x.cmd
-}
-
-func (x *execution) isRunning() bool {
-	defer x.mu.Lock("isRunning").Unlock()
-	return x.cmd != nil && x.cmd.ProcessState == nil
 }
