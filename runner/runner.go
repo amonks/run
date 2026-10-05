@@ -140,8 +140,8 @@ type Run struct {
 	input chan any
 
 	// Read-only after construction:
-	out      MultiWriter
-	allTasks task.Library // full task universe
+	out         MultiWriter
+	allTasks    task.Library // full task universe
 	runType     RunType
 	rootID      string
 	dir         string
@@ -272,8 +272,7 @@ func (r *Run) Start(ctx context.Context) error {
 	}
 
 	// Unwrap the sentinel.
-	var exitErr *runExitError
-	if errors.As(loopErr, &exitErr) {
+	if exitErr, ok := errors.AsType[*runExitError](loopErr); ok {
 		return exitErr.err
 	}
 	return loopErr
