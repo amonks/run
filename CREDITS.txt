@@ -52,7 +52,7 @@ SOFTWARE.
 
 
 
-charm.land/lipgloss/v2@v2.0.0
+charm.land/lipgloss/v2@v2.0.6
 =============================
 
 MIT License
@@ -139,7 +139,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-github.com/charmbracelet/colorprofile@v0.4.2
+github.com/charmbracelet/colorprofile@v0.4.3
 ============================================
 
 MIT License
@@ -166,7 +166,7 @@ SOFTWARE.
 
 
 
-github.com/charmbracelet/ultraviolet@v0.0.0-20260223171050-89c142e4aa73
+github.com/charmbracelet/ultraviolet@v0.0.0-20260811164956-006e29f97886
 =======================================================================
 
 MIT License
@@ -193,7 +193,7 @@ SOFTWARE.
 
 
 
-github.com/charmbracelet/x/ansi@v0.11.6
+github.com/charmbracelet/x/ansi@v0.11.8
 =======================================
 
 MIT License
@@ -408,7 +408,7 @@ SOFTWARE.
 
 
 
-github.com/lucasb-eyer/go-colorful@v1.3.0
+github.com/lucasb-eyer/go-colorful@v1.4.1
 =========================================
 
 Copyright (c) 2013 Lucas Beyer
@@ -421,7 +421,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 
 
-github.com/mattn/go-runewidth@v0.0.20
+github.com/mattn/go-runewidth@v0.0.24
 =====================================
 
 The MIT License (MIT)
