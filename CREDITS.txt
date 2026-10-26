@@ -556,8 +556,8 @@ SOFTWARE.
 
 
 
-github.com/xo/terminfo@v0.0.0-20220910002029-abceb7e1c41e
-=========================================================
+github.com/xo/terminfo@v1.0.0
+=============================
 
 The MIT License (MIT)
 
