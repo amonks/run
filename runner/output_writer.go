@@ -3,7 +3,7 @@ package runner
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
+	"encoding/json/jsontext"
 	"io"
 
 	"monks.co/run/internal/mutex"
@@ -48,9 +48,10 @@ type jsonWriter struct {
 }
 
 func (w *jsonWriter) Write(bs []byte) (int, error) {
-	var pretty bytes.Buffer
-	if err := json.Indent(&pretty, bs, "", "  "); err == nil {
-		w.w.Write(pretty.Bytes())
+	pretty := jsontext.Value(bytes.Clone(bs))
+	if err := pretty.Indent(jsontext.WithIndent("  "), jsontext.AllowDuplicateNames(true), jsontext.AllowInvalidUTF8(true)); err == nil {
+		// Indent drops the trailing newline that ends the log line.
+		w.w.Write(append(pretty, bs[len(bytes.TrimRight(bs, " \t\r\n")):]...))
 	} else {
 		w.w.Write(bs)
 	}

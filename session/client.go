@@ -2,7 +2,7 @@ package session
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/v2"
 	"fmt"
 	"net"
 	"net/http"
@@ -68,7 +68,7 @@ func (c *Client) Status() (*StatusResponse, error) {
 	defer resp.Body.Close()
 
 	var sr StatusResponse
-	if err := json.NewDecoder(resp.Body).Decode(&sr); err != nil {
+	if err := json.UnmarshalRead(resp.Body, &sr); err != nil {
 		return nil, err
 	}
 	return &sr, nil
@@ -89,7 +89,7 @@ func (c *Client) EnableLog(taskID string) (string, error) {
 	var body struct {
 		Path string `json:"path"`
 	}
-	json.NewDecoder(resp.Body).Decode(&body)
+	json.UnmarshalRead(resp.Body, &body)
 	return body.Path, nil
 }
 

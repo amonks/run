@@ -2,7 +2,8 @@ package session
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"fmt"
 	"net"
 	"net/http"
@@ -192,7 +193,7 @@ func statusString(str string) string {
 
 func writeJSON(w http.ResponseWriter, v any) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(v)
+	json.MarshalWrite(w, v, jsontext.AllowInvalidUTF8(true))
 }
 
 func checkStaleSocket(name string, sock string) error {

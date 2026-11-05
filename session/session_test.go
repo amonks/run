@@ -2,7 +2,7 @@ package session
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/v2"
 	"io"
 	"net"
 	"net/http"
@@ -92,7 +92,7 @@ func TestSessionGetTasks(t *testing.T) {
 			Log    bool   `json:"log"`
 		} `json:"tasks"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+	if err := json.UnmarshalRead(resp.Body, &body); err != nil {
 		t.Fatal(err)
 	}
 
@@ -155,7 +155,7 @@ func TestSessionRestart(t *testing.T) {
 	}
 
 	var body map[string]any
-	json.NewDecoder(resp.Body).Decode(&body)
+	json.UnmarshalRead(resp.Body, &body)
 	if body["ok"] != true {
 		t.Errorf("expected ok=true, got %v", body)
 	}

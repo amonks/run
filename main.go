@@ -2,7 +2,8 @@ package main
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"flag"
 	"fmt"
@@ -12,6 +13,10 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/muesli/reflow/dedent"
+	"github.com/muesli/reflow/indent"
+	"github.com/muesli/reflow/wordwrap"
+	"golang.org/x/term"
 	"monks.co/run/internal/color"
 	"monks.co/run/printer"
 	"monks.co/run/runner"
@@ -19,10 +24,6 @@ import (
 	"monks.co/run/task"
 	"monks.co/run/taskfile"
 	"monks.co/run/tui"
-	"github.com/muesli/reflow/dedent"
-	"github.com/muesli/reflow/indent"
-	"github.com/muesli/reflow/wordwrap"
-	"golang.org/x/term"
 )
 
 // --- Invocation types ---
@@ -72,7 +73,7 @@ var modes = []mode{
 		inv:         &runInv,
 	},
 	{
-		name: "INTERACTING WITH RUNNING TASKS",
+		name:        "INTERACTING WITH RUNNING TASKS",
 		description: "In addition to the TUI, you can check on and control long-running tasks from the command line. Use -session with the name of the task you started (e.g. if you ran `run dev`, use -session=dev).",
 		examples: []string{
 			"run -session=<name> -status",
@@ -193,9 +194,8 @@ func handleSession() {
 				fmt.Printf("%-40s %s%s\n", t.ID, t.Status, logIndicator)
 			}
 		} else {
-			enc := json.NewEncoder(os.Stdout)
-			enc.SetIndent("", "  ")
-			enc.Encode(status)
+			enc := jsontext.NewEncoder(os.Stdout, jsontext.WithIndent("  "), json.Deterministic(true))
+			json.MarshalEncode(enc, status)
 		}
 
 	case sessionInv.Log != "":
@@ -418,4 +418,3 @@ func licenseText() string {
 	b.WriteString(indent.String(wordwrap.String(License, 70), 2))
 	return b.String()
 }
-
