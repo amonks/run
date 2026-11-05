@@ -3,6 +3,7 @@ package script_test
 import (
 	"bytes"
 	"context"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -93,16 +94,30 @@ func TestReentrant(t *testing.T) {
 	}
 }
 
+// waitForOutput waits for the script to print want — the script's own
+// word that it has reached a point, in place of guessing how long a
+// shell takes to get there.
+func waitForOutput(t *testing.T, stdout, stderr *safeBuffer, want string) {
+	t.Helper()
+	deadline := time.Now().Add(10 * time.Second)
+	for !strings.Contains(stdout.String(), want) {
+		if time.Now().After(deadline) {
+			t.Fatalf("the script never printed %q; stdout %q, stderr %q", want, stdout.String(), stderr.String())
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+}
+
 func TestSIGINT(t *testing.T) {
-	s := script.Script{Dir: ".", Text: "sleep 100"}
+	s := script.Script{Dir: ".", Text: "echo started ; sleep 100"}
 	stdout, stderr := &safeBuffer{}, &safeBuffer{}
 	ctx, cancel := context.WithCancel(context.Background())
 
 	errCh := make(chan error)
 	go func() { errCh <- s.Start(ctx, stdout, stderr) }()
 
-	// Wait for the script to start.
-	time.Sleep(50 * time.Millisecond)
+	// Cancel once the script is running, so the SIGINT reaches it.
+	waitForOutput(t, stdout, stderr, "started")
 	cancel()
 
 	select {
@@ -115,15 +130,16 @@ func TestSIGINT(t *testing.T) {
 
 func TestSIGKILL(t *testing.T) {
 	// Trap SIGINT so the process ignores it, forcing SIGKILL.
-	s := script.Script{Dir: ".", Text: "trap '' SIGINT ; sleep 100"}
+	s := script.Script{Dir: ".", Text: "trap '' SIGINT ; echo trapped ; sleep 100"}
 	stdout, stderr := &safeBuffer{}, &safeBuffer{}
 	ctx, cancel := context.WithCancel(context.Background())
 
 	errCh := make(chan error)
 	go func() { errCh <- s.Start(ctx, stdout, stderr) }()
 
-	// Wait for the script to start.
-	time.Sleep(50 * time.Millisecond)
+	// Cancel once the trap is set. A SIGINT that lands before bash has
+	// run the trap kills it, which would read as the trap not holding.
+	waitForOutput(t, stdout, stderr, "trapped")
 	cancel()
 
 	// Should NOT exit within the SIGINT grace period.

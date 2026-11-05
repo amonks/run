@@ -71,6 +71,43 @@ func TestDebounce(t *testing.T) {
 	})
 }
 
+// A watch's stop closes its input; the debounced output must end with
+// it, so the reader ranging over it (the runner's forwarding goroutine)
+// returns instead of waiting forever — including when a batch is still
+// pending, whose timer must then not send on the closed channel.
+func TestDebounceEndsWithItsInput(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		in := make(chan watcher.EventInfo)
+		out := watcher.Debounce(50*time.Millisecond, in)
+		in <- watcher.EventInfo{Path: "a.txt", Event: "Write"}
+		close(in)
+
+		for batch := range out {
+			t.Errorf("a stopped watch delivered %v", batch)
+		}
+		// Let the pending batch's timer fire after the close.
+		time.Sleep(time.Second)
+	})
+}
+
+// The mock's stop ends its channel the same way.
+func TestMockStopEndsTheChannel(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		restore := watcher.Mock()
+		defer restore()
+		ch, stop, err := watcher.Watch("src")
+		if err != nil {
+			t.Fatal(err)
+		}
+		stop()
+		stop() // idempotent, like the real stop
+		for evs := range ch {
+			t.Errorf("a stopped mock watch delivered %v", evs)
+		}
+		watcher.Dispatch("src", watcher.EventInfo{Path: "src/late.go"}) // no-op once stopped
+	})
+}
+
 func TestMockAndDispatch(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		restore := watcher.Mock()

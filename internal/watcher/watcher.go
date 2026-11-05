@@ -3,6 +3,7 @@
 package watcher
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -99,10 +100,12 @@ type debounced[T any] struct {
 	mu      sync.Mutex
 	coll    []T
 	waiting bool
+	closed  bool
 }
 
 // Debounce collects events from c and emits them as batches after dur of
-// inactivity.
+// inactivity. The output closes when c does — a stopped watch — so a
+// reader ranging over it returns; a batch still pending then is dropped.
 func Debounce(dur time.Duration, c <-chan EventInfo) <-chan []EventInfo {
 	d := &debounced[EventInfo]{}
 	debouncedC := make(chan []EventInfo)
@@ -124,14 +127,22 @@ func Debounce(dur time.Duration, c <-chan EventInfo) <-chan []EventInfo {
 				d.mu.Lock()
 				defer d.mu.Unlock()
 
-				select {
-				case debouncedC <- d.coll:
-				default:
+				if !d.closed {
+					select {
+					case debouncedC <- d.coll:
+					default:
+					}
 				}
 				d.coll = nil
 				d.waiting = false
 			}()
 		}
+		// Closed under mu, so a pending batch's send above sees closed
+		// rather than a closed channel.
+		d.mu.Lock()
+		d.closed = true
+		close(debouncedC)
+		d.mu.Unlock()
 	}()
 
 	return debouncedC
@@ -181,11 +192,16 @@ func Mock() func() {
 
 		ch := make(chan []EventInfo, 16)
 		mockChannels[inputPath] = ch
-		stop := func() {
+		// Like the real stop: idempotent, and it ends the channel so
+		// its reader returns.
+		stop := sync.OnceFunc(func() {
 			mockMu.Lock()
 			defer mockMu.Unlock()
-			delete(mockChannels, inputPath)
-		}
+			if mockChannels[inputPath] == ch {
+				delete(mockChannels, inputPath)
+			}
+			close(ch)
+		})
 		return ch, stop, nil
 	}
 
@@ -198,12 +214,21 @@ func Mock() func() {
 }
 
 // Dispatch sends synthetic events to the mock watcher for the given path.
-// The path must match the inputPath previously passed to Watch.
+// The path must match the inputPath previously passed to Watch. It sends
+// under the mock's lock, so a concurrent stop can't close the channel
+// between the lookup and the send — which is why the send can't wait: a
+// full channel (16 batches nobody has read) panics rather than wedging
+// every other mock call behind the lock.
 func Dispatch(path string, evs ...EventInfo) {
 	mockMu.Lock()
+	defer mockMu.Unlock()
 	ch, ok := mockChannels[path]
-	mockMu.Unlock()
-	if ok {
-		ch <- evs
+	if !ok {
+		return
+	}
+	select {
+	case ch <- evs:
+	default:
+		panic(fmt.Sprintf("watcher.Dispatch(%q): the mock watch's buffer is full; nothing is reading it", path))
 	}
 }

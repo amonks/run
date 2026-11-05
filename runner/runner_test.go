@@ -254,40 +254,42 @@ func TestShutdownReverseDependencyOrder(t *testing.T) {
 // --- Test 6: Watch-triggered restart (long task) ---
 
 func TestWatchTriggeredRestartLongTask(t *testing.T) {
-	restore := watcher.Mock()
-	defer restore()
+	synctest.Test(t, func(t *testing.T) {
+		restore := watcher.Mock()
+		defer restore()
 
-	var startCount atomic.Int32
-	tk := task.FuncTask(func(ctx context.Context, onReady chan<- struct{}, w io.Writer) error {
-		startCount.Add(1)
-		w.Write([]byte("! server: start\n"))
-		close(onReady)
-		<-ctx.Done()
-		return ctx.Err()
-	}, task.TaskMetadata{
-		ID:    "server",
-		Type:  "long",
-		Watch: []string{"src"},
+		var startCount atomic.Int32
+		tk := task.FuncTask(func(ctx context.Context, onReady chan<- struct{}, w io.Writer) error {
+			startCount.Add(1)
+			w.Write([]byte("! server: start\n"))
+			close(onReady)
+			<-ctx.Done()
+			return ctx.Err()
+		}, task.TaskMetadata{
+			ID:    "server",
+			Type:  "long",
+			Watch: []string{"src"},
+		})
+
+		mw := fixtures.NewWriter()
+		_, cancel, errs := startRunWithHandle(t, []task.Task{tk}, "server", mw)
+		defer cancel()
+
+		// Let the task start and its watch register.
+		synctest.Wait()
+		assert.Equal(t, int32(1), startCount.Load())
+
+		// Dispatch a file-system event. The mock watcher key is
+		// filepath.Join(".", "src") = "src".
+		watcher.Dispatch("src", watcher.EventInfo{Path: "src/main.go", Event: "write"})
+
+		// The event should trigger a restart (cancel + rerun).
+		synctest.Wait()
+		assert.Equal(t, int32(2), startCount.Load(), "one watch event should restart the task once")
+
+		cancel()
+		waitFor(t, errs, 5*time.Second)
 	})
-
-	mw := fixtures.NewWriter()
-	_, cancel, errs := startRunWithHandle(t, []task.Task{tk}, "server", mw)
-	defer cancel()
-
-	// Wait for task to start.
-	time.Sleep(100 * time.Millisecond)
-	assert.Equal(t, int32(1), startCount.Load())
-
-	// Dispatch a file-system event. The mock watcher key is
-	// filepath.Join(".", "src") = "src".
-	watcher.Dispatch("src", watcher.EventInfo{Path: "src/main.go", Event: "write"})
-
-	// The event should trigger a restart (cancel + rerun).
-	time.Sleep(200 * time.Millisecond)
-	assert.GreaterOrEqual(t, startCount.Load(), int32(2), "task should have restarted after watch event")
-
-	cancel()
-	waitFor(t, errs, 5*time.Second)
 }
 
 // --- Test 7: Trigger completion causes main task restart ---
@@ -334,93 +336,97 @@ func TestTriggerCompletionCausesRestart(t *testing.T) {
 // --- Test 8: Watch event on trigger causes cascade restart ---
 
 func TestWatchEventOnTriggerCausesCascade(t *testing.T) {
-	restore := watcher.Mock()
-	defer restore()
+	synctest.Test(t, func(t *testing.T) {
+		restore := watcher.Mock()
+		defer restore()
 
-	mw := fixtures.NewWriter()
+		mw := fixtures.NewWriter()
 
-	trigger := fixtures.NewTask("codegen", "short").WithWatch("schema")
+		trigger := fixtures.NewTask("codegen", "short").WithWatch("schema")
 
-	var startCount atomic.Int32
-	main := task.FuncTask(func(ctx context.Context, onReady chan<- struct{}, w io.Writer) error {
-		startCount.Add(1)
-		w.Write([]byte("! app: start\n"))
-		close(onReady)
-		<-ctx.Done()
-		return ctx.Err()
-	}, task.TaskMetadata{
-		ID:       "app",
-		Type:     "long",
-		Triggers: []string{"codegen"},
+		var startCount atomic.Int32
+		main := task.FuncTask(func(ctx context.Context, onReady chan<- struct{}, w io.Writer) error {
+			startCount.Add(1)
+			w.Write([]byte("! app: start\n"))
+			close(onReady)
+			<-ctx.Done()
+			return ctx.Err()
+		}, task.TaskMetadata{
+			ID:       "app",
+			Type:     "long",
+			Triggers: []string{"codegen"},
+		})
+
+		_, cancel, errs := startRunWithHandle(t, []task.Task{trigger, main}, "app", mw)
+		defer cancel()
+
+		// Let the initial start settle: codegen runs once (auto-started as
+		// zero-dep task), which triggers app restart.
+		synctest.Wait()
+		initialStartCount := startCount.Load()
+
+		// Dispatch a watch event that should trigger codegen to rerun.
+		watcher.Dispatch("schema", watcher.EventInfo{Path: "schema/api.graphql", Event: "write"})
+
+		// Let the trigger re-run and cascade.
+		synctest.Wait()
+
+		// codegen should have executed at least twice (initial + watch-triggered).
+		assert.Equal(t, 2, strings.Count(mw.String("codegen"), "! codegen: execute"))
+		// app should have been restarted again.
+		assert.Equal(t, initialStartCount+1, startCount.Load(), "app should restart once when trigger re-runs via watch")
+
+		cancel()
+		waitFor(t, errs, 5*time.Second)
 	})
-
-	_, cancel, errs := startRunWithHandle(t, []task.Task{trigger, main}, "app", mw)
-	defer cancel()
-
-	// Wait for initial start: codegen runs once (auto-started as
-	// zero-dep task), which triggers app restart.
-	time.Sleep(200 * time.Millisecond)
-	initialStartCount := startCount.Load()
-
-	// Dispatch a watch event that should trigger codegen to rerun.
-	watcher.Dispatch("schema", watcher.EventInfo{Path: "schema/api.graphql", Event: "write"})
-
-	// Wait for the trigger to re-run and cascade.
-	time.Sleep(300 * time.Millisecond)
-
-	// codegen should have executed at least twice (initial + watch-triggered).
-	assert.GreaterOrEqual(t, strings.Count(mw.String("codegen"), "! codegen: execute"), 2)
-	// app should have been restarted again.
-	assert.Greater(t, startCount.Load(), initialStartCount, "app should restart when trigger re-runs via watch")
-
-	cancel()
-	waitFor(t, errs, 5*time.Second)
 }
 
 // --- Test 9: Dependency rerun does not restart long task ---
 
 func TestDepRerunDoesNotRestartLongTask(t *testing.T) {
-	restore := watcher.Mock()
-	defer restore()
+	synctest.Test(t, func(t *testing.T) {
+		restore := watcher.Mock()
+		defer restore()
 
-	mw := fixtures.NewWriter()
+		mw := fixtures.NewWriter()
 
-	dep := fixtures.NewTask("compile", "short").WithWatch("src")
+		dep := fixtures.NewTask("compile", "short").WithWatch("src")
 
-	var startCount atomic.Int32
-	main := task.FuncTask(func(ctx context.Context, onReady chan<- struct{}, w io.Writer) error {
-		startCount.Add(1)
-		w.Write([]byte("! server: start\n"))
-		close(onReady)
-		<-ctx.Done()
-		return ctx.Err()
-	}, task.TaskMetadata{
-		ID:           "server",
-		Type:         "long",
-		Dependencies: []string{"compile"},
+		var startCount atomic.Int32
+		main := task.FuncTask(func(ctx context.Context, onReady chan<- struct{}, w io.Writer) error {
+			startCount.Add(1)
+			w.Write([]byte("! server: start\n"))
+			close(onReady)
+			<-ctx.Done()
+			return ctx.Err()
+		}, task.TaskMetadata{
+			ID:           "server",
+			Type:         "long",
+			Dependencies: []string{"compile"},
+		})
+
+		_, cancel, errs := startRunWithHandle(t, []task.Task{dep, main}, "server", mw)
+		defer cancel()
+
+		// Let both start and compile's watch register.
+		synctest.Wait()
+
+		initialStartCount := startCount.Load()
+
+		// Dispatch a watch event that triggers compile to rerun.
+		watcher.Dispatch("src", watcher.EventInfo{Path: "src/main.go", Event: "write"})
+
+		// Let the rerun settle.
+		synctest.Wait()
+
+		cancel()
+		waitFor(t, errs, 5*time.Second)
+
+		// Compile should have run twice: the initial run and the event's.
+		assert.Equal(t, 2, strings.Count(mw.String("compile"), "! compile: execute"))
+		// Server should NOT have been restarted.
+		assert.Equal(t, initialStartCount, startCount.Load(), "long task should not restart when dependency reruns")
 	})
-
-	_, cancel, errs := startRunWithHandle(t, []task.Task{dep, main}, "server", mw)
-	defer cancel()
-
-	// Wait for both to start.
-	time.Sleep(100 * time.Millisecond)
-
-	initialStartCount := startCount.Load()
-
-	// Dispatch a watch event that triggers compile to rerun.
-	watcher.Dispatch("src", watcher.EventInfo{Path: "src/main.go", Event: "write"})
-
-	// Wait for rerun.
-	time.Sleep(200 * time.Millisecond)
-
-	cancel()
-	waitFor(t, errs, 5*time.Second)
-
-	// Compile should have run at least twice.
-	assert.GreaterOrEqual(t, strings.Count(mw.String("compile"), "! compile: execute"), 2)
-	// Server should NOT have been restarted.
-	assert.Equal(t, initialStartCount, startCount.Load(), "long task should not restart when dependency reruns")
 }
 
 // --- Test 10: JSON output is prettified ---
@@ -591,99 +597,104 @@ func TestInvalidateRestartsRunningTask(t *testing.T) {
 // --- Test 15: Watch-triggered restart (short dep in long run) ---
 
 func TestWatchRestartShortDepInLongRun(t *testing.T) {
-	restore := watcher.Mock()
-	defer restore()
+	synctest.Test(t, func(t *testing.T) {
+		restore := watcher.Mock()
+		defer restore()
 
-	mw := fixtures.NewWriter()
+		mw := fixtures.NewWriter()
 
-	dep := fixtures.NewTask("compile", "short").WithWatch("src")
-	main := fixtures.NewTask("server", "long").
-		WithCancel(context.Canceled).
-		WithDependencies("compile")
+		dep := fixtures.NewTask("compile", "short").WithWatch("src")
+		main := fixtures.NewTask("server", "long").
+			WithCancel(context.Canceled).
+			WithDependencies("compile")
 
-	_, cancel, errs := startRunWithHandle(t, []task.Task{dep, main}, "server", mw)
-	defer cancel()
+		_, cancel, errs := startRunWithHandle(t, []task.Task{dep, main}, "server", mw)
+		defer cancel()
 
-	// Wait for initial run.
-	time.Sleep(100 * time.Millisecond)
-	assert.Contains(t, mw.String("compile"), "! compile: execute")
+		// Let the initial run settle and compile's watch register.
+		synctest.Wait()
+		assert.Contains(t, mw.String("compile"), "! compile: execute")
 
-	// Dispatch a watch event.
-	watcher.Dispatch("src", watcher.EventInfo{Path: "src/main.go", Event: "write"})
+		// Dispatch a watch event.
+		watcher.Dispatch("src", watcher.EventInfo{Path: "src/main.go", Event: "write"})
 
-	// Wait for the compile task to be rerun.
-	time.Sleep(200 * time.Millisecond)
+		// Let the compile task rerun.
+		synctest.Wait()
 
-	cancel()
-	waitFor(t, errs, 5*time.Second)
+		cancel()
+		waitFor(t, errs, 5*time.Second)
 
-	// Compile should have run at least twice.
-	assert.GreaterOrEqual(t, strings.Count(mw.String("compile"), "! compile: execute"), 2)
+		// Compile should have run twice: the initial run and the event's.
+		assert.Equal(t, 2, strings.Count(mw.String("compile"), "! compile: execute"))
+	})
 }
 
 // --- Test 16: Watch event does not bypass dependency check ---
 
 func TestWatchEventRespectsUnmetDependencies(t *testing.T) {
-	restore := watcher.Mock()
-	defer restore()
+	synctest.Test(t, func(t *testing.T) {
+		restore := watcher.Mock()
+		defer restore()
 
-	mw := fixtures.NewWriter()
+		mw := fixtures.NewWriter()
 
-	// install is a short task that takes a while to complete.
-	// We use a channel to control when it finishes.
-	installDone := make(chan struct{})
-	install := task.FuncTask(func(ctx context.Context, onReady chan<- struct{}, w io.Writer) error {
-		fmt.Fprintf(w, "! install: execute\n")
-		select {
-		case <-installDone:
+		// install is a short task that takes a while to complete.
+		// We use a channel to control when it finishes.
+		installDone := make(chan struct{})
+		install := task.FuncTask(func(ctx context.Context, onReady chan<- struct{}, w io.Writer) error {
+			fmt.Fprintf(w, "! install: execute\n")
+			select {
+			case <-installDone:
+				close(onReady)
+				return nil
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		}, task.TaskMetadata{
+			ID:   "install",
+			Type: "short",
+		})
+
+		// build depends on install and watches a path.
+		var buildCount atomic.Int32
+		build := task.FuncTask(func(ctx context.Context, onReady chan<- struct{}, w io.Writer) error {
+			buildCount.Add(1)
+			fmt.Fprintf(w, "! build: execute\n")
 			close(onReady)
 			return nil
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}, task.TaskMetadata{
-		ID:   "install",
-		Type: "short",
+		}, task.TaskMetadata{
+			ID:           "build",
+			Type:         "short",
+			Dependencies: []string{"install"},
+			Watch:        []string{"css"},
+		})
+
+		_, cancel, errs := startRunWithHandle(t, []task.Task{install, build}, "build", mw)
+		defer cancel()
+
+		// Let install start and build's watch register.
+		synctest.Wait()
+		assert.Contains(t, mw.String("install"), "! install: execute")
+
+		// Dispatch a watch event matching build's watch pattern while
+		// install is still running (has not exited).
+		watcher.Dispatch("css", watcher.EventInfo{Path: "css/index.css", Event: "write"})
+
+		// build should NOT start because install hasn't completed: with
+		// every goroutine blocked, nothing more is coming.
+		synctest.Wait()
+		assert.Equal(t, int32(0), buildCount.Load(),
+			"build must not start while its dependency (install) is still running")
+
+		// Now let install complete.
+		close(installDone)
+
+		// build should run.
+		synctest.Wait()
+		assert.Equal(t, int32(1), buildCount.Load(),
+			"build should run once after install completes")
+
+		cancel()
+		waitFor(t, errs, 5*time.Second)
 	})
-
-	// build depends on install and watches a path.
-	var buildCount atomic.Int32
-	build := task.FuncTask(func(ctx context.Context, onReady chan<- struct{}, w io.Writer) error {
-		buildCount.Add(1)
-		fmt.Fprintf(w, "! build: execute\n")
-		close(onReady)
-		return nil
-	}, task.TaskMetadata{
-		ID:           "build",
-		Type:         "short",
-		Dependencies: []string{"install"},
-		Watch:        []string{"css"},
-	})
-
-	_, cancel, errs := startRunWithHandle(t, []task.Task{install, build}, "build", mw)
-	defer cancel()
-
-	// Wait for install to start.
-	time.Sleep(100 * time.Millisecond)
-	assert.Contains(t, mw.String("install"), "! install: execute")
-
-	// Dispatch a watch event matching build's watch pattern while
-	// install is still running (has not exited).
-	watcher.Dispatch("css", watcher.EventInfo{Path: "css/index.css", Event: "write"})
-
-	// build should NOT start because install hasn't completed.
-	time.Sleep(200 * time.Millisecond)
-	assert.Equal(t, int32(0), buildCount.Load(),
-		"build must not start while its dependency (install) is still running")
-
-	// Now let install complete.
-	close(installDone)
-
-	// build should run.
-	time.Sleep(200 * time.Millisecond)
-	assert.GreaterOrEqual(t, buildCount.Load(), int32(1),
-		"build should run after install completes")
-
-	cancel()
-	waitFor(t, errs, 5*time.Second)
 }
